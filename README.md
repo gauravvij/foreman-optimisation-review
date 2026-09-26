@@ -60,6 +60,7 @@ derived from the other three by `src/services/priority.ts`).
 **Key relationships:**
 - `(Issue)-[:HAS_COMMENT]->(Comment)`
 - `(Issue)-[:AUTHORED_BY]->(User)`
+- `(Issue)-[:ASSIGNED_TO]->(User)` (zero or more)
 - `(Issue)-[:BELONGS_TO_CATEGORY]->(Category)`
 - `(Issue)-[:HAS_SOLUTION]->(Solution)`
 - `(Issue)-[:HAS_WORKAROUND]->(Workaround)`

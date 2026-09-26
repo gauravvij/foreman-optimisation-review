@@ -239,6 +239,7 @@ ${linkRule}
 
 - (Issue)-[:HAS_COMMENT]->(Comment)
 - (Issue)-[:AUTHORED_BY]->(User)
+- (Issue)-[:ASSIGNED_TO]->(User)     // zero or more; live state, refreshed on every incremental sync
 - (Issue)-[:HAS_LABEL]->(Label)
 - (Issue)-[:HAS_REACTION]->(Reaction)
 - (Comment)-[:AUTHORED_BY]->(User)

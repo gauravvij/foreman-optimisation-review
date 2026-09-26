@@ -33,6 +33,12 @@ query ($owner: String!, $repo: String!, $issueNumber: Int!, $commentsAfter: Stri
         login
         ... on User { name company }
       }
+      assignees(first: 10) {
+        nodes {
+          login
+          ... on User { name company }
+        }
+      }
       labels(first: 50) {
         nodes { name description color }
       }

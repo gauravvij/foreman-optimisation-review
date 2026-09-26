@@ -3,7 +3,7 @@
  *
  * Graph schema:
  *   Nodes:  Issue, Comment, User, Label, Reaction
- *   Rels:   AUTHORED_BY, HAS_LABEL, HAS_COMMENT, HAS_REACTION
+ *   Rels:   AUTHORED_BY, ASSIGNED_TO, HAS_LABEL, HAS_COMMENT, HAS_REACTION
  */
 
 import neo4j, { type Driver, type Integer, type Session } from 'neo4j-driver';
@@ -47,6 +47,7 @@ export interface GitHubIssue {
   closedAt: string | null;
   state: string;
   author: GitHubUser | null;
+  assignees?: { nodes: GitHubUser[] } | null;
   labels?: { nodes: GitHubLabel[] };
   reactions?: { nodes: GitHubReaction[]; totalCount: number };
   totalComments: number;
@@ -155,7 +156,7 @@ async function insertReactions(
 // Issue ingestion
 // ---------------------------------------------------------------------------
 
-async function insertIssue(session: Session, issue: GitHubIssue): Promise<void> {
+export async function insertIssue(session: Session, issue: GitHubIssue): Promise<void> {
   // 1. Upsert Issue node
   await session.run(
     `MERGE (i:Issue {issueId: $issueId})
@@ -188,6 +189,26 @@ async function insertIssue(session: Session, issue: GitHubIssue): Promise<void> 
       `MATCH (i:Issue {issueId: $issueId}), (u:User {login: $login})
        MERGE (i)-[:AUTHORED_BY]->(u)`,
       { issueId: issue.id, login: issue.author.login },
+    );
+  }
+
+  // 2b. Assignees. Every reassignment updates the issue's updatedAt, so the
+  // incremental sync picks up the change; we still delete the old edges here
+  // so an unassignment is reflected rather than leaving a stale link.
+  const assignees = (issue.assignees?.nodes ?? []).filter((u): u is GitHubUser =>
+    Boolean(u?.login),
+  );
+  await session.run('MATCH (i:Issue {issueId: $issueId})-[r:ASSIGNED_TO]->() DELETE r', {
+    issueId: issue.id,
+  });
+  if (assignees.length > 0) {
+    await insertUsers(session, assignees);
+    await session.run(
+      `MATCH (i:Issue {issueId: $issueId})
+       UNWIND $logins AS login
+       MATCH (u:User {login: login})
+       MERGE (i)-[:ASSIGNED_TO]->(u)`,
+      { issueId: issue.id, logins: assignees.map((u) => u.login) },
     );
   }
 
