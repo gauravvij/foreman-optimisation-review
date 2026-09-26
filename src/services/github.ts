@@ -117,6 +117,7 @@ async function fetchCompleteIssue(
         closedAt: issue.closedAt as string | null,
         state: issue.state as string,
         author: issue.author as GitHubIssue['author'],
+        assignees: issue.assignees as GitHubIssue['assignees'],
         labels: issue.labels as GitHubIssue['labels'],
         reactions: issue.reactions as GitHubIssue['reactions'],
         totalComments: comments.totalCount,
