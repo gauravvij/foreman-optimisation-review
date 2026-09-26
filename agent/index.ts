@@ -67,11 +67,25 @@ const INSTRUCTIONS = buildInstructions(owner, repo);
 // platform mounts, so the snapshot survives a restart mid-confirmation.
 const RUN_STORE_URL = process.env.RUN_STORE_URL ?? 'file:/data/agent-runs.db';
 
+// Persistent so a bun --watch restart, or a rebuild, does not wipe the
+// conversation the user is having right now. /data is the same platform
+// volume RUN_STORE_URL sits on.
+//
+// lastMessages defaults to 10 in @mastra/memory (see memoryDefaultOptions in
+// @mastra/core), which is too tight for a triage session that ranges over
+// dozens of turns and refers back to earlier ones. workingMemory keeps a
+// small structured notes block the model updates and receives every turn,
+// which is what carries a fact past that window without needing semantic
+// recall's vector store.
 const memory = new Memory({
   storage: new LibSQLStore({
     id: 'memory',
-    url: ':memory:',
+    url: process.env.MEMORY_STORE_URL ?? 'file:/data/agent-memory.db',
   }),
+  options: {
+    lastMessages: Number(process.env.MEMORY_LAST_MESSAGES ?? '80'),
+    workingMemory: { enabled: true },
+  },
 });
 
 const agent = new Agent({
