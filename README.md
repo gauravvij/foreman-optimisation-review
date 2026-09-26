@@ -1,0 +1,562 @@
+# Foreman
+
+Ingests GitHub issues from a repository into a Neo4j knowledge graph, enriches them with Claude analysis, and answers questions using Cypher queries and comment summarization.
+
+Built with [Mastra](https://mastra.ai) and the Astro platform.
+
+## Architecture
+
+```
+┌───────────────────────────────────────────────────────┐
+│  Ingestion (SYNC_MODE=startup — full sync)            │
+│                                                       │
+│  GitHub GraphQL ─► Neo4j ─► Claude ─► Neo4j           │
+│  (fetch issues)    (store)  (analyze)  (store result) │
+└───────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────┐
+│  Ingestion (SYNC_MODE=schedule — incremental)         │
+│                                                       │
+│  Same pipeline, only fetches issues updated since     │
+│  the last successful run.                             │
+└───────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────┐
+│  Agent                                                │
+│                                                       │
+│  User ─► Playground ─► Messaging ─► Agent             │
+│                                      ├─ queryNeo4j    │
+│                                      └─ summarize     │
+└───────────────────────────────────────────────────────┘
+```
+
+### Knowledge Graph Schema
+
+**Nodes:** Issue, Comment, User, Label, Reaction, Category, Subcategory, Competitor, Workaround, Solution, Keyword
+
+**Classification** (properties on `Issue`, written during analysis):
+`category` (one of frontend, backend, cli, infra, docs, security, observability,
+tooling, other), `subcategory` (from a corpus-derived vocabulary persisted as
+`Subcategory` nodes), `severity`, `impact`, `effort`, and `priorityScore` (0-100,
+derived from the other three by `src/services/priority.ts`).
+
+**Key relationships:**
+- `(Issue)-[:HAS_COMMENT]->(Comment)`
+- `(Issue)-[:AUTHORED_BY]->(User)`
+- `(Issue)-[:BELONGS_TO_CATEGORY]->(Category)`
+- `(Issue)-[:HAS_SOLUTION]->(Solution)`
+- `(Issue)-[:HAS_WORKAROUND]->(Workaround)`
+- `(Issue)-[:MENTIONS_COMPETITOR]->(Competitor)`
+
+## Quick Start
+
+### Prerequisites
+
+- Astro CLI (`curl -fsSL https://astropods.com/install | sh`)
+- Docker
+- A GitHub token, and `ast login` for AI gateway access
+
+### Setup
+
+```bash
+git clone https://github.com/astropods/agents.git
+cd foreman
+ast configure
+```
+
+### Run
+
+```bash
+ast dev
+```
+
+This will:
+1. Start Neo4j (persistent volume, no auth)
+2. Start the messaging service and playground UI
+3. Build and run the startup ingestion (full sync: fetches issues, analyzes with Claude, stores in Neo4j)
+4. Start the agent
+
+Open http://localhost:3100 (or the URL shown by ast dev) to chat with the agent.
+
+## Using the agent
+
+Ask in plain English. The agent writes its own Cypher against the graph and
+picks its own tools, so these are starting points rather than fixed commands.
+
+### Explore the taxonomy
+
+Issues carry two independent axes: a fixed `category` naming the area of the
+system, and a `subcategory` naming a concern or work type, drawn from a
+vocabulary derived from this repository's own issues. Ask for both, or the
+second one is easy to miss:
+
+> Show me the full issue taxonomy as two tables. First, every category with its
+> issue count. Second, every subcategory term with its definition and issue
+> count. Sort both by count descending, and call out any taxonomy value that has
+> zero issues.
+
+Asking for the definitions is what makes the agent read the `Subcategory` nodes
+rather than just the distinct values already on issues.
+
+> Cross-tabulate category against subcategory: a matrix of issue counts,
+> categories as rows, subcategories as columns. Drop any row or column that is
+> all zeros.
+
+### Rank what to work on
+
+> What are the top 15 issues by priority score? Show the category, severity,
+> effort, and the one-line rationale for each.
+
+> Group issues by category and show me the highest-priority three in each.
+
+> Which small-effort issues have high severity? Those are the quick wins.
+
+### Correct the agent, durably
+
+The agent has no memory between conversations, so a correction only survives if
+it is written to the graph. Three things can be recorded, and they behave
+differently. Just say what you mean; the agent picks the right one.
+
+**A decision about specific issues.** Stored as an `Assessment` against each
+issue, and it outranks the derived priority score:
+
+> #412 and #530 are nice to have, defer them. The rest we should fix.
+
+**A mapping from a GitHub label to a category.** Stored as a `Rule` and
+*enforced* after every classification, so the model cannot undo it:
+
+> Anything labelled infra-team should be categorised as infra, not backend.
+
+**An instruction about how to classify.** Stored as `Guidance` and added to the
+classifier prompt on every future run:
+
+> Make a note that issues categorised as tooling should not carry the
+> ui-polish subcategory.
+
+Prefer a rule when the condition is a label, because a rule is enforced while
+guidance is advisory: the model is told about guidance but can still get it
+wrong. Guidance is the only option when the condition is about the
+classification itself rather than a fact on the issue, since there is nothing
+to match on.
+
+Neither rules nor guidance reclassify existing issues. They apply on the next
+analysis run. To see what is on record:
+
+> What classification rules and notes do I have recorded?
+
+All three live in the same Neo4j volume as the issues, and survive re-ingestion
+and re-analysis. They are the only human-authored data in the graph; everything
+else can be rebuilt from GitHub.
+
+### Check the graph against GitHub
+
+`Issue.state` can lag reality. The startup sync fetches open issues, so an issue
+closed after it was ingested keeps a stale `OPEN` state, and the scheduled sync
+only sees issues touched since its last run. Ask the agent to check:
+
+> Check whether the graph's issue open/closed state matches GitHub.
+
+That reports drift and changes nothing. To correct it, say so explicitly:
+
+> Reconcile the issue state against GitHub and correct any stale entries.
+
+The word that flips it is "correct", "fix", or "apply". This tool writes only to
+the graph, never to GitHub, so unlike the label sync it is not confirmation
+gated: the worst it can do is make the graph agree with GitHub.
+
+Two different things can be wrong, and they need different tools. A stale state
+on an issue the graph already holds is drift, and the tool above fixes it. An
+issue that was never ingested at all is a gap, and that tool cannot see it: it
+compares only the issues it already knows about, so it reports no drift while a
+total stays short. When a count looks wrong, check for a gap first:
+
+> Are any open issues missing from the graph?
+
+That reports the missing issue numbers and changes nothing. To add them:
+
+> Find the missing issues and ingest them.
+
+Ingesting fetches each issue with its comments and reactions, then classifies
+it, so it costs one model call per issue. It works 25 at a time by default and
+says how many are left, so re-run it until the count reaches zero. It reuses the
+persisted subcategory vocabulary rather than re-deriving it, so a backfill
+cannot redefine the taxonomy the rest of the graph is already classified against.
+
+### Sync labels to GitHub
+
+Preview first. This is read-only and cannot write, however it is phrased:
+
+> Preview the GitHub label sync. Show which labels would be created or deleted
+> and which issues would change. Do not write anything.
+
+The preview returns 25 per-issue changes by default, so say "list up to 100
+changes" for more.
+
+Writing requires asking for it explicitly. The agent is instructed to refuse
+unless you request it in your own words, because it reads issue bodies and
+comments, which are attacker-influenced text:
+
+> Apply the label sync to GitHub.
+
+The agent shows the diff and pauses for your confirmation before anything is
+written. See [Label sync](#label-sync) for what it writes and what it leaves
+alone.
+
+For a first write, take a chunk rather than the whole set:
+
+> Apply the label sync to GitHub, but only the first 10 issues.
+
+> Apply the label sync for the security category only.
+
+Chunking needs no bookkeeping. The plan is recomputed against the live labels
+each run, so issues already written drop out of it and re-running continues from
+where the last chunk stopped. The confirmation says how many issues still
+differ.
+
+## Project Structure
+
+```
+foreman/
+├── astropods.yml                   # Astro agent spec
+├── Dockerfile                      # Agent container
+├── vitest.config.ts                # Test configuration (unit + evals)
+├── tsconfig.json                   # TypeScript config
+├── agent/
+│   ├── index.ts                    # Mastra Agent + serve() entry point
+│   ├── instructions.ts             # Prompt, parameterised by owner/repo
+│   └── tools/
+│       ├── query-neo4j.ts          # Read-only Cypher queries (createTool)
+│       ├── summarize-comments.ts   # Fetch + summarize comments (createTool)
+│       ├── prioritize-issues.ts    # Ranked / grouped issues
+│       ├── preview-label-sync.ts   # Label diff, read-only
+│       ├── apply-label-sync.ts     # Label write, gated on confirmation
+│       └── __tests__/
+├── ingestion/
+│   ├── Dockerfile                  # Shared ingestion container
+│   ├── Dockerfile.labels           # Label sync container
+│   ├── index.ts                    # Entry point (SYNC_MODE selects full/incremental)
+│   └── sync-labels.ts              # Label sync entry point (APPLY gates writes)
+├── src/services/
+│   ├── neo4j.ts                    # Neo4j driver singleton + write operations
+│   ├── database.ts                 # Neo4j read operations (issue details)
+│   ├── github.ts                   # GitHub GraphQL API client
+│   ├── models.ts                   # AI gateway client + model per task
+│   ├── issue-analysis.ts           # Structured issue analysis + classification
+│   ├── analysis.ts                 # Store analysis results back into Neo4j
+│   ├── priority.ts                 # Taxonomy + priority scoring (pure)
+│   ├── subcategory.ts              # Corpus-derived subcategory vocabulary
+│   ├── github-labels.ts            # Label planning + sync
+│   └── pipeline.ts                 # Orchestrates the full ingestion flow
+└── test/
+    ├── dump-fixtures.ts            # Export Neo4j data to seed.cypher
+    ├── fixtures/
+    │   └── seed.cypher             # Neo4j fixture data (generated)
+    └── evals/
+        ├── setup.ts                # Loads .env for vitest
+        └── agent.eval.ts           # Agent-level Mastra evals
+```
+
+## Configuration
+
+All configuration is in `astropods.yml`.
+
+**Providers** (credentials auto-injected from `.env`):
+
+| Section | Provider | Env var injected |
+|---------|----------|------------------|
+| `models.reasoning` | `gateway` | `MODEL_REASONING`, plus the two gateway vars below |
+| `models.fast` | `gateway` | `MODEL_FAST`, plus the two gateway vars below |
+| `tools.github` | `github` | `GITHUB_TOKEN` |
+| `knowledge.graph` | `neo4j` | `NEO4J_HOST`, `NEO4J_PORT` (auto) |
+
+**Deploy-time inputs** (top-level `inputs` in `astropods.yml`, prompted by `ast configure` and injected into every container, including both ingestion entries):
+
+| Input | Default | Description |
+|-------|---------|-------------|
+| `GITHUB_OWNER` | none | Repository owner |
+| `GITHUB_REPO` | none | Repository name |
+
+**Startup ingestion inputs** (scoped to the `startup` entry, so they reach only that container):
+
+| Input | Default | Values | Description |
+|-------|---------|--------|-------------|
+| `ISSUE_LIMIT` | `20` | any integer | Max issues to ingest on the first run (0 = all) |
+| `ISSUE_STATE` | `open` | `open`, `closed`, `all` | Which issue states to ingest on the first run |
+
+Change either at deploy time to backfill more history or pull in closed issues.
+The scheduled sync stays uncapped and set to `all`, so declaring these per-entry
+rather than top-level keeps the startup defaults from narrowing incremental runs.
+
+**Ingestion build args** (baked into container images via `astropods.yml`):
+
+| Arg | Value | Description |
+|-----|-------|-------------|
+| `SYNC_MODE` | `startup` / `schedule` | Full sync or incremental |
+| `ISSUE_LIMIT` | `0` (schedule) | Fallback when no input is supplied |
+| `ISSUE_STATE` | `all` (schedule) | Fallback when no input is supplied |
+
+The scheduled sync uses `ISSUE_STATE=all` so an issue closed since the last run
+is re-fetched and marked `CLOSED` in the graph.
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ASTRO_GATEWAY_URL` | Yes | AI gateway host. Injected by `ast dev` and by the platform |
+| `ASTRO_GATEWAY_API_KEY` | Yes | AI gateway key. Injected the same way |
+| `GITHUB_TOKEN` | Yes | GitHub API access for fetching issues |
+| `MODEL_REASONING` | No | Overrides the reasoning tier (default `claude-sonnet-4-6`) |
+| `MODEL_FAST` | No | Overrides the cheap tier (default `claude-haiku-4-5`) |
+
+### Models
+
+Every model call goes through the Astropods [AI gateway](https://docs.astropods.com/ai-gateway),
+so no provider key lives in this project. `src/services/models.ts` maps each
+task to a tier, and the tier to a model:
+
+| Task | Tier | Default model | Why |
+|------|------|---------------|-----|
+| Issue analysis and classification | fast | `claude-haiku-4-5` | One call per issue, so cost scales with the corpus |
+| Comment summarization | fast | `claude-haiku-4-5` | Bounded extraction from text already in hand |
+| Subcategory vocabulary | reasoning | `claude-sonnet-4-6` | Runs once over every title and shapes every later classification |
+| The agent itself | reasoning | `claude-sonnet-4-6` | Plans over five tools and writes to GitHub |
+
+The gateway is OpenAI-API-compatible, so the OpenAI SDK is the client and only
+the base URL, key, and model IDs differ. Structured calls attach their JSON
+schema to a tool the model is forced to call, because Claude has no
+`response_format: json_schema` (see `structuredCompletion` in
+`src/services/models.ts` and its tests).
+
+## Label sync
+
+Pushes the derived classification back to GitHub as namespaced labels:
+`area/<category>` and `type/<subcategory>`. Only labels under `area/`, `type/`,
+and `priority/` are added or removed, so human-managed labels are never touched.
+
+Priority is no longer a label. It lives in the project board's Priority field
+(see [Project board sync](#project-board-sync)), because a label set can drift
+into two priorities at once while a single-select field cannot. `priority/`
+stays a managed prefix, so the first sync after this change strips the old
+labels from issues and then deletes the definitions once unused.
+
+The repository's label list is reconciled as well, not just the labels on each
+issue:
+
+- A label the plan needs but the repository lacks is created, colored by prefix.
+- Every label it creates carries the description `Derived by foreman`.
+- A label with that description is deleted once no issue or pull request carries
+  it, so an emptied category stops cluttering the label picker.
+- A label without that description is never deleted, however unused it is (see
+  `selectOrphans` in `src/services/github-labels.ts`).
+
+Creations and deletions appear in the preview and in the confirmation diff, so a
+cleanup is never a surprise. Both are computed against the repository's live
+label list, so the diff you confirm names only labels that really are missing or
+really are unused.
+
+Three ways to run it, all of which refuse to write unless explicitly told to:
+
+| Mode | How | Writes? |
+|------|-----|---------|
+| Explicit job | `ast project trigger sync-labels` | Only when `APPLY=true` |
+| Preview tool | Ask the agent to preview the label sync | Never |
+| Confirmed write | Ask the agent to apply it | Shows the diff, pauses for your confirmation, then writes |
+
+### Varying a run
+
+Each ingestion entry declares `inputs` that an env file can override, so you can
+change what a run does without editing the spec. Credentials are never needed in
+such a file: `ast configure` values are merged afterwards and always win.
+
+| Setting | Entry | Purpose |
+|---------|-------|---------|
+| `ISSUE_LIMIT=0`, `ISSUE_STATE=open` | `startup` | Ingest every open issue |
+| `APPLY=false` | `sync-labels` | Print the label diff, write nothing (the default) |
+| `APPLY=true` | `sync-labels` | Write the labels to GitHub |
+| `LABEL_LIMIT=10` | `sync-labels` | Write at most 10 issues, then stop. Re-run to continue |
+| `LABEL_CATEGORY=security` | `sync-labels` | Restrict to one taxonomy category |
+
+Put the settings in a file and pass it, for example:
+
+```bash
+printf 'APPLY=true\n' > labels-apply.env
+ast project trigger sync-labels --env labels-apply.env
+```
+
+Two CLI behaviors to know, both of which fail quietly:
+
+- **The `--env` path must be relative to the project directory.** The CLI joins
+  it onto the working directory, so an absolute path is mangled, and a missing
+  file is ignored without an error. The run then silently uses spec defaults,
+  which for `startup` means ingesting every open issue.
+- **`ast project trigger` never rebuilds images.** There is no `--rebuild` flag
+  on it (only on `project start`), so it will happily run stale code and report
+  success. Rebuild first when you have changed anything under `src/` or
+  `ingestion/`.
+
+The confirmed write uses Mastra tool suspension, which the Astro adapter bridges
+to an elicitation prompt. Declining or dismissing ends the turn without writing.
+
+## Project board sync
+
+Writes the derived priority, size, and status to single-select fields on a
+GitHub Projects v2 board, and adds an issue to the board when it is not already
+on it. Only open issues are triaged; a closed card keeps the priority and size
+it was triaged with, and only its column moves.
+
+| Field | Derived from | Movement |
+|-------|--------------|----------|
+| Priority | Score bands at 80, 60, 40 (`P0`..`P3`) | Overwrites |
+| Size | Effort, mapped `small=S, medium=M, large=L` | Overwrites |
+| Status | Assignee and pull request state, live from GitHub | Forward only |
+
+Pull request state is read live through `readPullRequests`, not stored in the
+graph, because a pull request opens, becomes ready, or merges without the issue
+itself being touched.
+
+Status is derived from facts rather than judgment, in order of how much
+evidence each signal carries:
+
+| Signal | Column |
+|--------|--------|
+| Closed | Done |
+| Linked pull request that is ready for review, or already merged | In review |
+| Linked pull request still in draft | In progress |
+| Assignee | In progress |
+| P0 or P1, and actionable as written | Ready |
+| Anything else | Backlog |
+
+A draft pull request says work has started but is not offered for review yet,
+which is the same claim an assignee makes. A merged pull request on an issue
+that is still open means the work landed and nobody closed the issue, so the
+sync reports those separately rather than only filing them: they are candidates
+for closing, which the agent will not do on its own.
+
+Status only ever moves later in the column order. A column someone dragged a
+card into is a coordination signal, so a repeat run advances it or leaves it,
+and never pulls it back. That also means the status field is never cleared.
+
+### Pick the board
+
+The target must be unambiguous. When a repository has more than one project
+carrying a managed field, the sync refuses and names them rather than guessing,
+because guessing writes to a board someone else owns:
+
+> Which project boards can you write to?
+
+> Preview the board sync for project 4.
+
+> Apply the board sync to project 4, priority and size only, first 20 changes.
+
+Set `PROJECT_NUMBER` to avoid naming it every time. A field the board does not
+define, or defines with no options, is skipped with a note rather than failing
+the whole sync.
+
+### Configuration
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PROJECT_NUMBER` | none | Board to write to when not given per call |
+| `PROJECT_PRIORITY_FIELD` | `Priority` | Field name on the board |
+| `PROJECT_SIZE_FIELD` | `Size` | Field name on the board |
+| `PROJECT_STATUS_FIELD` | `Status` | Field name on the board |
+| `PROJECT_SIZE_MAP` | `small=S,medium=M,large=L` | Effort to size option |
+| `PROJECT_STATUS_MAP` | `backlog=Backlog,ready=Ready,progress=In progress,review=In review,done=Done` | Derived state to column |
+
+A derived value the board has no option for leaves the field unset rather than
+showing a stale one. With the default bands that applies to `P3`, which the
+standard board template does not offer.
+
+Effort is matched against the map after trimming and lower-casing, so an issue
+the graph holds as `Large` still sizes as `L` without a re-analysis. An effort
+outside `small`, `medium`, and `large` has no size, leaves the field unset, and
+marks the issue as needing clarification rather than being scored as though it
+were large (see `toEffort` in `src/services/priority.ts`). An unsized issue
+earns no effort points, so it ranks just below the same issue sized large, and
+`needsClarification` keeps it in Backlog.
+
+### Running it repeatedly
+
+The plan is recomputed against the live board every run, so a change already
+written drops out of it. Re-running when nothing has moved plans nothing. That
+makes it safe on a schedule: new issues get their fields filled, and a card
+advances as its pull request opens or its issue closes.
+
+## Pull requests
+
+`readPullRequests` reports the pull requests linked to given issues, which is
+what the status column is derived from and what answers "has anyone started
+this":
+
+> Which of the top 10 issues already have a pull request?
+
+> Read the pull requests for 1370 and 1371.
+
+It distinguishes two kinds of link, because they claim different things. A
+closing reference is the author declaring the pull request resolves the issue.
+A cross reference is only a mention, which a pull request picks up by quoting
+an issue number in passing. Both are reported, tagged.
+
+It also names issues whose pull request merged while the issue stayed open. A
+still-open pull request rules that out: a merged first pull request with
+follow-up work in flight is not a finished issue.
+
+## Issue types
+
+Sets GitHub's own issue type (bug, feature, task) on the issues themselves,
+which is not a board field and not covered by choosing a separate board.
+
+Classification is separate from the write, so the model cost is paid once:
+
+> Classify issue kinds, up to 25.
+
+That fills `issueType` and `needsClarification` on issues that have neither, so
+it is safe to re-run as new issues arrive. `needsClarification` is what holds a
+P0 or P1 issue back from Ready.
+
+> Set the issue types on GitHub.
+
+A type someone already set is left alone unless you ask for it, because unlike a
+board field this is on the issue itself, where a human choice is the more likely
+one to be right. The confirmation says how many were skipped for that reason.
+
+> Set the issue types on GitHub, overwriting the ones already set.
+
+## Testing
+
+### Unit tests (fast, no Docker, no API keys)
+
+Tests the agent tools with mocked Neo4j and model calls:
+
+```bash
+bun run test:unit
+```
+
+### Capture fixture data
+
+Exports ~50 real issues from a running dev Neo4j into `test/fixtures/seed.cypher`:
+
+```bash
+ast dev                  # start the dev environment first
+bun run test:dump        # connect and export
+```
+
+Re-run anytime to refresh.
+
+### Agent evals (requires Docker + API keys)
+
+Spins up a Neo4j testcontainer, seeds it with the fixture data, then runs the agent against test prompts and scores the results using Mastra scorers:
+
+```bash
+bun run test:evals
+```
+
+**Scorers used:**
+- **Answer relevancy** — does the response actually address the question?
+- **Tool usage** — did the agent use `queryNeo4j` / `summarizeComments` instead of hallucinating?
+
+### Run everything
+
+```bash
+bun run test
+```

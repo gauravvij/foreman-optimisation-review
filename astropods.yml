@@ -1,0 +1,102 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: blueprint/v1
+name: "foreman"
+
+# Top-level inputs are prompted by `ast configure` and injected into every
+# container — including both ingestion entries below. Declare once here.
+inputs:
+  GITHUB_OWNER:
+    name: GITHUB_OWNER
+    datatype: string
+    description: "Owner of the GitHub repo to ingest issues from"
+  GITHUB_REPO:
+    name: GITHUB_REPO
+    datatype: string
+    description: "Name of the GitHub repo to ingest issues from"
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+# Two tiers, each exporting MODEL_<KEY> to every container: MODEL_REASONING
+# and MODEL_FAST. src/services/models.ts maps each task onto one of them.
+models:
+  reasoning:
+    provider: gateway
+    models: [claude-sonnet-4-6, claude-opus-4-8]
+  fast:
+    provider: gateway
+    models: [claude-haiku-4-5]
+
+integrations:
+  github:
+    provider: github
+
+knowledge:
+  graph:
+    provider: neo4j
+
+ingestion:
+  startup:
+    container:
+      build:
+        context: .
+        dockerfile: ingestion/Dockerfile
+        args:
+          SYNC_MODE: "startup"
+    # Scoped to this entry, not top-level, so these defaults never reach the
+    # schedule container and throttle or narrow the incremental sync.
+    inputs:
+      - name: ISSUE_LIMIT
+        datatype: number
+        description: "Max issues to ingest on the first run (0 = all)"
+        default: "20"
+        optional: true
+      - name: ISSUE_STATE
+        datatype: string
+        description: "Which issue states to ingest on the first run"
+        display-as: select
+        options: ["open", "closed", "all"]
+        default: "open"
+        optional: true
+    trigger:
+      type: manual
+  schedule:
+    container:
+      build:
+        context: .
+        dockerfile: ingestion/Dockerfile
+        args:
+          SYNC_MODE: "schedule"
+          ISSUE_LIMIT: "0"
+          # Stays "all" so an issue closed since the last sync is re-fetched
+          # and its state updated, instead of staying OPEN in the graph.
+          ISSUE_STATE: "all"
+    trigger:
+      type: schedule
+  sync-labels:
+    container:
+      build:
+        context: .
+        dockerfile: ingestion/Dockerfile.labels
+    # Declared as an input, not container.environment: the local compose builder
+    # ignores container.environment for ingestion services, so only an input is
+    # overridable per run via `--env`.
+    inputs:
+      - name: APPLY
+        datatype: boolean
+        description: "Set true to write labels to GitHub. Anything else is a dry run."
+        default: "false"
+        optional: true
+    trigger:
+      type: manual
+
+dev:
+  interfaces: [web]
+  # Restart the agent when a source file changes, so a new or edited tool is
+  # picked up without stopping the stack. The tool list is built at startup.
+  command: bun --watch agent/index.ts
+  # Both directories agent/index.ts imports. ingestion/ also imports src/, but
+  # its containers are separate services that this mount does not reach.
+  watch: [agent, src]

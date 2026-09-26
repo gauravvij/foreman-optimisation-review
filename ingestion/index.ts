@@ -1,0 +1,87 @@
+/**
+ * Foreman — Ingestion
+ *
+ * Single entry point for both startup (full sync) and schedule (incremental sync).
+ * Set SYNC_MODE=startup for full sync, SYNC_MODE=schedule for incremental.
+ *
+ * Required environment variables:
+ *   GITHUB_TOKEN    — GitHub API token
+ *   GITHUB_OWNER    — Repo owner
+ *   GITHUB_REPO     — Repo name
+ *   ASTRO_GATEWAY_URL / ASTRO_GATEWAY_API_KEY — AI gateway, injected by the platform
+ *
+ * Optional:
+ *   SYNC_MODE       — "startup" (full sync, default) or "schedule" (incremental)
+ *   NEO4J_HOST      — Neo4j host (injected by ast dev)
+ *   NEO4J_URI       — Neo4j bolt URI
+ *   NEO4J_AUTH      — Set to enable auth (default: disabled)
+ *   ISSUE_STATE     — open | closed | all (default: all)
+ *   ISSUE_LIMIT     — Max issues to process (0 = all, default: 0)
+ *   SKIP_ANALYSIS   — Set to "true" to skip model analysis
+ *   REFRESH_VOCAB   — Set to "true" to re-derive the subcategory vocabulary
+ */
+
+import type { IssueState } from '../src/services/github';
+import { closeDriver } from '../src/services/neo4j';
+import { type PipelineConfig, runPipeline } from '../src/services/pipeline';
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} environment variable is required`);
+  }
+  return value;
+}
+
+async function main() {
+  const syncMode = process.env.SYNC_MODE || 'startup';
+  const fullSync = syncMode === 'startup';
+
+  console.log(`Starting ingestion (${fullSync ? 'full sync' : 'incremental'})...`);
+
+  let owner: string;
+  let repo: string;
+  try {
+    owner = requireEnv('GITHUB_OWNER');
+    repo = requireEnv('GITHUB_REPO');
+  } catch (err) {
+    console.error((err as Error).message);
+    console.error(
+      'Set these via the top-level `inputs` in astropods.yml (run `ast configure`, or set them in .env for local dev)',
+    );
+    process.exit(1);
+  }
+
+  const config: PipelineConfig = {
+    owner,
+    repo,
+    state: (process.env.ISSUE_STATE as IssueState) || 'all',
+    limit: Number.parseInt(process.env.ISSUE_LIMIT || '0', 10),
+    analyze: process.env.SKIP_ANALYSIS !== 'true',
+    fullSync,
+    refreshVocabulary: process.env.REFRESH_VOCAB === 'true',
+  };
+
+  console.log(`  Owner: ${config.owner}`);
+  console.log(`  Repo:  ${config.repo}`);
+  console.log(`  Mode:  ${syncMode}`);
+  console.log(`  Limit: ${config.limit || 'all'}`);
+  console.log('');
+
+  try {
+    const result = await runPipeline(config);
+
+    if (result.errors.length > 0) {
+      console.error(`\nCompleted with ${result.errors.length} error(s):`);
+      for (const e of result.errors) console.error(`  - ${e}`);
+      process.exit(1);
+    }
+  } catch (err) {
+    console.error('Fatal pipeline error:', err);
+    process.exit(1);
+  } finally {
+    await closeDriver();
+  }
+}
+
+main();

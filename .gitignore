@@ -1,0 +1,10 @@
+node_modules/
+.ast/
+.env
+dist/
+*.log
+test/fixtures/
+env/
+
+# Personal AI assistant config, not committed
+**/.claude/
