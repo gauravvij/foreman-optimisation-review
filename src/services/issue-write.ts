@@ -9,6 +9,7 @@
  */
 
 import { trace } from '@opentelemetry/api';
+import neo4j from 'neo4j-driver';
 import { githubGraphQL } from './http';
 import { getDriver } from './neo4j';
 
@@ -195,6 +196,154 @@ async function syncGraph(number: number, state: string, title?: string): Promise
       { n: number, state, title: title ?? null, now: new Date().toISOString() },
     );
     return res.records.length > 0;
+  } finally {
+    await session.close();
+  }
+}
+
+export interface CreateIssueOptions {
+  owner: string;
+  repo: string;
+  title: string;
+  /** Markdown body; the attribution footer is appended before the write. */
+  body?: string;
+  /** Existing issue numbers this new issue is drawn from, linked in the body. */
+  derivedFrom?: number[];
+  /** Label names that already exist on the repository. Missing ones fail. */
+  labels?: string[];
+}
+
+export interface CreateIssueResult {
+  number: number;
+  url: string;
+  title: string;
+}
+
+interface RepoIdResult {
+  repository: { id: string; viewerPermission: string | null } | null;
+}
+
+/**
+ * Opens a new issue on the repository.
+ *
+ * The body carries the same attribution footer every other agent write does,
+ * so a person searching the repo for agent-written content finds this issue
+ * the same way. Numbers listed in derivedFrom are rendered as a "Draws on"
+ * block so the trail back to the observed evidence is visible on the issue.
+ */
+export async function createIssue(opts: CreateIssueOptions): Promise<CreateIssueResult> {
+  const { owner, repo, title, body, derivedFrom, labels } = opts;
+
+  const trimmed = title.trim();
+  if (!trimmed) throw new Error('createIssue: title is empty');
+
+  const repoData = await githubGraphQL<RepoIdResult>(
+    `query($owner:String!,$repo:String!){
+       repository(owner:$owner,name:$repo){ id viewerPermission }
+     }`,
+    { owner, repo },
+  );
+  const repository = repoData.repository;
+  if (!repository) throw new Error(`repository ${owner}/${repo} not found`);
+  const permission = repository.viewerPermission;
+  if (
+    permission !== 'ADMIN' &&
+    permission !== 'MAINTAIN' &&
+    permission !== 'WRITE' &&
+    permission !== 'TRIAGE'
+  ) {
+    throw new Error(
+      `the configured token cannot open issues on ${owner}/${repo}; it needs at least TRIAGE, got ${permission ?? 'no'} permission`,
+    );
+  }
+
+  let labelIds: string[] | undefined;
+  if (labels && labels.length > 0) {
+    const data = await githubGraphQL<{
+      repository: { labels: { nodes: { id: string; name: string }[] } } | null;
+    }>(
+      `query($owner:String!,$repo:String!,$q:String!){
+         repository(owner:$owner,name:$repo){
+           labels(first:100, query:$q){ nodes { id name } }
+         }
+       }`,
+      { owner, repo, q: labels.join(' ') },
+    );
+    const found = new Map((data.repository?.labels.nodes ?? []).map((n) => [n.name, n.id]));
+    const missing = labels.filter((name) => !found.has(name));
+    if (missing.length > 0) throw new Error(`labels do not exist: ${missing.join(', ')}`);
+    labelIds = labels.map((name) => {
+      const id = found.get(name);
+      if (!id) throw new Error(`label ${name} disappeared between lookup and use`);
+      return id;
+    });
+  }
+
+  const parts: string[] = [];
+  if (body?.trim()) parts.push(body.trim());
+  if (derivedFrom && derivedFrom.length > 0) {
+    const linked = derivedFrom.map((n) => `#${n}`).join(', ');
+    parts.push(`### Draws on\n\n${linked}`);
+  }
+  parts.push(`---\n${commentAttribution()}`);
+  const finalBody = parts.join('\n\n');
+
+  const created = await githubGraphQL<{
+    createIssue: { issue: { number: number; url: string; title: string } };
+  }>(
+    `mutation($repo:ID!,$title:String!,$body:String,$labels:[ID!]){
+       createIssue(input:{repositoryId:$repo, title:$title, body:$body, labelIds:$labels}){
+         issue{ number url title }
+       }
+     }`,
+    { repo: repository.id, title: trimmed, body: finalBody, labels: labelIds ?? null },
+  );
+
+  return created.createIssue.issue;
+}
+
+/** Cheap duplicate suggestions before opening a new issue. */
+export interface DuplicateCandidate {
+  number: number;
+  title: string;
+  state: string;
+  tokenMatches: number;
+}
+
+/**
+ * Looks for existing issues whose titles share tokens with the proposed title.
+ * Read-only, and cheap enough to run inline before the create prompt.
+ */
+export async function findLikelyDuplicates(
+  title: string,
+  limit = 5,
+): Promise<DuplicateCandidate[]> {
+  const tokens = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 4);
+
+  if (tokens.length === 0) return [];
+
+  const driver = getDriver();
+  const session = driver.session();
+  try {
+    const res = await session.run(
+      `MATCH (i:Issue)
+       WITH i, [t IN $tokens WHERE toLower(i.title) CONTAINS t] AS hits
+       WHERE size(hits) > 0
+       RETURN i.number AS number, i.title AS title, i.state AS state, size(hits) AS tokenMatches
+       ORDER BY tokenMatches DESC, i.number DESC
+       LIMIT $limit`,
+      { tokens, limit: neo4j.int(limit) },
+    );
+    return res.records.map((r) => ({
+      number: neo4j.int(r.get('number')).toNumber(),
+      title: r.get('title') as string,
+      state: r.get('state') as string,
+      tokenMatches: neo4j.int(r.get('tokenMatches')).toNumber(),
+    }));
   } finally {
     await session.close();
   }

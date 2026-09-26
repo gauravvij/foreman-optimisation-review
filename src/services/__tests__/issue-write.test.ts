@@ -10,7 +10,12 @@ const fake = vi.hoisted(() => ({
 
 vi.mock('../neo4j', () => ({ getDriver: () => fake.ref?.mockDriver }));
 
-import { applyIssueUpdate, commentAttribution } from '../issue-write';
+import {
+  applyIssueUpdate,
+  commentAttribution,
+  createIssue,
+  findLikelyDuplicates,
+} from '../issue-write';
 
 let db: ReturnType<typeof createFakeDriver>;
 /** Every GraphQL body the service sent, in order. */
@@ -49,6 +54,41 @@ function mockGitHub(
       }
       if (body.query.includes('updateIssue')) {
         return new Response(JSON.stringify({ data: { updateIssue: { issue: { title: 'x' } } } }));
+      }
+      if (body.query.includes('viewerPermission')) {
+        return new Response(
+          JSON.stringify({
+            data: { repository: { id: 'R_1', viewerPermission: overrides.permission ?? 'WRITE' } },
+          }),
+        );
+      }
+      if (body.query.includes('labels(first:100')) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              repository: {
+                labels: {
+                  nodes: (overrides.labels as { id: string; name: string }[] | undefined) ?? [],
+                },
+              },
+            },
+          }),
+        );
+      }
+      if (body.query.includes('createIssue')) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              createIssue: {
+                issue: {
+                  number: 4242,
+                  url: 'https://github.com/acme/widgets/issues/4242',
+                  title: (body.variables as { title: string }).title,
+                },
+              },
+            },
+          }),
+        );
       }
       return new Response(JSON.stringify({ data: { addComment: {} }, ...overrides }));
     }),
@@ -303,5 +343,98 @@ describe('commentAttribution', () => {
 
   it('marks the deployment as local when the platform supplies none', () => {
     expect(commentAttribution()).toContain('deployment=local');
+  });
+});
+
+describe('createIssue', () => {
+  it('opens an issue with the attribution footer and returns its number and url', async () => {
+    mockGitHub(OPEN_ISSUE);
+
+    const res = await createIssue({
+      owner: 'acme',
+      repo: 'widgets',
+      title: 'A pattern across five closed issues',
+      body: 'Body prose',
+    });
+
+    expect(res.number).toBe(4242);
+    expect(res.url).toContain('/issues/4242');
+    const create = sent.find((c) => c.query.includes('createIssue'));
+    expect(create, 'the mutation ran').toBeDefined();
+    expect(create?.variables.body as string).toContain('Body prose');
+    expect(create?.variables.body as string, 'every write signs itself').toContain(
+      'astro-agent: foreman',
+    );
+  });
+
+  it('renders a Draws on block from derivedFrom, keeping the trail visible on the issue', async () => {
+    mockGitHub(OPEN_ISSUE);
+
+    await createIssue({
+      owner: 'acme',
+      repo: 'widgets',
+      title: 'A theme',
+      derivedFrom: [412, 530, 798],
+    });
+
+    const create = sent.find((c) => c.query.includes('createIssue'));
+    const body = create?.variables.body as string;
+    expect(body, 'the section is a heading so it renders on GitHub').toContain('### Draws on');
+    expect(body).toContain('#412, #530, #798');
+  });
+
+  it('refuses to write when the token has no permission', async () => {
+    mockGitHub(OPEN_ISSUE, { permission: 'READ' });
+
+    await expect(createIssue({ owner: 'acme', repo: 'widgets', title: 'x' })).rejects.toThrow(
+      /at least TRIAGE, got READ/,
+    );
+    expect(
+      sent.some((c) => c.query.includes('createIssue')),
+      'nothing written',
+    ).toBe(false);
+  });
+
+  it('refuses when a label the caller asked for does not exist', async () => {
+    mockGitHub(OPEN_ISSUE, {
+      labels: [{ id: 'L_bug', name: 'bug' }],
+    });
+
+    await expect(
+      createIssue({ owner: 'acme', repo: 'widgets', title: 'x', labels: ['bug', 'ghost'] }),
+    ).rejects.toThrow(/labels do not exist: ghost/);
+    expect(sent.some((c) => c.query.includes('createIssue'))).toBe(false);
+  });
+
+  it('rejects an empty title before any network call', async () => {
+    mockGitHub(OPEN_ISSUE);
+
+    await expect(createIssue({ owner: 'acme', repo: 'widgets', title: '   ' })).rejects.toThrow(
+      /title is empty/,
+    );
+    expect(sent, 'nothing sent').toEqual([]);
+  });
+});
+
+describe('findLikelyDuplicates', () => {
+  it('returns candidates in the graph whose titles share tokens with the proposed title', async () => {
+    db.queueResult([
+      { number: 123, title: 'Login button unresponsive on Safari', state: 'OPEN', tokenMatches: 2 },
+      { number: 456, title: 'Safari login broken since v4', state: 'CLOSED', tokenMatches: 1 },
+    ]);
+
+    const hits = await findLikelyDuplicates('Login button broken on Safari again');
+
+    expect(hits).toEqual([
+      { number: 123, title: 'Login button unresponsive on Safari', state: 'OPEN', tokenMatches: 2 },
+      { number: 456, title: 'Safari login broken since v4', state: 'CLOSED', tokenMatches: 1 },
+    ]);
+  });
+
+  it('returns nothing when the title has no substantial tokens, so the query is not even run', async () => {
+    // No result queued; if the query ran, the driver would throw.
+    const hits = await findLikelyDuplicates('a of it');
+
+    expect(hits).toEqual([]);
   });
 });

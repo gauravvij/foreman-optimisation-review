@@ -26,6 +26,7 @@ import { gatewayModel } from '../src/services/models';
 import { buildInstructions } from './instructions';
 import { applyLabelSyncTool } from './tools/apply-label-sync';
 import { listCategoryRulesTool, recordCategoryRuleTool } from './tools/category-rules';
+import { createIssueTool } from './tools/create-issue';
 import { listGuidanceTool, recordGuidanceTool } from './tools/guidance';
 import { ingestMissingIssuesTool } from './tools/ingest-missing-issues';
 import { applyIssueTypeSyncTool, classifyIssueTypesTool } from './tools/issue-types';
@@ -93,6 +94,7 @@ const agent = new Agent({
     previewBoardSync: previewBoardSyncTool,
     applyBoardSync: applyBoardSyncTool,
     setBoardColumn: setBoardColumnTool,
+    createIssue: createIssueTool,
     readAttachment: readAttachmentTool,
     reconcileIssueState: reconcileIssueStateTool,
     ingestMissingIssues: ingestMissingIssuesTool,
