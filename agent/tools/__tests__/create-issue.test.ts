@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const svc = vi.hoisted(() => ({
   createIssue: vi.fn(),
   findLikelyDuplicates: vi.fn(),
+  uploadAttachment: vi.fn(),
 }));
 
 vi.mock('../../../src/services/issue-write', async (importOriginal) => {
@@ -13,6 +14,10 @@ vi.mock('../../../src/services/issue-write', async (importOriginal) => {
     findLikelyDuplicates: svc.findLikelyDuplicates,
   };
 });
+
+vi.mock('../../../src/services/github-attachments', () => ({
+  uploadAttachment: svc.uploadAttachment,
+}));
 
 import { createIssueTool } from '../create-issue';
 
@@ -122,5 +127,101 @@ describe('createIssueTool', () => {
 
     expect(svc.createIssue).not.toHaveBeenCalled();
     expect(r.message).toContain('not configured');
+  });
+});
+
+describe('createIssueTool: attachments', () => {
+  it('uploads each attachment, embeds it in the body, then creates the issue', async () => {
+    svc.uploadAttachment.mockResolvedValueOnce({
+      url: 'https://github.com/user-attachments/assets/abc-shot.png',
+      name: 'shot.png',
+      contentType: 'image/png',
+      size: 1024,
+    });
+    svc.createIssue.mockResolvedValue({
+      number: 4242,
+      url: 'https://github.com/acme/widgets/issues/4242',
+      title: 'A theme',
+    });
+
+    const r = (await createIssueTool.execute!(
+      {
+        title: 'A theme',
+        body: 'context prose',
+        attachments: [{ path: '/data/files/abc-shot.png', alt: 'the failing UI' }],
+      },
+      confirmed,
+    )) as { opened: boolean };
+
+    expect(svc.uploadAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({ owner: 'acme', repo: 'widgets', path: '/data/files/abc-shot.png' }),
+    );
+    expect(r.opened).toBe(true);
+    const create = svc.createIssue.mock.calls[0]?.[0] as { body?: string };
+    expect(create.body, 'the image embeds as markdown').toContain(
+      '![the failing UI](https://github.com/user-attachments/assets/abc-shot.png)',
+    );
+    expect(create.body, 'the original prose survives').toContain('context prose');
+  });
+
+  it('renders a non-image attachment as a link, not an image', async () => {
+    svc.uploadAttachment.mockResolvedValueOnce({
+      url: 'https://github.com/user-attachments/assets/xyz-run.log',
+      name: 'run.log',
+      contentType: 'text/plain',
+      size: 512,
+    });
+    svc.createIssue.mockResolvedValue({
+      number: 5,
+      url: 'https://github.com/acme/widgets/issues/5',
+      title: 'A theme',
+    });
+
+    await createIssueTool.execute!(
+      { title: 'A theme', attachments: [{ path: '/data/files/xyz-run.log' }] },
+      confirmed,
+    );
+
+    const create = svc.createIssue.mock.calls[0]?.[0] as { body?: string };
+    expect(create.body).toContain(
+      '[run.log](https://github.com/user-attachments/assets/xyz-run.log)',
+    );
+    expect(create.body, 'a non-image should not render as an image').not.toContain('![run.log]');
+  });
+
+  it('fails the whole write when any upload fails, and no issue is created', async () => {
+    svc.uploadAttachment.mockRejectedValueOnce(
+      new Error('github user-attachments upload failed: HTTP 413 Payload Too Large'),
+    );
+
+    const r = (await createIssueTool.execute!(
+      { title: 'A theme', attachments: [{ path: '/data/files/huge.mp4' }] },
+      confirmed,
+    )) as { opened: boolean; message: string };
+
+    expect(svc.createIssue, 'no issue is created when any upload fails').not.toHaveBeenCalled();
+    expect(r.opened).toBe(false);
+    expect(r.message).toContain('Failed to upload');
+    expect(r.message).toContain('HTTP 413');
+    expect(r.message).toContain('no issue was opened');
+  });
+
+  it('lists the attachments in the confirmation prompt so the user can see them', async () => {
+    svc.findLikelyDuplicates.mockResolvedValue([]);
+
+    await createIssueTool.execute!(
+      {
+        title: 'A theme',
+        attachments: [{ path: '/data/files/a.png' }, { path: '/data/files/b.log' }],
+      },
+      suspending,
+    );
+
+    const suspend = (suspending as unknown as { agent: { suspend: ReturnType<typeof vi.fn> } })
+      .agent.suspend;
+    const message = suspend.mock.calls[0]?.[0]?.message as string;
+    expect(message).toContain('Attachments:');
+    expect(message).toContain('/data/files/a.png');
+    expect(message).toContain('/data/files/b.log');
   });
 });

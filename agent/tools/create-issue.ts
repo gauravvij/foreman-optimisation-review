@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { uploadAttachment } from '../../src/services/github-attachments';
 import type { DuplicateCandidate } from '../../src/services/issue-write';
 import { createIssue, findLikelyDuplicates } from '../../src/services/issue-write';
 
@@ -46,6 +47,22 @@ export const createIssueTool = createTool({
       .array(z.string())
       .optional()
       .describe('Existing label names to apply; a missing label fails the write.'),
+    attachments: z
+      .array(
+        z.object({
+          path: z.string().describe('Absolute path on the shared volume, as the adapter named it'),
+          alt: z
+            .string()
+            .optional()
+            .describe('Alt text used in the markdown; falls back to the filename'),
+        }),
+      )
+      .optional()
+      .describe(
+        'Files to upload to GitHub and embed in the issue body. Use for a ' +
+          'screenshot or log the user attached to the current turn. A failed ' +
+          'upload fails the write; no issue is opened without every attachment.',
+      ),
   }),
   suspendSchema: z.object({
     message: z.string(),
@@ -75,12 +92,34 @@ export const createIssueTool = createTool({
 
     if (resumeData?.confirm === true) {
       console.log(`  [createIssue] confirmed, opening on ${owner}/${repo}`);
+
+      // Uploads happen before the create so a failed upload cannot leave a
+      // partial issue behind. Every failure surfaces the endpoint's response.
+      let bodyWithAttachments = input.body ?? '';
+      const attachments = input.attachments ?? [];
+      for (const att of attachments) {
+        try {
+          console.log(`  [createIssue] uploading ${att.path}`);
+          const uploaded = await uploadAttachment({ owner, repo, path: att.path });
+          const alt = (att.alt ?? uploaded.name).replace(/[\r\n]+/g, ' ');
+          const isImage = uploaded.contentType.startsWith('image/');
+          const link = isImage ? `![${alt}](${uploaded.url})` : `[${alt}](${uploaded.url})`;
+          bodyWithAttachments = bodyWithAttachments ? `${bodyWithAttachments}\n\n${link}` : link;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          return {
+            ...empty,
+            message: `Failed to upload ${att.path}, so no issue was opened: ${msg}`,
+          };
+        }
+      }
+
       try {
         const created = await createIssue({
           owner,
           repo,
           title: input.title,
-          body: input.body,
+          body: bodyWithAttachments || undefined,
           derivedFrom: input.derivedFrom,
           labels: input.labels,
         });
@@ -116,12 +155,17 @@ export const createIssueTool = createTool({
         : '';
     const labelLine =
       input.labels && input.labels.length > 0 ? `Labels: ${input.labels.join(', ')}` : '';
+    const attachmentLine =
+      input.attachments && input.attachments.length > 0
+        ? `Attachments: ${input.attachments.map((a) => a.path).join(', ')}`
+        : '';
 
     const message = [
       `About to open a new issue on ${owner}/${repo}:`,
       `  Title: ${input.title}`,
       derived,
       labelLine,
+      attachmentLine,
       '',
       input.body ? bodyPreview(input.body) : '(no body)',
       '',
