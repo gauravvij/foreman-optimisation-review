@@ -1,34 +1,51 @@
 # Foreman
 
-Ingests GitHub issues from a repository into a Neo4j knowledge graph, enriches them with Claude analysis, and answers questions using Cypher queries and comment summarization.
+Foreman is an AI engineering manager for GitHub issues in one repository. It reads them into a Neo4j knowledge graph, classifies and prioritises them, and syncs the results to GitHub labels and a Projects v2 board. Linked pull requests are tracked as they open, become ready, and merge, so the board's status column follows the actual state of the work. Triage decisions a person records outrank the model on the next classification.
+
+Comments the agent posts on GitHub carry a signature you can grep for. Writes to GitHub wait for your confirmation.
 
 Built with [Mastra](https://mastra.ai) and the Astro platform.
 
 ## Architecture
 
 ```
-┌───────────────────────────────────────────────────────┐
-│  Ingestion (SYNC_MODE=startup — full sync)            │
-│                                                       │
-│  GitHub GraphQL ─► Neo4j ─► Claude ─► Neo4j           │
-│  (fetch issues)    (store)  (analyze)  (store result) │
-└───────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│  Ingestion (SYNC_MODE=startup): full sync                      │
+│                                                                │
+│  GitHub GraphQL ─► Neo4j ─► gateway (Claude) ─► Neo4j          │
+│  (fetch issues)    (store)  (classify, score)  (store results) │
+└────────────────────────────────────────────────────────────────┘
 
-┌───────────────────────────────────────────────────────┐
-│  Ingestion (SYNC_MODE=schedule — incremental)         │
-│                                                       │
-│  Same pipeline, only fetches issues updated since     │
-│  the last successful run.                             │
-└───────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│  Ingestion (SYNC_MODE=schedule): incremental                   │
+│                                                                │
+│  Same pipeline. Only fetches issues updated since the last     │
+│  successful run.                                               │
+└────────────────────────────────────────────────────────────────┘
 
-┌───────────────────────────────────────────────────────┐
-│  Agent                                                │
-│                                                       │
-│  User ─► Playground ─► Messaging ─► Agent             │
-│                                      ├─ queryNeo4j    │
-│                                      └─ summarize     │
-└───────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│  Agent                                                         │
+│                                                                │
+│  You ─► Chat UI ─► Messaging sidecar ─► Foreman ─► tools       │
+└────────────────────────────────────────────────────────────────┘
 ```
+
+### Tools
+
+Grouped by what a person is likely to ask for. Every write tool shows a diff
+and waits for confirmation before it contacts GitHub.
+
+| Category | Tools |
+|---|---|
+| Graph queries | `queryNeo4j`, `summarizeComments`, `prioritizeIssues` |
+| Labels | `previewLabelSync`, `applyLabelSync` |
+| Project boards | `previewBoardSync`, `applyBoardSync`, `setBoardColumn`, `listProjectBoards` |
+| Issue types | `classifyIssueTypes`, `applyIssueTypeSync` |
+| Pull requests | `readPullRequests`, `inspectPullRequest`, `commentOnPullRequest` |
+| Issue writes | `updateIssue` (retitle, close, reopen, comment) |
+| State reconciliation | `reconcileIssueState`, `ingestMissingIssues`, `refreshIssues` |
+| Human decisions | `recordAssessment`, `listAssessments`, `recordCategoryRule`, `listCategoryRules`, `recordGuidance`, `listGuidance` |
+| Attachments | `readAttachment` |
 
 ### Knowledge Graph Schema
 
@@ -59,7 +76,7 @@ derived from the other three by `src/services/priority.ts`).
 ### Setup
 
 ```bash
-git clone https://github.com/astropods/agents.git
+git clone https://github.com/astropods/foreman.git
 cd foreman
 ast configure
 ```
@@ -213,47 +230,72 @@ each run, so issues already written drop out of it and re-running continues from
 where the last chunk stopped. The confirmation says how many issues still
 differ.
 
-## Project Structure
+## Project structure
 
 ```
 foreman/
-├── astropods.yml                   # Astro agent spec
-├── Dockerfile                      # Agent container
-├── vitest.config.ts                # Test configuration (unit + evals)
-├── tsconfig.json                   # TypeScript config
+├── astropods.yml                    # Astro agent spec
+├── Dockerfile                       # Agent container
+├── biome.json                       # Lint and format
+├── vitest.config.ts                 # Test configuration (unit + evals)
+├── tsconfig.json                    # TypeScript config
 ├── agent/
-│   ├── index.ts                    # Mastra Agent + serve() entry point
-│   ├── instructions.ts             # Prompt, parameterised by owner/repo
+│   ├── index.ts                     # Mastra Agent + serve({ supportsFiles: true })
+│   ├── instructions.ts              # System prompt with the tool table
 │   └── tools/
-│       ├── query-neo4j.ts          # Read-only Cypher queries (createTool)
-│       ├── summarize-comments.ts   # Fetch + summarize comments (createTool)
-│       ├── prioritize-issues.ts    # Ranked / grouped issues
-│       ├── preview-label-sync.ts   # Label diff, read-only
-│       ├── apply-label-sync.ts     # Label write, gated on confirmation
+│       ├── query-neo4j.ts           # Read-only Cypher
+│       ├── summarize-comments.ts    # Comment summarisation
+│       ├── prioritize-issues.ts     # Ranked and grouped issue lists
+│       ├── preview-label-sync.ts    # Label diff, read-only
+│       ├── apply-label-sync.ts      # Label write, gated
+│       ├── sync-board-fields.ts     # Board preview, apply, and listing
+│       ├── set-board-column.ts      # Explicit column move, e.g. On hold
+│       ├── issue-types.ts           # classifyIssueTypes + applyIssueTypeSync
+│       ├── pull-requests.ts         # readPullRequests, inspectPullRequest, commentOnPullRequest
+│       ├── update-issue.ts          # Retitle, close, reopen, comment
+│       ├── reconcile-issue-state.ts # Detect and correct stale state
+│       ├── ingest-missing-issues.ts # Find and backfill gaps
+│       ├── refresh-issues.ts        # Re-read changed issues
+│       ├── record-assessment.ts     # Human decisions with list
+│       ├── category-rules.ts        # Label-to-category rules with list
+│       ├── guidance.ts              # Free-text classifier notes with list
+│       ├── read-attachment.ts       # Read a user-uploaded file
 │       └── __tests__/
 ├── ingestion/
-│   ├── Dockerfile                  # Shared ingestion container
-│   ├── Dockerfile.labels           # Label sync container
-│   ├── index.ts                    # Entry point (SYNC_MODE selects full/incremental)
-│   └── sync-labels.ts              # Label sync entry point (APPLY gates writes)
+│   ├── Dockerfile                   # Startup and schedule ingestion image
+│   ├── Dockerfile.labels            # Label sync image
+│   ├── index.ts                     # SYNC_MODE selects full or incremental
+│   └── sync-labels.ts               # APPLY gates writes
 ├── src/services/
-│   ├── neo4j.ts                    # Neo4j driver singleton + write operations
-│   ├── database.ts                 # Neo4j read operations (issue details)
-│   ├── github.ts                   # GitHub GraphQL API client
-│   ├── models.ts                   # AI gateway client + model per task
-│   ├── issue-analysis.ts           # Structured issue analysis + classification
-│   ├── analysis.ts                 # Store analysis results back into Neo4j
-│   ├── priority.ts                 # Taxonomy + priority scoring (pure)
-│   ├── subcategory.ts              # Corpus-derived subcategory vocabulary
-│   ├── github-labels.ts            # Label planning + sync
-│   └── pipeline.ts                 # Orchestrates the full ingestion flow
+│   ├── neo4j.ts                     # Driver singleton + write operations
+│   ├── database.ts                  # Neo4j read operations
+│   ├── github.ts                    # GitHub GraphQL client
+│   ├── http.ts                      # Rate-limited HTTP helpers
+│   ├── models.ts                    # AI gateway client and model per task
+│   ├── issue-analysis.ts            # Structured analysis and classification
+│   ├── analysis.ts                  # Persist results into Neo4j
+│   ├── priority.ts                  # Taxonomy and priority scoring (pure)
+│   ├── subcategory.ts               # Corpus-derived subcategory vocabulary
+│   ├── github-labels.ts             # Label planning and sync
+│   ├── github-project.ts            # Board planning and status derivation
+│   ├── pull-requests.ts             # Linked PR queries, PR detail, PR comments
+│   ├── issue-write.ts               # Comment attribution, close, reopen
+│   ├── issue-state.ts               # State reconciliation
+│   ├── issue-gap.ts                 # Missing-issue detection
+│   ├── issue-refresh.ts             # Selective re-ingest
+│   ├── issue-type.ts                # Issue-type classification
+│   ├── assessment.ts                # Human triage decisions
+│   ├── rules.ts                     # Label-to-category rules
+│   ├── guidance.ts                  # Free-text classifier notes
+│   ├── progress.ts                  # Progress reporting for slow loops
+│   └── pipeline.ts                  # Orchestrates the full ingestion
 └── test/
-    ├── dump-fixtures.ts            # Export Neo4j data to seed.cypher
+    ├── dump-fixtures.ts             # Export Neo4j data to seed.cypher
     ├── fixtures/
-    │   └── seed.cypher             # Neo4j fixture data (generated)
+    │   └── seed.cypher              # Neo4j fixture data (generated, gitignored)
     └── evals/
-        ├── setup.ts                # Loads .env for vitest
-        └── agent.eval.ts           # Agent-level Mastra evals
+        ├── setup.ts                 # Loads .env for vitest
+        └── agent.eval.ts            # Agent-level Mastra evals
 ```
 
 ## Configuration
@@ -319,7 +361,7 @@ task to a tier, and the tier to a model:
 | Issue analysis and classification | fast | `claude-haiku-4-5` | One call per issue, so cost scales with the corpus |
 | Comment summarization | fast | `claude-haiku-4-5` | Bounded extraction from text already in hand |
 | Subcategory vocabulary | reasoning | `claude-sonnet-4-6` | Runs once over every title and shapes every later classification |
-| The agent itself | reasoning | `claude-sonnet-4-6` | Plans over five tools and writes to GitHub |
+| The agent itself | reasoning | `claude-sonnet-4-6` | Plans over the full tool set and writes to GitHub |
 
 The gateway is OpenAI-API-compatible, so the OpenAI SDK is the client and only
 the base URL, key, and model IDs differ. Structured calls attach their JSON
@@ -343,7 +385,7 @@ The repository's label list is reconciled as well, not just the labels on each
 issue:
 
 - A label the plan needs but the repository lacks is created, colored by prefix.
-- Every label it creates carries the description `Derived by foreman`.
+- Every label it creates carries the description `Derived by Foreman`.
 - A label with that description is deleted once no issue or pull request carries
   it, so an emptied category stops cluttering the label picker.
 - A label without that description is never deleted, however unused it is (see
