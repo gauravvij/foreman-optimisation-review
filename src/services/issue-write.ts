@@ -61,12 +61,18 @@ export function commentAttribution(): string {
 export type IssueAction = 'close' | 'reopen';
 export type CloseReason = 'completed' | 'not_planned' | 'duplicate';
 
+export interface AssigneeRef {
+  id: string;
+  login: string;
+}
+
 export interface IssueSnapshot {
   id: string;
   number: number;
   title: string;
   state: string;
   viewerCanUpdate: boolean;
+  assignees: AssigneeRef[];
 }
 
 export interface WriteResult {
@@ -77,6 +83,9 @@ export interface WriteResult {
   previousState: string;
   newState: string;
   commented: boolean;
+  assigneesBefore: string[];
+  assigneesAfter: string[];
+  assigneesChanged: boolean;
   graphUpdated: boolean;
 }
 
@@ -86,15 +95,46 @@ export async function getIssueSnapshot(
   repo: string,
   number: number,
 ): Promise<IssueSnapshot | null> {
-  const data = await githubGraphQL<{ repository: { issue: IssueSnapshot | null } }>(
+  const data = await githubGraphQL<{
+    repository: {
+      issue: (Omit<IssueSnapshot, 'assignees'> & { assignees: { nodes: AssigneeRef[] } }) | null;
+    };
+  }>(
     `query($owner:String!,$repo:String!,$number:Int!){
        repository(owner:$owner,name:$repo){
-         issue(number:$number){ id number title state viewerCanUpdate }
+         issue(number:$number){
+           id number title state viewerCanUpdate
+           assignees(first:20){ nodes { id login } }
+         }
        }
      }`,
     { owner, repo, number },
   );
-  return data.repository.issue;
+  const issue = data.repository.issue;
+  if (!issue) return null;
+  return {
+    id: issue.id,
+    number: issue.number,
+    title: issue.title,
+    state: issue.state,
+    viewerCanUpdate: issue.viewerCanUpdate,
+    assignees: issue.assignees?.nodes ?? [],
+  };
+}
+
+/**
+ * Resolves a GitHub login to its node id. The id is what every assignee mutation
+ * takes. Throws when the login does not exist or belongs to an org, so a typo
+ * fails loudly instead of silently assigning nobody.
+ */
+async function resolveLoginId(login: string): Promise<string> {
+  const data = await githubGraphQL<{ user: { id: string; login: string } | null }>(
+    'query($login:String!){ user(login:$login){ id login } }',
+    { login },
+    `resolve GitHub user ${login}`,
+  );
+  if (!data.user) throw new Error(`GitHub user @${login} does not exist`);
+  return data.user.id;
 }
 
 const CLOSE_REASON: Record<CloseReason, string> = {
@@ -117,8 +157,22 @@ export async function applyIssueUpdate(opts: {
   comment?: string;
   /** New title. Omit to leave it unchanged. */
   title?: string;
+  /** GitHub logins to assign; already-assigned logins are a no-op. */
+  addAssignees?: string[];
+  /** GitHub logins to remove; a login not currently assigned is a no-op. */
+  removeAssignees?: string[];
 }): Promise<WriteResult> {
-  const { owner, repo, number, action, reason = 'completed', comment, title } = opts;
+  const {
+    owner,
+    repo,
+    number,
+    action,
+    reason = 'completed',
+    comment,
+    title,
+    addAssignees,
+    removeAssignees,
+  } = opts;
 
   const snapshot = await getIssueSnapshot(owner, repo, number);
   if (!snapshot) throw new Error(`issue #${number} not found in ${owner}/${repo}`);
@@ -130,6 +184,19 @@ export async function applyIssueUpdate(opts: {
 
   const wantedTitle = title?.trim();
   const titleChanged = !!wantedTitle && wantedTitle !== snapshot.title;
+
+  const assigneesBefore = snapshot.assignees.map((a) => a.login);
+  const currentById = new Map(snapshot.assignees.map((a) => [a.login, a.id]));
+
+  const toAddLogins = (addAssignees ?? []).filter((l) => !currentById.has(l));
+  const toRemoveLogins = (removeAssignees ?? []).filter((l) => currentById.has(l));
+
+  // Resolve new logins to node ids before any write, so a typo throws before
+  // mutating anything else on the issue.
+  const addIdByLogin = new Map<string, string>();
+  for (const login of toAddLogins) {
+    addIdByLogin.set(login, await resolveLoginId(login));
+  }
 
   // Comment first, so the reason is visible above the change it explains.
   let commented = false;
@@ -147,6 +214,25 @@ export async function applyIssueUpdate(opts: {
       { id: snapshot.id, title: wantedTitle },
     );
   }
+
+  if (toAddLogins.length > 0) {
+    await githubGraphQL(
+      'mutation($id:ID!,$ids:[ID!]!){ addAssigneesToAssignable(input:{assignableId:$id, assigneeIds:$ids}){ clientMutationId } }',
+      { id: snapshot.id, ids: toAddLogins.map((l) => addIdByLogin.get(l) as string) },
+    );
+  }
+  if (toRemoveLogins.length > 0) {
+    await githubGraphQL(
+      'mutation($id:ID!,$ids:[ID!]!){ removeAssigneesFromAssignable(input:{assignableId:$id, assigneeIds:$ids}){ clientMutationId } }',
+      { id: snapshot.id, ids: toRemoveLogins.map((l) => currentById.get(l) as string) },
+    );
+  }
+
+  const assigneesAfter = [
+    ...assigneesBefore.filter((l) => !toRemoveLogins.includes(l)),
+    ...toAddLogins,
+  ];
+  const assigneesChanged = toAddLogins.length > 0 || toRemoveLogins.length > 0;
 
   // An omitted action means retitle or comment only; leave the state alone.
   let newState = snapshot.state;
@@ -179,12 +265,22 @@ export async function applyIssueUpdate(opts: {
     previousState: snapshot.state,
     newState,
     commented,
-    graphUpdated: await syncGraph(number, newState, titleChanged ? wantedTitle : undefined),
+    assigneesBefore,
+    assigneesAfter,
+    assigneesChanged,
+    graphUpdated: await syncGraph(number, newState, {
+      title: titleChanged ? wantedTitle : undefined,
+      assignees: assigneesChanged ? assigneesAfter : undefined,
+    }),
   };
 }
 
 /** Keeps the graph consistent immediately, so a reconcile is not needed afterwards. */
-async function syncGraph(number: number, state: string, title?: string): Promise<boolean> {
+async function syncGraph(
+  number: number,
+  state: string,
+  opts: { title?: string; assignees?: string[] } = {},
+): Promise<boolean> {
   const session = getDriver().session();
   try {
     const res = await session.run(
@@ -193,9 +289,25 @@ async function syncGraph(number: number, state: string, title?: string): Promise
            i.closedAt = CASE WHEN $state = 'CLOSED' THEN coalesce(i.closedAt, $now) ELSE null END,
            i.title = coalesce($title, i.title)
        RETURN i.number AS n`,
-      { n: number, state, title: title ?? null, now: new Date().toISOString() },
+      { n: number, state, title: opts.title ?? null, now: new Date().toISOString() },
     );
-    return res.records.length > 0;
+    if (res.records.length === 0) return false;
+
+    if (opts.assignees) {
+      await session.run('MATCH (i:Issue {number: $n})-[r:ASSIGNED_TO]->() DELETE r', {
+        n: number,
+      });
+      if (opts.assignees.length > 0) {
+        await session.run(
+          `MATCH (i:Issue {number: $n})
+           UNWIND $logins AS login
+           MERGE (u:User {login: login})
+           MERGE (i)-[:ASSIGNED_TO]->(u)`,
+          { n: number, logins: opts.assignees },
+        );
+      }
+    }
+    return true;
   } finally {
     await session.close();
   }

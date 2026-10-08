@@ -31,6 +31,7 @@ const OPEN = {
   title: 'A real issue',
   state: 'OPEN',
   viewerCanUpdate: true,
+  assignees: [] as { id: string; login: string }[],
 };
 
 beforeEach(() => {
@@ -179,6 +180,65 @@ describe('updateIssueTool', () => {
     );
 
     expect(suspend.mock.calls[0][0].message).toContain('Shipped in #123.');
+  });
+
+  it('shows the assignee change in the confirmation preview', async () => {
+    getIssueSnapshot.mockResolvedValue({
+      ...OPEN,
+      assignees: [{ id: 'U_jane', login: 'jane' }],
+    });
+
+    await updateIssueTool.execute!(
+      { issueNumber: 798, reason: 'completed', addAssignees: ['chris'], removeAssignees: ['jane'] },
+      ctxWith(),
+    );
+
+    const msg = suspend.mock.calls[0][0].message;
+    expect(msg, 'the before set is visible').toContain('@jane');
+    expect(msg, 'the after set is visible').toContain('@chris');
+  });
+
+  it('passes addAssignees and removeAssignees through to the service', async () => {
+    applyIssueUpdate.mockResolvedValue({
+      number: 798,
+      title: 'A real issue',
+      previousTitle: 'A real issue',
+      titleChanged: false,
+      previousState: 'OPEN',
+      newState: 'OPEN',
+      commented: false,
+      assigneesBefore: [],
+      assigneesAfter: ['chris'],
+      assigneesChanged: true,
+      graphUpdated: true,
+    });
+
+    const r = (await updateIssueTool.execute!(
+      { issueNumber: 798, reason: 'completed', addAssignees: ['chris'] },
+      ctxWith({ confirm: true }),
+    )) as Result & { assigneesAfter: string[]; assigneesChanged: boolean };
+
+    expect(applyIssueUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ addAssignees: ['chris'] }),
+    );
+    expect(r.assigneesAfter).toEqual(['chris']);
+    expect(r.message).toContain('@chris');
+  });
+
+  it('does not prompt when the only requested assignee is already there', async () => {
+    getIssueSnapshot.mockResolvedValue({
+      ...OPEN,
+      assignees: [{ id: 'U_chris', login: 'chris' }],
+    });
+
+    const r = (await updateIssueTool.execute!(
+      { issueNumber: 798, reason: 'completed', addAssignees: ['chris'] },
+      ctxWith(),
+    )) as Result;
+
+    expect(suspend, 'a no-op must not ask for confirmation').not.toHaveBeenCalled();
+    expect(applyIssueUpdate).not.toHaveBeenCalled();
+    expect(r.message).toContain('already matches');
   });
 
   it('reports a missing repo instead of guessing one', async () => {

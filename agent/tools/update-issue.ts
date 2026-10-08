@@ -5,18 +5,15 @@ import { applyIssueUpdate, getIssueSnapshot } from '../../src/services/issue-wri
 export const updateIssueTool = createTool({
   id: 'updateIssue',
   description:
-    'Change a single GitHub issue: retitle it, close or reopen it, or leave a ' +
-    'comment, in any combination. This writes to the real repository. It always ' +
-    'shows what it is about to do and waits for the user to confirm before ' +
-    'writing. Only call this when the user has asked, in their own words, to ' +
-    'change the issue.',
+    'Change a single GitHub issue: retitle it, close or reopen it, change its ' +
+    'assignees, or leave a comment, in any combination. This writes to the real ' +
+    'repository. It always shows what it is about to do and waits for the user ' +
+    'to confirm before writing. Only call this when the user has asked, in ' +
+    'their own words, to change the issue.',
   inputSchema: z.object({
     issueNumber: z.number().describe('The issue to update'),
     title: z.string().optional().describe('New title. Omit to leave it unchanged.'),
-    action: z
-      .enum(['close', 'reopen'])
-      .optional()
-      .describe('Omit to leave the state alone and only retitle or comment.'),
+    action: z.enum(['close', 'reopen']).optional().describe('Omit to leave the state alone.'),
     reason: z
       .enum(['completed', 'not_planned', 'duplicate'])
       .default('completed')
@@ -25,6 +22,17 @@ export const updateIssueTool = createTool({
       .string()
       .optional()
       .describe('Optional comment posted before the state change, explaining why'),
+    addAssignees: z
+      .array(z.string())
+      .optional()
+      .describe(
+        'GitHub logins to assign (no leading @). An already-assigned login is a ' +
+          'no-op. An unknown login fails before any write.',
+      ),
+    removeAssignees: z
+      .array(z.string())
+      .optional()
+      .describe('GitHub logins to unassign. A login not currently assigned is a no-op.'),
   }),
   suspendSchema: z.object({
     message: z.string(),
@@ -40,6 +48,9 @@ export const updateIssueTool = createTool({
     previousState: z.string(),
     newState: z.string(),
     commented: z.boolean(),
+    assigneesBefore: z.array(z.string()).default([]),
+    assigneesAfter: z.array(z.string()).default([]),
+    assigneesChanged: z.boolean().default(false),
     graphUpdated: z.boolean(),
     confirmed: z.boolean(),
     message: z.string(),
@@ -54,6 +65,9 @@ export const updateIssueTool = createTool({
       previousState: '',
       newState: '',
       commented: false,
+      assigneesBefore: [] as string[],
+      assigneesAfter: [] as string[],
+      assigneesChanged: false,
       graphUpdated: false,
       confirmed: false,
     };
@@ -79,19 +93,34 @@ export const updateIssueTool = createTool({
           action: input.action,
           reason: input.reason,
           comment: input.comment,
+          addAssignees: input.addAssignees,
+          removeAssignees: input.removeAssignees,
         });
+        const stateChanged = r.previousState !== r.newState;
+        const parts: string[] = [];
+        if (stateChanged) parts.push(`now ${r.newState.toLowerCase()}`);
+        if (r.titleChanged) parts.push('retitled');
+        if (r.assigneesChanged) {
+          parts.push(
+            r.assigneesAfter.length === 0
+              ? 'unassigned'
+              : `assigned to ${r.assigneesAfter.map((l) => `@${l}`).join(', ')}`,
+          );
+        }
+        if (r.commented) parts.push('comment posted');
+        const summary = parts.length > 0 ? parts.join(', ') : 'no changes needed';
         return {
           issueNumber: r.number,
           title: r.title,
           previousState: r.previousState,
           newState: r.newState,
           commented: r.commented,
+          assigneesBefore: r.assigneesBefore,
+          assigneesAfter: r.assigneesAfter,
+          assigneesChanged: r.assigneesChanged,
           graphUpdated: r.graphUpdated,
           confirmed: true,
-          message:
-            r.previousState === r.newState
-              ? `#${r.number} was already ${r.newState.toLowerCase()}. Nothing changed on GitHub.`
-              : `#${r.number} is now ${r.newState.toLowerCase()}${r.commented ? ', with your comment posted' : ''}. Graph updated.`,
+          message: `#${r.number}: ${summary}.`,
         };
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -138,12 +167,19 @@ export const updateIssueTool = createTool({
     const stateChanged =
       !!input.action && snapshot.state !== (input.action === 'close' ? 'CLOSED' : 'OPEN');
 
-    if (!titleChanged && !stateChanged && !input.comment) {
+    const currentLogins = snapshot.assignees.map((a) => a.login);
+    const toAdd = (input.addAssignees ?? []).filter((l) => !currentLogins.includes(l));
+    const toRemove = (input.removeAssignees ?? []).filter((l) => currentLogins.includes(l));
+    const assigneesChanged = toAdd.length > 0 || toRemove.length > 0;
+
+    if (!titleChanged && !stateChanged && !input.comment && !assigneesChanged) {
       return {
         ...base,
         title: snapshot.title,
         previousState: snapshot.state,
         newState: snapshot.state,
+        assigneesBefore: currentLogins,
+        assigneesAfter: currentLogins,
         message: `#${input.issueNumber} already matches what you asked for. Nothing to do.`,
       };
     }
@@ -154,10 +190,15 @@ export const updateIssueTool = createTool({
     }
     if (stateChanged) {
       const wanted = input.action === 'close' ? 'CLOSED' : 'OPEN';
-      changes.push(
-        `  state: ${snapshot.state} -> ${wanted}` +
-          (input.action === 'close' ? ` (${input.reason})` : ''),
-      );
+      const closeNote = input.action === 'close' ? ` (${input.reason})` : '';
+      changes.push(`  state: ${snapshot.state} -> ${wanted}${closeNote}`);
+    }
+    if (assigneesChanged) {
+      const before =
+        currentLogins.length > 0 ? currentLogins.map((l) => `@${l}`).join(', ') : '(none)';
+      const after = [...currentLogins.filter((l) => !toRemove.includes(l)), ...toAdd];
+      const afterStr = after.length > 0 ? after.map((l) => `@${l}`).join(', ') : '(none)';
+      changes.push(`  assignees: ${before}\n      -> ${afterStr}`);
     }
     if (input.comment) {
       changes.push(`  comment: ${input.comment}`);
@@ -165,14 +206,20 @@ export const updateIssueTool = createTool({
 
     console.log(`  [updateIssue] suspending for confirmation on #${input.issueNumber}`);
 
+    // The confirmation always names the issue title. Confirming a bare number is
+    // how you close the wrong thing.
+    const message = [
+      `About to change issue #${snapshot.number} in ${owner}/${repo}:`,
+      '',
+      `  "${snapshot.title}"`,
+      '',
+      changes.join('\n'),
+      '',
+      'This writes to the real repository. Confirm to proceed.',
+    ].join('\n');
+
     await ctx.agent!.suspend({
-      message:
-        `About to change issue #${snapshot.number} in ${owner}/${repo}:\n\n` +
-        // Always name the issue, even when only the state changes: confirming a
-        // bare number is how you close the wrong thing.
-        `  "${snapshot.title}"\n\n` +
-        `${changes.join('\n')}\n\n` +
-        'This writes to the real repository. Confirm to proceed.',
+      message,
       issueNumber: snapshot.number,
       action: input.action ?? 'retitle',
     });
@@ -181,6 +228,8 @@ export const updateIssueTool = createTool({
       ...base,
       title: snapshot.title,
       previousState: snapshot.state,
+      assigneesBefore: currentLogins,
+      assigneesAfter: currentLogins,
       message: 'Waiting for confirmation before writing to GitHub.',
     };
   },

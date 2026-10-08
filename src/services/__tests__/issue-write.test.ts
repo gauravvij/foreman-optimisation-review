@@ -27,6 +27,7 @@ const OPEN_ISSUE = {
   title: 'Original title',
   state: 'OPEN',
   viewerCanUpdate: true,
+  assignees: { nodes: [] as { id: string; login: string }[] },
 };
 
 function mockGitHub(
@@ -54,6 +55,22 @@ function mockGitHub(
       }
       if (body.query.includes('updateIssue')) {
         return new Response(JSON.stringify({ data: { updateIssue: { issue: { title: 'x' } } } }));
+      }
+      if (body.query.includes('user(login:')) {
+        const login = (body.variables as { login: string }).login;
+        const users = (overrides.users as Record<string, string> | undefined) ?? {};
+        const id = users[login];
+        return new Response(JSON.stringify({ data: { user: id ? { id, login } : null } }));
+      }
+      if (body.query.includes('addAssigneesToAssignable')) {
+        return new Response(
+          JSON.stringify({ data: { addAssigneesToAssignable: { clientMutationId: null } } }),
+        );
+      }
+      if (body.query.includes('removeAssigneesFromAssignable')) {
+        return new Response(
+          JSON.stringify({ data: { removeAssigneesFromAssignable: { clientMutationId: null } } }),
+        );
       }
       if (body.query.includes('viewerPermission')) {
         return new Response(
@@ -271,6 +288,107 @@ describe('applyIssueUpdate', () => {
     });
 
     expect(r.graphUpdated).toBe(false);
+  });
+
+  it('resolves a login to a node id before calling addAssigneesToAssignable', async () => {
+    mockGitHub(OPEN_ISSUE, { users: { chris: 'U_chris' } });
+    db.queueResult([{ n: 798 }]);
+    db.queueEmpty();
+    db.queueEmpty();
+
+    const r = await applyIssueUpdate({
+      owner: 'acme',
+      repo: 'widgets',
+      number: 798,
+      addAssignees: ['chris'],
+    });
+
+    expect(
+      inOrder(sentQueries(), 'user(login:', 'addAssigneesToAssignable'),
+      'the login resolves before the mutation runs',
+    ).toBe(true);
+    const add = sent.find((s) => s.query.includes('addAssigneesToAssignable'));
+    expect(add?.variables).toMatchObject({ id: 'I_1', ids: ['U_chris'] });
+    expect(r.assigneesAfter).toEqual(['chris']);
+    expect(r.assigneesChanged).toBe(true);
+  });
+
+  it('throws before any mutation when the login does not exist on GitHub', async () => {
+    mockGitHub(OPEN_ISSUE, { users: {} });
+
+    await expect(
+      applyIssueUpdate({
+        owner: 'acme',
+        repo: 'widgets',
+        number: 798,
+        addAssignees: ['notaperson'],
+        action: 'close',
+      }),
+    ).rejects.toThrow(/@notaperson does not exist/);
+
+    expect(sentQueries(), 'nothing may be attempted after a failed login resolution').not.toContain(
+      'addAssigneesToAssignable',
+    );
+    expect(sentQueries(), 'the state change must not happen either').not.toContain('closeIssue');
+  });
+
+  it('skips the add mutation entirely when the login is already assigned', async () => {
+    const snapshot = { ...OPEN_ISSUE, assignees: { nodes: [{ id: 'U_chris', login: 'chris' }] } };
+    mockGitHub(snapshot);
+    db.queueResult([{ n: 798 }]);
+
+    const r = await applyIssueUpdate({
+      owner: 'acme',
+      repo: 'widgets',
+      number: 798,
+      addAssignees: ['chris'],
+    });
+
+    expect(sentQueries(), 'a no-op add must not call GitHub').not.toContain(
+      'addAssigneesToAssignable',
+    );
+    expect(sentQueries(), 'and the login does not need resolving').not.toContain('user(login:');
+    expect(r.assigneesChanged).toBe(false);
+  });
+
+  it('removes an assignee using the id taken from the live snapshot', async () => {
+    const snapshot = { ...OPEN_ISSUE, assignees: { nodes: [{ id: 'U_chris', login: 'chris' }] } };
+    mockGitHub(snapshot);
+    db.queueResult([{ n: 798 }]);
+    db.queueEmpty();
+    db.queueEmpty();
+
+    const r = await applyIssueUpdate({
+      owner: 'acme',
+      repo: 'widgets',
+      number: 798,
+      removeAssignees: ['chris'],
+    });
+
+    const remove = sent.find((s) => s.query.includes('removeAssigneesFromAssignable'));
+    expect(remove?.variables).toMatchObject({ id: 'I_1', ids: ['U_chris'] });
+    expect(r.assigneesAfter).toEqual([]);
+  });
+
+  it('deletes and recreates ASSIGNED_TO edges in the graph when assignees change', async () => {
+    mockGitHub(OPEN_ISSUE, { users: { chris: 'U_chris' } });
+    db.queueResult([{ n: 798 }]);
+    db.queueEmpty();
+    db.queueEmpty();
+
+    await applyIssueUpdate({
+      owner: 'acme',
+      repo: 'widgets',
+      number: 798,
+      addAssignees: ['chris'],
+    });
+
+    expect(
+      db.ranInOrder('DELETE r', 'MERGE (u:User'),
+      'the delete must land before the merge, so a renamed user cleans up',
+    ).toBe(true);
+    const merge = db.queries.find((q) => q.query.includes('MERGE (u:User'));
+    expect(merge?.params).toMatchObject({ n: 798, logins: ['chris'] });
   });
 });
 
