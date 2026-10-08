@@ -116,7 +116,6 @@ ${titles.map((t) => `- ${t}`).join('\n')}
     prompt,
     name: 'subcategory_vocabulary',
     schema: VOCAB_SCHEMA,
-    temperature: 0.2,
   });
 
   return data.terms.slice(0, MAX_TERMS);

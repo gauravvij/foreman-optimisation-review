@@ -46,7 +46,6 @@ interface ModelCall {
   task: Task;
   system: string;
   prompt: string;
-  temperature?: number;
 }
 
 export interface StructuredCall extends ModelCall {
@@ -111,7 +110,6 @@ export async function textCompletion(call: ModelCall): Promise<string | null> {
   const completion = await gatewayClient().chat.completions.create({
     model: modelFor(call.task),
     messages: messagesFor(call),
-    temperature: call.temperature ?? 0.2,
   });
   return completion.choices[0]?.message.content ?? null;
 }
@@ -129,7 +127,6 @@ export async function structuredCompletion<T>(
     messages: messagesFor(call),
     tools: [{ type: 'function', function: { name: call.name, parameters: call.schema } }],
     tool_choice: { type: 'function', function: { name: call.name } },
-    temperature: call.temperature ?? 0.1,
   });
 
   const toolCall = completion.choices[0]?.message.tool_calls?.[0];
