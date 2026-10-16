@@ -9,7 +9,6 @@ import {
   isShippedButOpen,
   summariseLinks,
 } from '../../src/services/pull-requests';
-import { isAutoConfirm } from './confirm';
 
 const PR = z.object({
   number: z.number(),
@@ -273,7 +272,8 @@ export const commentOnPullRequestTool = createTool({
 
     const resumeData = ctx?.agent?.resumeData as { confirm?: boolean } | undefined;
 
-    const applyWrite = async () => {
+    if (resumeData?.confirm === true) {
+      console.log(`  [commentOnPullRequest] confirmed, posting on #${input.number}`);
       const result = await commentOnPullRequest(owner, repo, input.number, input.comment);
       return {
         posted: true,
@@ -281,11 +281,6 @@ export const commentOnPullRequestTool = createTool({
         url: result.url,
         message: `Commented on #${result.number} "${result.title}". ${result.url}`,
       };
-    };
-
-    if (resumeData?.confirm === true) {
-      console.log(`  [commentOnPullRequest] confirmed, posting on #${input.number}`);
-      return applyWrite();
     }
 
     if (resumeData) {
@@ -301,13 +296,6 @@ export const commentOnPullRequestTool = createTool({
         ...empty,
         message: `${owner}/${repo} has no pull request #${input.number}, so there is nothing to comment on.`,
       };
-    }
-
-    if (isAutoConfirm()) {
-      console.log(
-        `  [commentOnPullRequest] AUTO_CONFIRM set, posting on #${input.number} without confirmation`,
-      );
-      return applyWrite();
     }
 
     console.log(`  [commentOnPullRequest] awaiting confirmation for #${input.number}`);
