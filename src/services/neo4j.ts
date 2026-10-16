@@ -1,9 +1,10 @@
 /**
- * Neo4j write operations — ingests GitHub issue data into the knowledge graph.
+ * Neo4j write operations — ingests GitHub issue and pull request data into
+ * the knowledge graph.
  *
  * Graph schema:
- *   Nodes:  Issue, Comment, User, Label, Reaction
- *   Rels:   AUTHORED_BY, ASSIGNED_TO, HAS_LABEL, HAS_COMMENT, HAS_REACTION
+ *   Nodes:  Issue, PullRequest, Comment, User, Label, Reaction
+ *   Rels:   AUTHORED_BY, ASSIGNED_TO, HAS_LABEL, HAS_COMMENT, HAS_REACTION, CLOSES
  */
 
 import neo4j, { type Driver, type Integer, type Session } from 'neo4j-driver';
@@ -56,6 +57,26 @@ export interface GitHubIssue {
 export interface IssueData {
   issue: GitHubIssue;
   comments: GitHubComment[];
+}
+
+export interface GitHubPullRequest {
+  id: string;
+  number: number;
+  title: string;
+  url: string;
+  state: string;
+  isDraft: boolean;
+  createdAt: string;
+  updatedAt: string;
+  closedAt: string | null;
+  mergedAt: string | null;
+  additions: number;
+  deletions: number;
+  changedFiles: number;
+  author: GitHubUser | null;
+  assignees?: { nodes: GitHubUser[] } | null;
+  labels?: { nodes: GitHubLabel[] };
+  closingIssuesReferences?: { nodes: { number: number }[] };
 }
 
 export interface IngestionResult {
@@ -377,6 +398,158 @@ export async function getIssueUpdatedAt(issueNumber: number): Promise<string | n
     });
     if (result.records.length === 0) return null;
     return result.records[0].get('ts') as string | null;
+  } finally {
+    await session.close();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Pull request ingestion
+// ---------------------------------------------------------------------------
+
+export async function insertPullRequest(session: Session, pr: GitHubPullRequest): Promise<void> {
+  await session.run(
+    `MERGE (pr:PullRequest {prId: $prId})
+     SET pr.number       = toInteger($number),
+         pr.title        = $title,
+         pr.url          = $url,
+         pr.state        = $state,
+         pr.isDraft      = $isDraft,
+         pr.isMerged     = $isMerged,
+         pr.createdAt    = $createdAt,
+         pr.updatedAt    = $updatedAt,
+         pr.closedAt     = $closedAt,
+         pr.mergedAt     = $mergedAt,
+         pr.additions    = toInteger($additions),
+         pr.deletions    = toInteger($deletions),
+         pr.changedFiles = toInteger($changedFiles),
+         pr.authorLogin  = $authorLogin
+     RETURN pr`,
+    {
+      prId: pr.id,
+      number: pr.number,
+      title: pr.title,
+      url: pr.url,
+      state: pr.state,
+      isDraft: pr.isDraft,
+      isMerged: Boolean(pr.mergedAt),
+      createdAt: pr.createdAt,
+      updatedAt: pr.updatedAt,
+      closedAt: pr.closedAt,
+      mergedAt: pr.mergedAt,
+      additions: pr.additions,
+      deletions: pr.deletions,
+      changedFiles: pr.changedFiles,
+      authorLogin: pr.author?.login ?? null,
+    },
+  );
+
+  if (pr.author?.login) {
+    await insertUsers(session, [pr.author]);
+    await session.run(
+      `MATCH (pr:PullRequest {prId: $prId}), (u:User {login: $login})
+       MERGE (pr)-[:AUTHORED_BY]->(u)`,
+      { prId: pr.id, login: pr.author.login },
+    );
+  }
+
+  const assignees = (pr.assignees?.nodes ?? []).filter((u): u is GitHubUser => Boolean(u?.login));
+  await session.run('MATCH (pr:PullRequest {prId: $prId})-[r:ASSIGNED_TO]->() DELETE r', {
+    prId: pr.id,
+  });
+  if (assignees.length > 0) {
+    await insertUsers(session, assignees);
+    await session.run(
+      `MATCH (pr:PullRequest {prId: $prId})
+       UNWIND $logins AS login
+       MATCH (u:User {login: login})
+       MERGE (pr)-[:ASSIGNED_TO]->(u)`,
+      { prId: pr.id, logins: assignees.map((u) => u.login) },
+    );
+  }
+
+  const labelNodes = pr.labels?.nodes ?? [];
+  await session.run('MATCH (pr:PullRequest {prId: $prId})-[r:HAS_LABEL]->() DELETE r', {
+    prId: pr.id,
+  });
+  if (labelNodes.length > 0) {
+    await insertLabels(session, labelNodes);
+    await session.run(
+      `MATCH (pr:PullRequest {prId: $prId})
+       UNWIND $names AS name
+       MATCH (l:Label {name: name})
+       MERGE (pr)-[:HAS_LABEL]->(l)`,
+      { prId: pr.id, names: labelNodes.map((l) => l.name) },
+    );
+  }
+
+  const closesNumbers = (pr.closingIssuesReferences?.nodes ?? [])
+    .map((n) => n.number)
+    .filter((n): n is number => typeof n === 'number');
+  await session.run('MATCH (pr:PullRequest {prId: $prId})-[r:CLOSES]->() DELETE r', {
+    prId: pr.id,
+  });
+  if (closesNumbers.length > 0) {
+    await session.run(
+      `MATCH (pr:PullRequest {prId: $prId})
+       UNWIND $numbers AS n
+       MATCH (i:Issue {number: toInteger(n)})
+       MERGE (pr)-[:CLOSES]->(i)`,
+      { prId: pr.id, numbers: closesNumbers },
+    );
+  }
+}
+
+export async function ingestPullRequests(prs: GitHubPullRequest[]): Promise<{
+  ingested: number;
+  errors: { number: number; error: string }[];
+}> {
+  if (prs.length === 0) return { ingested: 0, errors: [] };
+
+  const session = getDriver().session();
+  const errors: { number: number; error: string }[] = [];
+  let ingested = 0;
+  try {
+    console.log(`\n=== Ingesting ${prs.length} pull requests into Neo4j ===`);
+    for (let i = 0; i < prs.length; i++) {
+      const pr = prs[i];
+      try {
+        console.log(`[${i + 1}/${prs.length}] PR #${pr.number}: ${pr.title}`);
+        await insertPullRequest(session, pr);
+        ingested++;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`  Failed PR #${pr.number}: ${msg}`);
+        errors.push({ number: pr.number, error: msg });
+      }
+    }
+    console.log(`\nPull request ingestion: ${ingested} ok, ${errors.length} failed`);
+  } finally {
+    await session.close();
+  }
+  return { ingested, errors };
+}
+
+/** The last successful pull request sync timestamp. Separate from the issue lastSync so a PR sync can lag an issue sync without resetting it. */
+export async function getLastPullRequestSyncTimestamp(): Promise<string | null> {
+  const session = getDriver().session();
+  try {
+    const result = await session.run(
+      `MATCH (m:Meta {key: 'lastPullRequestSync'}) RETURN m.value AS ts`,
+    );
+    if (result.records.length === 0) return null;
+    return result.records[0].get('ts') as string | null;
+  } finally {
+    await session.close();
+  }
+}
+
+export async function setLastPullRequestSyncTimestamp(iso: string): Promise<void> {
+  const session = getDriver().session();
+  try {
+    await session.run(`MERGE (m:Meta {key: 'lastPullRequestSync'}) SET m.value = $ts`, {
+      ts: iso,
+    });
   } finally {
     await session.close();
   }

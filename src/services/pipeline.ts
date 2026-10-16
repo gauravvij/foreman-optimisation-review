@@ -9,14 +9,17 @@
 
 import { type AnalysisData, ingestAnalysisResults } from './analysis';
 import { fetchMultipleIssueDetails } from './database';
-import { type IssueState, getAllIssueNumbers, getIssuesData } from './github';
+import { type IssueState, getAllIssueNumbers, getIssuesData, getPullRequests } from './github';
 import { listGuidance, renderGuidance } from './guidance';
 import { analyzeIssue, transformIssueDataForAnalysis } from './issue-analysis';
 import { modelFor } from './models';
 import {
   getIssueUpdatedAt,
+  getLastPullRequestSyncTimestamp,
   getLastSyncTimestamp,
   ingestMultipleIssues,
+  ingestPullRequests,
+  setLastPullRequestSyncTimestamp,
   setLastSyncTimestamp,
 } from './neo4j';
 import { applyCategoryRules } from './rules';
@@ -48,6 +51,8 @@ export interface PipelineResult {
   issuesIngested: number;
   issuesAnalyzed: number;
   issuesSkipped: number;
+  pullRequestsFetched: number;
+  pullRequestsIngested: number;
   errors: string[];
   durationMs: number;
   incremental: boolean;
@@ -100,12 +105,15 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
       console.log('  No issues updated since last sync — nothing to do.\n');
       await setLastSyncTimestamp(runTimestamp);
     }
+    const prs = await syncPullRequests(config, runTimestamp, errors);
     return {
       issuesFetched: 0,
       issuesIngested: 0,
       issuesAnalyzed: 0,
       issuesSkipped: 0,
-      errors: [],
+      pullRequestsFetched: prs.fetched,
+      pullRequestsIngested: prs.ingested,
+      errors,
       durationMs: Date.now() - start,
       incremental,
     };
@@ -203,20 +211,24 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   // Record this run's timestamp for the next incremental sync
   await setLastSyncTimestamp(runTimestamp);
 
+  const prs = await syncPullRequests(config, runTimestamp, errors);
+
   const durationMs = Date.now() - start;
 
   console.log('\n========================================');
   console.log(' Pipeline Complete');
   console.log('========================================');
-  console.log(`  Mode:            ${incremental ? 'incremental' : 'full sync'}`);
-  console.log(`  Issues fetched:  ${fetched.results.length}`);
-  console.log(`  Issues ingested: ${ingested.results.length}`);
-  console.log(`  Issues analyzed: ${analysisCount}`);
+  console.log(`  Mode:                 ${incremental ? 'incremental' : 'full sync'}`);
+  console.log(`  Issues fetched:       ${fetched.results.length}`);
+  console.log(`  Issues ingested:      ${ingested.results.length}`);
+  console.log(`  Issues analyzed:      ${analysisCount}`);
   if (skippedCount > 0) {
-    console.log(`  Issues skipped:  ${skippedCount} (unchanged)`);
+    console.log(`  Issues skipped:       ${skippedCount} (unchanged)`);
   }
-  console.log(`  Errors:          ${errors.length}`);
-  console.log(`  Duration:        ${(durationMs / 1000).toFixed(1)}s`);
+  console.log(`  Pull requests found:  ${prs.fetched}`);
+  console.log(`  Pull requests stored: ${prs.ingested}`);
+  console.log(`  Errors:               ${errors.length}`);
+  console.log(`  Duration:             ${(durationMs / 1000).toFixed(1)}s`);
   console.log('========================================\n');
 
   return {
@@ -224,8 +236,46 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
     issuesIngested: ingested.results.length,
     issuesAnalyzed: analysisCount,
     issuesSkipped: skippedCount,
+    pullRequestsFetched: prs.fetched,
+    pullRequestsIngested: prs.ingested,
     errors,
     durationMs,
     incremental,
   };
+}
+
+/**
+ * Fetches pull requests (incremental when a prior sync exists) and ingests
+ * them. Runs after the issue pipeline so a PR's CLOSES link lands on an issue
+ * that already exists. Pull request errors push onto `errors` but do not fail
+ * the pipeline.
+ */
+async function syncPullRequests(
+  config: PipelineConfig,
+  runTimestamp: string,
+  errors: string[],
+): Promise<{ fetched: number; ingested: number }> {
+  console.log('\nStep PR: Syncing pull requests...');
+
+  let since: string | null = null;
+  if (!config.fullSync) {
+    try {
+      since = await getLastPullRequestSyncTimestamp();
+    } catch {
+      // Carry on with a full fetch when the Meta key is unreadable.
+    }
+  }
+
+  try {
+    const prs = await getPullRequests(config.owner, config.repo, since, config.limit);
+    const result = await ingestPullRequests(prs);
+    for (const e of result.errors) errors.push(`pr ingest #${e.number}: ${e.error}`);
+    await setLastPullRequestSyncTimestamp(runTimestamp);
+    return { fetched: prs.length, ingested: result.ingested };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`  Pull request sync failed: ${msg}`);
+    errors.push(`pr sync: ${msg}`);
+    return { fetched: 0, ingested: 0 };
+  }
 }

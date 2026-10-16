@@ -47,6 +47,7 @@ tools are, or how to use you, reply with this table and nothing invented.
 | See whether work has started | Which of the top 10 issues already have a pull request? | readPullRequests |
 | Read one pull request in full | Show me PR 88, is it ready to merge? | inspectPullRequest |
 | Comment on a pull request | Leave a note on PR 88 about the Windows failure | commentOnPullRequest |
+| Count PRs opened, merged, or closed | How many PRs did @alice open this week? | pullRequestStats |
 | Check stale open/closed state | Check whether the graph's issue open/closed state matches GitHub | reconcileIssueState |
 | Correct stale open/closed state | Reconcile the issue state against GitHub and correct any stale entries | reconcileIssueState |
 | Find issues the graph never held | Are any open issues missing from the graph? | ingestMissingIssues |
@@ -208,8 +209,11 @@ ${linkRule}
 - The board's status column comes from facts, not from your judgment: closed is
   Done, a pull request that is ready or already merged is In review, a draft
   pull request or an assignee is In progress, and a P0 or P1 that is actionable
-  is Ready. Pull request state is not in the graph, so use readPullRequests
-  rather than Cypher to answer why a card sits where it does.
+  is Ready. Individual pull request details (reviewDecision, checksState,
+  draft flag) are not in the graph, so use readPullRequests or
+  inspectPullRequest to answer why a card sits where it does. For aggregate
+  pull request questions ("how many did @X open this week"), use
+  pullRequestStats or query the PullRequest nodes directly in Cypher.
 - An open issue whose pull request already merged is probably finished. Say
   which ones and let the user decide; do not close one yourself.
 - Issue.priorityScore is 0-100, higher first. It is derived from severity,
@@ -247,6 +251,14 @@ ${linkRule}
 14. Subcategory — name (STRING), definition (STRING), derivedAt (STRING).
     The full subcategory vocabulary. Query this to list the available terms
     and what each one means; Issue.subcategory holds one of these names.
+15. PullRequest — prId (STRING), number (INTEGER), title (STRING), url (STRING),
+    state (STRING: OPEN, CLOSED, MERGED), isDraft (BOOLEAN), isMerged (BOOLEAN),
+    createdAt (STRING), updatedAt (STRING), closedAt (STRING or null),
+    mergedAt (STRING or null), additions (INTEGER), deletions (INTEGER),
+    changedFiles (INTEGER), authorLogin (STRING).
+    Pull request details that need freshness (reviewDecision, checksState,
+    the body) are not here; use inspectPullRequest for one PR when you need
+    them.
 
 ## Relationships
 
@@ -267,5 +279,9 @@ ${linkRule}
 - (Issue)-[:HAS_SOLUTION]->(Solution)
 - (Issue)-[:BELONGS_TO_CATEGORY]->(Category)
 - (Issue)-[:HAS_ASSESSMENT]->(Assessment)
+- (PullRequest)-[:AUTHORED_BY]->(User)
+- (PullRequest)-[:ASSIGNED_TO]->(User)   // zero or more; refreshed on every incremental sync
+- (PullRequest)-[:HAS_LABEL]->(Label)
+- (PullRequest)-[:CLOSES]->(Issue)       // one or more, from the PR's "closes #N" references
 `.trim();
 }

@@ -4,6 +4,7 @@ const svc = vi.hoisted(() => ({
   fetchLinkedPullRequests: vi.fn(),
   fetchPullRequest: vi.fn(),
   commentOnPullRequest: vi.fn(),
+  pullRequestStats: vi.fn(),
 }));
 
 vi.mock('../../../src/services/pull-requests', async (importOriginal) => {
@@ -16,9 +17,14 @@ vi.mock('../../../src/services/pull-requests', async (importOriginal) => {
   };
 });
 
+vi.mock('../../../src/services/pull-request-stats', () => ({
+  pullRequestStats: svc.pullRequestStats,
+}));
+
 import {
   commentOnPullRequestTool,
   inspectPullRequestTool,
+  pullRequestStatsTool,
   readPullRequestsTool,
 } from '../pull-requests';
 
@@ -311,5 +317,67 @@ describe('commentOnPullRequestTool', () => {
     expect(r.posted).toBe(false);
     expect(r.message).toContain('nothing to comment on');
     expect(svc.commentOnPullRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('pullRequestStatsTool', () => {
+  it('passes the user inputs through and formats a human summary', async () => {
+    svc.pullRequestStats.mockResolvedValue({
+      author: 'alice',
+      window: { since: '2026-10-09T00:00:00.000Z', until: '2026-10-16T00:00:00.000Z', days: 7 },
+      opened: 4,
+      merged: 2,
+      closed: 1,
+      sample: [],
+    });
+
+    const r = (await pullRequestStatsTool.execute!({ author: 'alice', windowDays: 7 }, ctx)) as {
+      message: string;
+      opened: number;
+      merged: number;
+      closed: number;
+    };
+
+    expect(svc.pullRequestStats).toHaveBeenCalledWith(
+      expect.objectContaining({ author: 'alice', windowDays: 7 }),
+    );
+    expect(r.opened).toBe(4);
+    expect(r.merged).toBe(2);
+    expect(r.closed).toBe(1);
+    expect(r.message, 'the summary names the author').toContain('@alice');
+    expect(r.message, 'and the window').toContain('7 days');
+    expect(r.message, 'and the three counts').toContain('opened 4, merged 2');
+  });
+
+  it('says "everyone" when no author filter is given', async () => {
+    svc.pullRequestStats.mockResolvedValue({
+      window: { since: 'a', until: 'b', days: 1 },
+      opened: 0,
+      merged: 0,
+      closed: 0,
+      sample: [],
+    });
+
+    const r = (await pullRequestStatsTool.execute!({ windowDays: 1 }, ctx)) as {
+      message: string;
+    };
+
+    expect(r.message).toContain('everyone');
+  });
+
+  it('returns zeros and the service error when the Cypher fails', async () => {
+    svc.pullRequestStats.mockRejectedValue(new Error('neo4j is down'));
+
+    const r = (await pullRequestStatsTool.execute!({}, ctx)) as {
+      opened: number;
+      merged: number;
+      closed: number;
+      error?: string;
+      message: string;
+    };
+
+    expect(r.opened).toBe(0);
+    expect(r.error).toBe('neo4j is down');
+    expect(r.message).toContain('Could not read');
   });
 });

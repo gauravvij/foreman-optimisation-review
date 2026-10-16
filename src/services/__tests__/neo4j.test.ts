@@ -1,7 +1,7 @@
 import type { Session } from 'neo4j-driver';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { insertIssue } from '../neo4j';
-import type { GitHubIssue } from '../neo4j';
+import { insertIssue, insertPullRequest } from '../neo4j';
+import type { GitHubIssue, GitHubPullRequest } from '../neo4j';
 import { createFakeDriver } from './fake-driver';
 
 // insertIssue takes a Session directly, so the fake driver's session is
@@ -88,5 +88,83 @@ describe('insertIssue: assignees', () => {
       'bob',
       'dave',
     ]);
+  });
+});
+
+const PR: GitHubPullRequest = {
+  id: 'PR_1',
+  number: 88,
+  title: 'Fix the thing',
+  url: 'https://github.com/acme/widgets/pull/88',
+  state: 'MERGED',
+  isDraft: false,
+  createdAt: '2026-10-01T00:00:00Z',
+  updatedAt: '2026-10-07T00:00:00Z',
+  closedAt: '2026-10-07T00:00:00Z',
+  mergedAt: '2026-10-07T00:00:00Z',
+  additions: 42,
+  deletions: 7,
+  changedFiles: 3,
+  author: { login: 'alice' },
+};
+
+describe('insertPullRequest', () => {
+  it('upserts the PullRequest with the fields the stats query needs', async () => {
+    await insertPullRequest(asSession(), PR);
+
+    const merge = db.queries.find((q) => q.query.includes('MERGE (pr:PullRequest {prId'));
+    expect(merge, 'the node was merged').toBeDefined();
+    expect(merge?.params).toMatchObject({
+      prId: 'PR_1',
+      number: 88,
+      state: 'MERGED',
+      isMerged: true,
+      mergedAt: '2026-10-07T00:00:00Z',
+      authorLogin: 'alice',
+    });
+  });
+
+  it('derives isMerged from mergedAt so a closed-not-merged PR stays unmerged', async () => {
+    await insertPullRequest(asSession(), { ...PR, state: 'CLOSED', mergedAt: null });
+
+    const merge = db.queries.find((q) => q.query.includes('MERGE (pr:PullRequest {prId'));
+    expect(merge?.params.isMerged, 'closed with mergedAt null is not merged').toBe(false);
+  });
+
+  it('links the author so stats can filter by login', async () => {
+    await insertPullRequest(asSession(), PR);
+
+    const edge = db.queries.find((q) => q.query.includes('MERGE (pr)-[:AUTHORED_BY]->(u)'));
+    expect(edge, 'the author edge was created').toBeDefined();
+    expect(edge?.params).toMatchObject({ prId: 'PR_1', login: 'alice' });
+  });
+
+  it('creates CLOSES edges to the referenced issue numbers', async () => {
+    await insertPullRequest(asSession(), {
+      ...PR,
+      closingIssuesReferences: { nodes: [{ number: 100 }, { number: 101 }] },
+    });
+
+    const closes = db.queries.find((q) => q.query.includes('MERGE (pr)-[:CLOSES]->(i)'));
+    expect(closes, 'the closes edge was written').toBeDefined();
+    expect(closes?.params.numbers).toEqual([100, 101]);
+  });
+
+  it('rewrites assignee and label edges on every call, so a change is reflected', async () => {
+    await insertPullRequest(asSession(), {
+      ...PR,
+      assignees: { nodes: [{ login: 'bob' }] },
+      labels: { nodes: [{ name: 'ready-for-review' }] },
+    });
+
+    expect(
+      db.indexOf('(pr:PullRequest {prId: $prId})-[r:ASSIGNED_TO]->() DELETE r'),
+    ).toBeGreaterThanOrEqual(0);
+    expect(
+      db.indexOf('(pr:PullRequest {prId: $prId})-[r:HAS_LABEL]->() DELETE r'),
+    ).toBeGreaterThanOrEqual(0);
+    expect(
+      db.indexOf('(pr:PullRequest {prId: $prId})-[r:CLOSES]->() DELETE r'),
+    ).toBeGreaterThanOrEqual(0);
   });
 });

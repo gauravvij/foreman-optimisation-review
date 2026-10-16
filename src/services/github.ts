@@ -3,7 +3,7 @@
  */
 
 import { githubGraphQL } from './http';
-import type { GitHubComment, GitHubIssue, IssueData } from './neo4j';
+import type { GitHubComment, GitHubIssue, GitHubPullRequest, IssueData } from './neo4j';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -273,4 +273,82 @@ export async function getIssuesData(
 
   console.log(`Fetch complete: ${results.length} ok, ${errors.length} failed`);
   return { results, errors };
+}
+
+// ---------------------------------------------------------------------------
+// Pull request fetch
+// ---------------------------------------------------------------------------
+
+const PULL_REQUESTS_QUERY = `
+query ($owner: String!, $repo: String!, $after: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequests(first: 50, after: $after, orderBy: {field: UPDATED_AT, direction: DESC}) {
+      nodes {
+        id number title url state isDraft createdAt updatedAt closedAt mergedAt
+        additions deletions changedFiles
+        author { login ... on User { name company } }
+        assignees(first: 10) { nodes { login ... on User { name company } } }
+        labels(first: 20) { nodes { name description color } }
+        closingIssuesReferences(first: 10) { nodes { number } }
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+}`;
+
+/**
+ * Fetches pull requests ordered by most recent activity. Stops paging as soon
+ * as a page is entirely older than `since`, so an incremental sync does not
+ * walk back further than it has to.
+ */
+export async function getPullRequests(
+  owner: string,
+  repo: string,
+  since?: string | null,
+  limit = 0,
+): Promise<GitHubPullRequest[]> {
+  const sinceLabel = since ? ` (since: ${since})` : '';
+  console.log(`Fetching pull requests from ${owner}/${repo}${sinceLabel}...`);
+
+  type PullRequestsResponse = {
+    repository: {
+      pullRequests: {
+        nodes: GitHubPullRequest[];
+        pageInfo: { hasNextPage: boolean; endCursor: string };
+      };
+    };
+  };
+
+  const sinceMs = since ? new Date(since).getTime() : null;
+  const all: GitHubPullRequest[] = [];
+  let after: string | null = null;
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+    const data: PullRequestsResponse = await githubGraphQL<PullRequestsResponse>(
+      PULL_REQUESTS_QUERY,
+      { owner, repo, after },
+    );
+    const page: PullRequestsResponse['repository']['pullRequests'] = data.repository.pullRequests;
+
+    let keptFromPage = 0;
+    for (const pr of page.nodes) {
+      if (sinceMs !== null && new Date(pr.updatedAt).getTime() < sinceMs) continue;
+      all.push(pr);
+      keptFromPage++;
+      if (limit > 0 && all.length >= limit) break;
+    }
+
+    if (limit > 0 && all.length >= limit) break;
+    // When filtering by `since`, if nothing in this page passes the filter the
+    // next page is strictly older, so stop walking back.
+    if (sinceMs !== null && keptFromPage === 0 && page.nodes.length > 0) break;
+
+    hasNextPage = page.pageInfo.hasNextPage;
+    after = page.pageInfo.endCursor;
+    console.log(`  Found ${all.length} pull requests so far...`);
+  }
+
+  console.log(`Found ${all.length} total pull requests`);
+  return all;
 }

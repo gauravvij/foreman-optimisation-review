@@ -35,6 +35,7 @@ import { prioritizeIssuesTool } from './tools/prioritize-issues';
 import {
   commentOnPullRequestTool,
   inspectPullRequestTool,
+  pullRequestStatsTool,
   readPullRequestsTool,
 } from './tools/pull-requests';
 import { queryNeo4jTool } from './tools/query-neo4j';
@@ -102,6 +103,7 @@ const agent = new Agent({
     readPullRequests: readPullRequestsTool,
     inspectPullRequest: inspectPullRequestTool,
     commentOnPullRequest: commentOnPullRequestTool,
+    pullRequestStats: pullRequestStatsTool,
     classifyIssueTypes: classifyIssueTypesTool,
     applyIssueTypeSync: applyIssueTypeSyncTool,
     listProjectBoards: listProjectBoardsTool,

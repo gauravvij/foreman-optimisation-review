@@ -1,5 +1,6 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { pullRequestStats } from '../../src/services/pull-request-stats';
 import type { PullRequestDetail } from '../../src/services/pull-requests';
 import {
   commentOnPullRequest,
@@ -8,6 +9,7 @@ import {
   isShippedButOpen,
   summariseLinks,
 } from '../../src/services/pull-requests';
+import { isAutoConfirm } from './confirm';
 
 const PR = z.object({
   number: z.number(),
@@ -271,8 +273,7 @@ export const commentOnPullRequestTool = createTool({
 
     const resumeData = ctx?.agent?.resumeData as { confirm?: boolean } | undefined;
 
-    if (resumeData?.confirm === true) {
-      console.log(`  [commentOnPullRequest] confirmed, posting on #${input.number}`);
+    const applyWrite = async () => {
       const result = await commentOnPullRequest(owner, repo, input.number, input.comment);
       return {
         posted: true,
@@ -280,6 +281,11 @@ export const commentOnPullRequestTool = createTool({
         url: result.url,
         message: `Commented on #${result.number} "${result.title}". ${result.url}`,
       };
+    };
+
+    if (resumeData?.confirm === true) {
+      console.log(`  [commentOnPullRequest] confirmed, posting on #${input.number}`);
+      return applyWrite();
     }
 
     if (resumeData) {
@@ -297,6 +303,13 @@ export const commentOnPullRequestTool = createTool({
       };
     }
 
+    if (isAutoConfirm()) {
+      console.log(
+        `  [commentOnPullRequest] AUTO_CONFIRM set, posting on #${input.number} without confirmation`,
+      );
+      return applyWrite();
+    }
+
     console.log(`  [commentOnPullRequest] awaiting confirmation for #${input.number}`);
     await ctx.agent?.suspend({
       message: [
@@ -312,5 +325,110 @@ export const commentOnPullRequestTool = createTool({
     });
 
     return { ...empty, url: pr.url, message: 'Waiting for confirmation before posting.' };
+  },
+});
+
+const STATS_SAMPLE = z.object({
+  number: z.number(),
+  title: z.string(),
+  url: z.string(),
+  author: z.string().nullable(),
+  state: z.string(),
+  isDraft: z.boolean(),
+  isMerged: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  closedAt: z.string().nullable(),
+  mergedAt: z.string().nullable(),
+});
+
+export const pullRequestStatsTool = createTool({
+  id: 'pullRequestStats',
+  description:
+    'Count pull requests opened, merged, or closed on this repository, in a ' +
+    'window and optionally by a GitHub login. Answers "how many pull requests ' +
+    'did @X open this week" and the same question for merged or closed. The ' +
+    'three counts are independent: a pull request merged this week may have ' +
+    'been opened earlier, and a pull request closed this week without being ' +
+    'merged is counted under closed, not merged. Read-only. Reads from the ' +
+    'graph, so there is no GitHub cost per call; the ingestion pipeline keeps ' +
+    'the graph current, and `inspectPullRequest` is the tool for a fresh fetch ' +
+    'of a single PR. Returns a short sample of recent pull requests from the ' +
+    'window alongside the counts.',
+  inputSchema: z.object({
+    author: z
+      .string()
+      .optional()
+      .describe('GitHub login (no leading @). Omit for repo-wide counts across every author.'),
+    since: z
+      .string()
+      .optional()
+      .describe('ISO 8601 window start. Omit to use windowDays ending at `until` or now.'),
+    until: z.string().optional().describe('ISO 8601 window end. Omit to use now.'),
+    windowDays: z
+      .number()
+      .int()
+      .min(1)
+      .max(90)
+      .optional()
+      .describe('Window length when `since` is omitted. Default 7, max 90.'),
+    sampleLimit: z
+      .number()
+      .int()
+      .min(0)
+      .max(20)
+      .optional()
+      .describe('Number of example pull requests to return, newest activity first. Default 5.'),
+  }),
+  outputSchema: z.object({
+    author: z.string().optional(),
+    window: z.object({ since: z.string(), until: z.string(), days: z.number() }),
+    opened: z.number(),
+    merged: z.number(),
+    closed: z.number(),
+    sample: z.array(STATS_SAMPLE),
+    message: z.string(),
+    error: z.string().optional(),
+  }),
+  execute: async (input) => {
+    const emptyWindow = { since: '', until: '', days: 0 };
+    const empty = {
+      window: emptyWindow,
+      opened: 0,
+      merged: 0,
+      closed: 0,
+      sample: [] as z.infer<typeof STATS_SAMPLE>[],
+    };
+
+    try {
+      console.log(
+        `  [pullRequestStats] author=${input.author ?? '*'} window=${input.since ?? `${input.windowDays ?? 7}d`}..${input.until ?? 'now'}`,
+      );
+      const stats = await pullRequestStats({
+        author: input.author,
+        since: input.since,
+        until: input.until,
+        windowDays: input.windowDays,
+        sampleLimit: input.sampleLimit,
+      });
+
+      const who = stats.author ? `@${stats.author}` : 'everyone';
+      const period = `the last ${stats.window.days} day${stats.window.days === 1 ? '' : 's'}`;
+      const message = `${who} in ${period}: opened ${stats.opened}, merged ${stats.merged}, closed without merge ${stats.closed}.`;
+
+      return {
+        author: stats.author,
+        window: stats.window,
+        opened: stats.opened,
+        merged: stats.merged,
+        closed: stats.closed,
+        sample: stats.sample,
+        message,
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`  [pullRequestStats] error: ${msg}`);
+      return { ...empty, message: 'Could not read pull request stats.', error: msg };
+    }
   },
 });
