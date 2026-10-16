@@ -211,9 +211,13 @@ ${linkRule}
   pull request or an assignee is In progress, and a P0 or P1 that is actionable
   is Ready. Individual pull request details (reviewDecision, checksState,
   draft flag) are not in the graph, so use readPullRequests or
-  inspectPullRequest to answer why a card sits where it does. For aggregate
-  pull request questions ("how many did @X open this week"), use
-  pullRequestStats or query the PullRequest nodes directly in Cypher.
+  inspectPullRequest to answer why a card sits where it does.
+- pullRequestStats is windowed and answers how many were opened, merged,
+  or closed during a time range. It does not answer "how many are open
+  right now". For a repo-wide total of PRs in a state ("how many open
+  PRs are there", "how many drafts"), use queryNeo4j with
+  MATCH (pr:PullRequest {state: 'OPEN'}) RETURN count(pr), or filter on
+  pr.isDraft, pr.isMerged, or pr.authorLogin.
 - An open issue whose pull request already merged is probably finished. Say
   which ones and let the user decide; do not close one yourself.
 - Issue.priorityScore is 0-100, higher first. It is derived from severity,

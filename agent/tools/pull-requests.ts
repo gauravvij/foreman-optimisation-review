@@ -345,16 +345,17 @@ const STATS_SAMPLE = z.object({
 export const pullRequestStatsTool = createTool({
   id: 'pullRequestStats',
   description:
-    'Count pull requests opened, merged, or closed on this repository, in a ' +
-    'window and optionally by a GitHub login. Answers "how many pull requests ' +
-    'did @X open this week" and the same question for merged or closed. The ' +
-    'three counts are independent: a pull request merged this week may have ' +
-    'been opened earlier, and a pull request closed this week without being ' +
-    'merged is counted under closed, not merged. Read-only. Reads from the ' +
-    'graph, so there is no GitHub cost per call; the ingestion pipeline keeps ' +
-    'the graph current, and `inspectPullRequest` is the tool for a fresh fetch ' +
-    'of a single PR. Returns a short sample of recent pull requests from the ' +
-    'window alongside the counts.',
+    'Count pull requests opened, merged, or closed on this repository during ' +
+    'a time window, optionally filtered to a GitHub login. Answers "how many ' +
+    'did @X open this week" and the same for merged or closed. The three ' +
+    'counts are independent: a PR merged this week may have been opened ' +
+    'earlier, and a PR closed this week without being merged is counted under ' +
+    'closed, not merged. This tool is windowed, so it does NOT answer "how ' +
+    'many PRs are open right now" or "how many are drafts"; use queryNeo4j ' +
+    'with a MATCH on PullRequest nodes for those point-in-time totals. ' +
+    'Read-only, backed by the graph; `inspectPullRequest` is the tool for a ' +
+    'fresh single-PR fetch. Returns a short sample of recent pull requests ' +
+    'from the window alongside the counts.',
   inputSchema: z.object({
     author: z
       .string()

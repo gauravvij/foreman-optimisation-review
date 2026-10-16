@@ -267,7 +267,10 @@ async function syncPullRequests(
   }
 
   try {
-    const prs = await getPullRequests(config.owner, config.repo, since, config.limit);
+    // Pull requests are typically a small fraction of the issue count, so the
+    // issue-side debug cap (`config.limit`) is not applied here. Capping PRs
+    // left the graph short of OPEN rows and made total-open queries wrong.
+    const prs = await getPullRequests(config.owner, config.repo, since);
     const result = await ingestPullRequests(prs);
     for (const e of result.errors) errors.push(`pr ingest #${e.number}: ${e.error}`);
     await setLastPullRequestSyncTimestamp(runTimestamp);
