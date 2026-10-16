@@ -4,17 +4,28 @@ import { createFakeDriver } from './fake-driver';
 
 const fake = vi.hoisted(() => ({
   ref: null as ReturnType<typeof import('./fake-driver').createFakeDriver> | null,
+  getPullRequests: vi.fn(),
+  ingestPullRequests: vi.fn(),
+  setLastPullRequestSyncTimestamp: vi.fn(),
 }));
 
-vi.mock('../neo4j', () => ({ getDriver: () => fake.ref?.mockDriver }));
+vi.mock('../neo4j', () => ({
+  getDriver: () => fake.ref?.mockDriver,
+  ingestPullRequests: fake.ingestPullRequests,
+  setLastPullRequestSyncTimestamp: fake.setLastPullRequestSyncTimestamp,
+}));
+vi.mock('../github', () => ({ getPullRequests: fake.getPullRequests }));
 
-import { pullRequestStats } from '../pull-request-stats';
+import { pullRequestStats, refreshAllPullRequests } from '../pull-request-stats';
 
 let db: ReturnType<typeof createFakeDriver>;
 
 beforeEach(() => {
   db = createFakeDriver();
   fake.ref = db;
+  fake.getPullRequests.mockReset();
+  fake.ingestPullRequests.mockReset();
+  fake.setLastPullRequestSyncTimestamp.mockReset();
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-10-16T00:00:00Z'));
 });
@@ -123,5 +134,93 @@ describe('pullRequestStats', () => {
   it('throws clearly when a date input is unparseable, before any Cypher runs', async () => {
     await expect(pullRequestStats({ since: 'not a date' })).rejects.toThrow(/since/);
     expect(db.queries, 'no query may run on invalid input').toEqual([]);
+  });
+});
+
+function stubPr(number: number, over: Record<string, unknown> = {}) {
+  return {
+    id: `PR_${number}`,
+    number,
+    title: `PR ${number}`,
+    url: `https://x/${number}`,
+    state: 'OPEN',
+    isDraft: false,
+    createdAt: '2026-09-01T00:00:00Z',
+    updatedAt: '2026-09-01T00:00:00Z',
+    closedAt: null,
+    mergedAt: null,
+    additions: 0,
+    deletions: 0,
+    changedFiles: 0,
+    author: { login: 'alice' },
+    ...over,
+  };
+}
+
+describe('refreshAllPullRequests', () => {
+  it('reads the current PullRequest count before fetching, so the dry run can report the gap', async () => {
+    db.queueResult([{ n: neo4j.int(25) }]);
+    fake.getPullRequests.mockResolvedValue([stubPr(1), stubPr(2)]);
+
+    const r = await refreshAllPullRequests({ owner: 'o', repo: 'r', dryRun: true });
+
+    expect(r.graphBefore).toBe(25);
+    expect(r.fetched).toBe(2);
+    expect(r.ingested).toBe(0);
+    expect(fake.ingestPullRequests, 'a dry run must not write to the graph').not.toHaveBeenCalled();
+    expect(
+      fake.setLastPullRequestSyncTimestamp,
+      'a dry run must not advance the sync timestamp',
+    ).not.toHaveBeenCalled();
+  });
+
+  it('fetches every pull request without a since filter and without the issue debug cap', async () => {
+    db.queueResult([{ n: neo4j.int(0) }]);
+    fake.getPullRequests.mockResolvedValue([]);
+
+    await refreshAllPullRequests({ owner: 'o', repo: 'r', dryRun: true });
+
+    expect(fake.getPullRequests).toHaveBeenCalledWith('o', 'r', null, 0);
+  });
+
+  it('upserts the fetched pull requests on a non-dry run, then advances the sync timestamp', async () => {
+    db.queueResult([{ n: neo4j.int(5) }]);
+    fake.getPullRequests.mockResolvedValue([stubPr(10), stubPr(11), stubPr(12)]);
+    fake.ingestPullRequests.mockResolvedValue({ ingested: 3, errors: [] });
+
+    const r = await refreshAllPullRequests({ owner: 'o', repo: 'r' });
+
+    expect(fake.ingestPullRequests).toHaveBeenCalledTimes(1);
+    expect(fake.setLastPullRequestSyncTimestamp).toHaveBeenCalledTimes(1);
+    expect(r.ingested).toBe(3);
+    expect(r.fetched).toBe(3);
+    expect(r.graphBefore).toBe(5);
+  });
+
+  it('carries ingest-time per-row errors through to the caller without failing the call', async () => {
+    db.queueResult([{ n: neo4j.int(0) }]);
+    fake.getPullRequests.mockResolvedValue([stubPr(1), stubPr(2)]);
+    fake.ingestPullRequests.mockResolvedValue({
+      ingested: 1,
+      errors: [{ number: 2, error: 'constraint violation' }],
+    });
+
+    const r = await refreshAllPullRequests({ owner: 'o', repo: 'r' });
+
+    expect(r.ingested).toBe(1);
+    expect(r.errors).toEqual([{ number: 2, error: 'constraint violation' }]);
+    expect(
+      fake.setLastPullRequestSyncTimestamp,
+      'the timestamp still advances even with a per-row failure',
+    ).toHaveBeenCalledTimes(1);
+  });
+
+  it('passes a non-zero limit through to the fetch', async () => {
+    db.queueResult([{ n: neo4j.int(0) }]);
+    fake.getPullRequests.mockResolvedValue([]);
+
+    await refreshAllPullRequests({ owner: 'o', repo: 'r', dryRun: true, limit: 50 });
+
+    expect(fake.getPullRequests).toHaveBeenCalledWith('o', 'r', null, 50);
   });
 });

@@ -48,6 +48,7 @@ tools are, or how to use you, reply with this table and nothing invented.
 | Read one pull request in full | Show me PR 88, is it ready to merge? | inspectPullRequest |
 | Comment on a pull request | Leave a note on PR 88 about the Windows failure | commentOnPullRequest |
 | Count PRs opened, merged, or closed | How many PRs did @alice open this week? | pullRequestStats |
+| Backfill missing or stale pull requests | The open PR count looks short — reconcile the graph | refreshPullRequests |
 | Check stale open/closed state | Check whether the graph's issue open/closed state matches GitHub | reconcileIssueState |
 | Correct stale open/closed state | Reconcile the issue state against GitHub and correct any stale entries | reconcileIssueState |
 | Find issues the graph never held | Are any open issues missing from the graph? | ingestMissingIssues |
@@ -218,6 +219,12 @@ ${linkRule}
   PRs are there", "how many drafts"), use queryNeo4j with
   MATCH (pr:PullRequest {state: 'OPEN'}) RETURN count(pr), or filter on
   pr.isDraft, pr.isMerged, or pr.authorLogin.
+- The scheduled sync picks up pull requests updated since the last run,
+  so a dormant open PR that has not been touched since the first startup
+  may never land in the graph through the normal cadence. If a Cypher
+  count comes back lower than the user expects, run refreshPullRequests
+  (dry run first, then with refresh:true) to reconcile the graph against
+  GitHub.
 - An open issue whose pull request already merged is probably finished. Say
   which ones and let the user decide; do not close one yourself.
 - Issue.priorityScore is 0-100, higher first. It is derived from severity,

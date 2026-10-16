@@ -5,6 +5,7 @@ const svc = vi.hoisted(() => ({
   fetchPullRequest: vi.fn(),
   commentOnPullRequest: vi.fn(),
   pullRequestStats: vi.fn(),
+  refreshAllPullRequests: vi.fn(),
 }));
 
 vi.mock('../../../src/services/pull-requests', async (importOriginal) => {
@@ -19,6 +20,7 @@ vi.mock('../../../src/services/pull-requests', async (importOriginal) => {
 
 vi.mock('../../../src/services/pull-request-stats', () => ({
   pullRequestStats: svc.pullRequestStats,
+  refreshAllPullRequests: svc.refreshAllPullRequests,
 }));
 
 import {
@@ -27,6 +29,7 @@ import {
   pullRequestStatsTool,
   readPullRequestsTool,
 } from '../pull-requests';
+import { refreshPullRequestsTool } from '../refresh-pull-requests';
 
 const ctx = {} as never;
 
@@ -379,5 +382,76 @@ describe('pullRequestStatsTool', () => {
     expect(r.opened).toBe(0);
     expect(r.error).toBe('neo4j is down');
     expect(r.message).toContain('Could not read');
+  });
+});
+
+describe('refreshPullRequestsTool', () => {
+  it('reports the gap without writing when refresh is false', async () => {
+    svc.refreshAllPullRequests.mockResolvedValue({
+      graphBefore: 25,
+      fetched: 500,
+      ingested: 0,
+      errors: [],
+    });
+
+    const r = (await refreshPullRequestsTool.execute!({ refresh: false, limit: 0 }, ctx)) as {
+      graphBefore: number;
+      fetched: number;
+      ingested: number;
+      gap: number;
+      message: string;
+    };
+
+    expect(svc.refreshAllPullRequests).toHaveBeenCalledWith(
+      expect.objectContaining({ owner: 'acme', repo: 'widgets', dryRun: true, limit: 0 }),
+    );
+    expect(r.gap).toBe(475);
+    expect(r.ingested).toBe(0);
+    expect(r.message, 'the dry-run message names both sides of the gap').toContain('500');
+    expect(r.message).toContain('25');
+  });
+
+  it('upserts and reports the ingested count when refresh is true', async () => {
+    svc.refreshAllPullRequests.mockResolvedValue({
+      graphBefore: 25,
+      fetched: 500,
+      ingested: 475,
+      errors: [],
+    });
+
+    const r = (await refreshPullRequestsTool.execute!({ refresh: true, limit: 0 }, ctx)) as {
+      ingested: number;
+      message: string;
+    };
+
+    expect(svc.refreshAllPullRequests).toHaveBeenCalledWith(
+      expect.objectContaining({ dryRun: false }),
+    );
+    expect(r.ingested).toBe(475);
+    expect(r.message, 'the write-run message names the before and after totals').toContain('25');
+    expect(r.message).toContain('500');
+  });
+
+  it('reports a missing repo rather than calling the service', async () => {
+    process.env.GITHUB_OWNER = '';
+
+    const r = (await refreshPullRequestsTool.execute!({ refresh: true, limit: 0 }, ctx)) as {
+      error?: string;
+    };
+
+    expect(svc.refreshAllPullRequests).not.toHaveBeenCalled();
+    expect(r.error).toContain('GITHUB_OWNER');
+  });
+
+  it('shapes a service failure instead of throwing', async () => {
+    svc.refreshAllPullRequests.mockRejectedValue(new Error('rate limited'));
+
+    const r = (await refreshPullRequestsTool.execute!({ refresh: false, limit: 0 }, ctx)) as {
+      error?: string;
+      message: string;
+    };
+
+    expect(r.error).toBe('rate limited');
+    expect(r.message).toContain('Refresh failed');
   });
 });

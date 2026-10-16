@@ -43,6 +43,7 @@ import { readAttachmentTool } from './tools/read-attachment';
 import { reconcileIssueStateTool } from './tools/reconcile-issue-state';
 import { listAssessmentsTool, recordAssessmentTool } from './tools/record-assessment';
 import { refreshIssuesTool } from './tools/refresh-issues';
+import { refreshPullRequestsTool } from './tools/refresh-pull-requests';
 import { setBoardColumnTool } from './tools/set-board-column';
 import { summarizeCommentsTool } from './tools/summarize-comments';
 import {
@@ -104,6 +105,7 @@ const agent = new Agent({
     inspectPullRequest: inspectPullRequestTool,
     commentOnPullRequest: commentOnPullRequestTool,
     pullRequestStats: pullRequestStatsTool,
+    refreshPullRequests: refreshPullRequestsTool,
     classifyIssueTypes: classifyIssueTypesTool,
     applyIssueTypeSync: applyIssueTypeSyncTool,
     listProjectBoards: listProjectBoardsTool,

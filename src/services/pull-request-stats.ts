@@ -8,7 +8,8 @@
  */
 
 import neo4j from 'neo4j-driver';
-import { getDriver } from './neo4j';
+import { getPullRequests } from './github';
+import { getDriver, ingestPullRequests, setLastPullRequestSyncTimestamp } from './neo4j';
 
 export interface PullRequestStatsOptions {
   /** Filter to this GitHub login. Omit for repo-wide stats. */
@@ -143,4 +144,65 @@ export async function pullRequestStats(
   } finally {
     await session.close();
   }
+}
+
+export interface RefreshAllPullRequestsOptions {
+  owner: string;
+  repo: string;
+  /** Count the gap without writing. Default false, which writes. */
+  dryRun?: boolean;
+  /** Max pull requests to fetch (0 = all). */
+  limit?: number;
+}
+
+export interface RefreshAllPullRequestsResult {
+  /** Count of pull request nodes in the graph before this call. */
+  graphBefore: number;
+  /** Number of pull requests fetched from GitHub in this call. */
+  fetched: number;
+  /** Number of pull requests upserted into the graph in this call. */
+  ingested: number;
+  /** Per-row errors from the ingest step. The call still returns on failure. */
+  errors: { number: number; error: string }[];
+}
+
+async function countPullRequestsInGraph(): Promise<number> {
+  const session = getDriver().session();
+  try {
+    const res = await session.run('MATCH (pr:PullRequest) RETURN count(pr) AS n');
+    const row = res.records[0];
+    if (!row) return 0;
+    return neo4j.int(row.get('n')).toNumber();
+  } finally {
+    await session.close();
+  }
+}
+
+/**
+ * Fetches every pull request from GitHub, ignoring `lastPullRequestSync`, and
+ * upserts each into the graph. On a dry run the fetch still happens so the
+ * caller can report the gap honestly; only the ingest and the timestamp update
+ * are skipped. Updates `lastPullRequestSync` on a non-dry-run so a scheduled
+ * tick does not re-walk the same window right after.
+ */
+export async function refreshAllPullRequests(
+  opts: RefreshAllPullRequestsOptions,
+): Promise<RefreshAllPullRequestsResult> {
+  const { owner, repo, dryRun = false, limit = 0 } = opts;
+
+  const graphBefore = await countPullRequestsInGraph();
+  const prs = await getPullRequests(owner, repo, null, limit);
+
+  if (dryRun) {
+    return { graphBefore, fetched: prs.length, ingested: 0, errors: [] };
+  }
+
+  const result = await ingestPullRequests(prs);
+  await setLastPullRequestSyncTimestamp(new Date().toISOString());
+  return {
+    graphBefore,
+    fetched: prs.length,
+    ingested: result.ingested,
+    errors: result.errors,
+  };
 }
