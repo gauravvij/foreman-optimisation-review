@@ -1,0 +1,189 @@
+---
+title: Memory and learning tools
+subtitle: Record decisions, rules, and classifier instructions
+---
+
+Three kinds of memory, each with a record tool and a list tool. All
+six write to the graph only, never to GitHub. None of these confirms,
+because the chat utterance that triggers them is itself the
+confirmation.
+
+## recordAssessment
+
+Persist the user's triage decision about one or more issues.
+
+**When to use.** The user says an issue is nice-to-have, should-fix,
+wont-fix, or needs-discussion.
+
+**When not to use.** For a judgment about a kind of issue
+(label-shaped). Use `recordCategoryRule` or `recordGuidance` instead.
+
+### Input
+
+<ParamField path="issueNumbers" type="number[]" required="true">
+  The issues this decision applies to.
+</ParamField>
+<ParamField path="decision" type="enum" required="true">
+  `should-fix`, `nice-to-have`, `wont-fix`, or `needs-discussion`.
+</ParamField>
+<ParamField path="note" type="string">
+  The user's reasoning, in their words where possible.
+</ParamField>
+
+### Response
+
+<ResponseField name="recorded" type="number[]" />
+<ResponseField name="replaced" type="number[]">
+  Issues whose prior assessment was overwritten.
+</ResponseField>
+<ResponseField name="notFound" type="number[]">
+  Issues not in the graph.
+</ResponseField>
+
+### Why
+
+An `Assessment` outranks the model's `priorityScore`. When both
+exist and disagree, Foreman leads with the assessment.
+
+---
+
+## listAssessments
+
+Read back the triage decisions the user has recorded.
+
+### Input
+
+<ParamField path="decision" type="enum">
+  Filter to one decision. Omit for all.
+</ParamField>
+
+### Response
+
+<ResponseField name="assessments" type="array">
+  Each carries `issueNumber`, `title`, `decision`, `note`, `recordedAt`,
+  `recordedBy`.
+</ResponseField>
+<ResponseField name="total" type="number" />
+
+---
+
+## recordCategoryRule
+
+Persist a standing rule that issues carrying a given label belong to
+a given category, and apply it immediately to every matching issue.
+
+**When to use.** The user corrects a whole class of issues:
+"anything labelled X should be Y".
+
+**When not to use.** For a correction that is not label-shaped (two
+classification values that should not appear together, a classifier
+rule the model should follow). Use `recordGuidance`.
+
+### Input
+
+<ParamField path="label" type="string" required="true">
+  The GitHub label to match, exactly as it appears on issues.
+</ParamField>
+<ParamField path="category" type="enum" required="true">
+  One of `frontend`, `backend`, `cli`, `infra`, `docs`, `security`,
+  `observability`, `tooling`, `other`.
+</ParamField>
+<ParamField path="note" type="string">
+  The user's reasoning.
+</ParamField>
+
+### Response
+
+<ResponseField name="changed" type="array">
+  Per-issue `from -> to` category moves.
+</ResponseField>
+<ResponseField name="changedCount" type="number" />
+
+### Why
+
+A `Rule` wins over the model's own classification. The rule keeps
+applying to issues ingested after it was recorded, so you only have
+to say it once. `Issue.categorySource` records which rule set the
+category, so "why is this issue categorised that way" has a direct
+answer.
+
+---
+
+## listCategoryRules
+
+Read back the standing label-to-category rules, and optionally remove
+one.
+
+### Input
+
+<ParamField path="remove" type="string">
+  Label whose rule should be deleted. Omit to only list.
+</ParamField>
+
+### Response
+
+<ResponseField name="rules" type="array">
+  Each with `label`, `category`, `note`, `recordedAt`.
+</ResponseField>
+<ResponseField name="removed" type="boolean">
+  True when a rule was deleted this call.
+</ResponseField>
+
+Removing a rule does not re-classify the issues it moved; the next
+`refreshIssues --analyze` run picks them up.
+
+---
+
+## recordGuidance
+
+Persist a standing instruction about how issues should be classified.
+
+**When to use.** The user corrects the classifier itself: "two
+subcategories should not appear together", "task issues should not
+carry ui-polish".
+
+**When not to use.** When the condition is a GitHub label, use
+`recordCategoryRule`; a rule is enforced rather than advisory.
+
+### Input
+
+<ParamField path="text" type="string" required="true">
+  The instruction, phrased as the user said it.
+</ParamField>
+
+### Response
+
+<ResponseField name="text" type="string">
+  The recorded text.
+</ResponseField>
+<ResponseField name="total" type="number">
+  How many standing instructions are on file.
+</ResponseField>
+
+### Why
+
+The text is added to the classifier prompt on every future run. It is
+advisory; the model may still ignore it on edge cases. For an
+enforced correction, use `recordCategoryRule`.
+
+Guidance does not reclassify existing issues; re-analysis will.
+
+---
+
+## listGuidance
+
+Read back the standing classification instructions, and optionally
+remove one.
+
+### Input
+
+<ParamField path="remove" type="string">
+  Text of the instruction to delete. Omit to only list.
+</ParamField>
+
+### Response
+
+<ResponseField name="guidance" type="array">
+  Each with `text`, `recordedAt`.
+</ResponseField>
+<ResponseField name="removed" type="boolean" />

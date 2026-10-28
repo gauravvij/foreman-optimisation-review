@@ -1,0 +1,106 @@
+---
+title: Astropods deployment
+subtitle: What the blueprint declares and why
+---
+
+The `astropods.yml` at the repository root is the whole deployment.
+Everything else (containers, environment, triggers) flows from it.
+
+## Top-level inputs
+
+```yaml
+inputs:
+  GITHUB_OWNER:
+    datatype: string
+  GITHUB_REPO:
+    datatype: string
+```
+
+Both are prompted at `ast configure` time and injected into every
+container, including the ingestion ones. Declared once at the top so
+the ingestion images do not have to re-declare them.
+
+## Agent
+
+```yaml
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+```
+
+Builds the agent image from the repository root. The image runs
+`agent/index.ts` under bun, which registers every tool, builds the
+instructions, and starts the Mastra adapter.
+
+## Models
+
+```yaml
+models:
+  reasoning:
+    provider: gateway
+    models: [claude-sonnet-4-6, claude-opus-4-8]
+  fast:
+    provider: gateway
+    models: [claude-haiku-4-5]
+```
+
+Two tiers. `MODEL_REASONING` is used by the agent itself.
+`MODEL_FAST` is used by classification and comment summaries. The
+mapping lives in `src/services/models.ts`.
+
+## Integrations
+
+```yaml
+integrations:
+  github:
+    provider: github
+```
+
+The GitHub token is provided by the platform. No manual secret setup.
+
+## Knowledge graph
+
+```yaml
+knowledge:
+  graph:
+    provider: neo4j
+```
+
+Managed by the platform. Both the agent and the ingestion containers
+reach it through `NEO4J_URI` (or `NEO4J_HOST` on the local compose
+builder).
+
+## Ingestion entries
+
+Three containers, all built from `ingestion/Dockerfile` (or
+`.labels`):
+
+- `startup`: manual trigger. `ISSUE_LIMIT` and `ISSUE_STATE` are
+  declared as per-entry inputs so a deploy can override them without
+  changing anything else.
+- `schedule`: scheduled trigger. `ISSUE_LIMIT: "0"` and `ISSUE_STATE:
+  "all"` are baked as build args, so the scheduled run is always
+  uncapped and always re-fetches closed issues.
+- `sync-labels`: manual trigger with an `APPLY` input. False is a dry
+  run; true writes.
+
+The reason `sync-labels` uses an input rather than a container
+environment variable is that the local compose builder ignores
+`container.environment` for ingestion services. An input is the only
+flag that can be overridden per run with `ast ingest --env`.
+
+## Dev
+
+```yaml
+dev:
+  interfaces: [web]
+  command: bun --watch agent/index.ts
+  watch: [agent, src]
+```
+
+`ast dev` restarts the agent when `agent/` or `src/` changes. The
+tool list is built at startup, so an added or edited tool is picked
+up without stopping the stack. The ingestion containers are separate
+services that this mount does not reach, so they are rebuilt
+explicitly.

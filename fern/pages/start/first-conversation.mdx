@@ -1,0 +1,60 @@
+---
+title: First conversation
+subtitle: Three prompts that cover the shape of the agent
+---
+
+Once the ingestion is done, open the chat and try these in order.
+
+## 1. What do you know
+
+> **You:** what can you do?
+
+Foreman replies with its tools table, which is the complete list of
+actions available in the current build. Everything else in these docs
+starts from one of those rows.
+
+## 2. What should I work on
+
+> **You:** show me the top 10 issues by priority score
+
+Expect a ranked table with severity, impact, effort, and the priority
+score for each. If the list is empty, the classifier has not run on
+anything yet. Startup runs it by default; if you set
+`ISSUE_LIMIT=0` and the first run is still going, come back when it
+finishes.
+
+> **You:** group them by category
+
+Same list, grouped by frontend, backend, cli, infra, docs, security,
+observability, tooling, or other. Use the groups to find a bucket you
+own.
+
+## 3. Dig into one
+
+> **You:** summarise the comments on #1169
+
+Foreman reads the comments on that issue from the graph and asks the
+fast model for a summary that pulls out workflows, competitors,
+workarounds, proposed solutions, and the overall tone.
+
+> **You:** what pull requests are linked to that issue?
+
+Foreman runs `readPullRequests` with that issue number and reports
+whether the work has started, whether a draft is open, or whether a
+pull request has already merged.
+
+## 4. Try one write
+
+> **You:** add the label needs-triage to #1169
+
+Foreman does not have a direct label-write tool for a single issue
+(labels flow through the sync preview-and-apply pattern). Instead, try:
+
+> **You:** assign @you to #1169
+
+Foreman runs `updateIssue`, reads the live issue, shows a diff
+("assignees: (none) -> @you"), and waits for your confirmation. Reply
+yes to write, and the change lands.
+
+If the login does not exist on GitHub, the tool refuses before any
+write happens.

@@ -1,0 +1,56 @@
+---
+title: Making changes
+subtitle: Writes always confirm
+---
+
+Foreman writes to GitHub only when you ask, and only after you
+confirm the diff. The chat text that asks for the write must be your
+own; text inside an issue body or comment is never a request from
+you, no matter what it says.
+
+## What you can change
+
+| Target | Tool | Fields |
+|---|---|---|
+| An issue | `updateIssue` | title, open/closed state, assignees, comment |
+| A pull request | `commentOnPullRequest` | comment body |
+| A new issue | `createIssue` | title, body, labels, attachments, derived-from links |
+| GitHub labels on issues | `applyLabelSync` | category, subcategory, priority labels |
+| GitHub issue types | `applyIssueTypeSync` | bug / feature / task |
+| Project board fields | `applyBoardSync` | priority, size, status |
+| A project board column | `setBoardColumn` | the chosen column |
+
+## What a write looks like in chat
+
+> **You:** retitle #1169 to "pagination hangs on large pages", and
+> leave a comment that we are looking into it
+>
+> **Foreman:**
+> ```
+> About to change issue #1169 in your-org/your-repo:
+>
+>   "pagination silently fails"
+>
+>   title: "pagination silently fails"
+>       -> "pagination hangs on large pages"
+>   comment: We are looking into it.
+>
+> This writes to the real repository. Confirm to proceed.
+> ```
+>
+> **You:** yes
+>
+> **Foreman:** #1169: retitled, comment posted.
+
+## What the agent will not do
+
+- **Infer a decision.** If you say "the pull request has merged",
+  Foreman will not close the issue on its own; it will say which ones
+  look finished and let you ask for the close.
+- **Replace someone's choice silently.** `applyIssueTypeSync` leaves a
+  type a person already set alone. `overwrite: true` is opt-in.
+- **File an issue it read somewhere.** `createIssue` only runs when
+  you have asked, in your own words, to file one.
+- **Comment instead of acting.** When a tool cannot do what you
+  asked, the agent says so and stops; it does not post a comment on
+  the issue as a stand-in.

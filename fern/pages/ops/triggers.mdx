@@ -1,0 +1,63 @@
+---
+title: Ingestion triggers
+subtitle: Startup, schedule, and the manual label sync
+---
+
+Three containers feed the graph. Each one has its own trigger and its
+own job.
+
+## startup
+
+Trigger: manual. Fired once by a human at deploy time, usually.
+
+Inputs: `ISSUE_LIMIT` (default 20) and `ISSUE_STATE` (default
+`open`). Both are declared on the entry, so a redeploy can change
+either without touching the Dockerfile.
+
+What it does:
+
+- Fetches issues up to the limit, newest first.
+- Fetches pull requests up to the limit, newest first by
+  `updatedAt`.
+- Classifies issues: category, subcategory, severity, impact, effort,
+  priority score, issue type, needs-clarification.
+- Records `lastIssueSync` and `lastPullRequestSync` as the watermark
+  for the scheduled run.
+
+## schedule
+
+Trigger: scheduled. Fires on the cadence Astropods configures (every
+few minutes by default).
+
+Inputs: none. `ISSUE_LIMIT: "0"` and `ISSUE_STATE: "all"` are baked
+as build args, and `ingestion/Dockerfile` promotes both to runtime
+env.
+
+What it does:
+
+- Reads every issue with `updatedAt > lastIssueSync`, upserts it,
+  and re-classifies on content change.
+- Reads every pull request with `updatedAt > lastPullRequestSync`,
+  upserts it, and advances the timestamp.
+- Does not re-walk anything older. A dormant pull request opened
+  before the first ingestion and untouched since will never flow
+  through this entry; see [Reconciling](/use/reconciling).
+
+## sync-labels
+
+Trigger: manual. Fired on demand, usually right after a classifier
+run, to push the derived labels to GitHub as a batch rather than
+through the chat.
+
+Input: `APPLY` (default `false`). False is a dry run that prints the
+plan to the logs; true writes.
+
+What it does: the same thing `applyLabelSync` does in the chat.
+Reads the derived category/subcategory/priority for every issue and
+pushes labels under `area/`, `type/`, and `priority/` to match.
+Creates and deletes labels as needed.
+
+The difference from the chat tool is that this is unattended: the
+plan is logged, not shown through a suspend, and there is no
+confirmation step. Use it in CI or on a cron, or when you want to run
+the sync without opening the chat.

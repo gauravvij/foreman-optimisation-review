@@ -1,0 +1,62 @@
+---
+title: Learning loops
+subtitle: How Foreman carries decisions forward
+---
+
+The agent has no memory between conversations. The graph is the only
+place anything you tell Foreman survives. Three node types carry what
+you say forward.
+
+## Assessments
+
+A triage decision about particular issues: should-fix, nice-to-have,
+wont-fix, or needs-discussion. Recorded by `recordAssessment`, read
+back by `listAssessments`.
+
+An `Assessment` outranks the model's `priorityScore`: when both
+exist and disagree, Foreman leads with the assessment and names the
+score as a lower-weight signal.
+
+```
+(Issue)-[:HAS_ASSESSMENT]->(Assessment)
+```
+
+## Category rules
+
+A standing mapping from a GitHub label to a category: "anything
+labelled `infra-team` is `infra`". Recorded by `recordCategoryRule`.
+A rule applies immediately to issues that match, and keeps applying
+to issues ingested after it was recorded. Rules win over the model's
+own classification.
+
+`Issue.categorySource` names the rule that set the category when one
+did, so a question like "why is this categorised that way" has a
+direct answer.
+
+## Guidance
+
+A free-text instruction for the classifier: "two values should not
+appear together on the same issue". Recorded by `recordGuidance`.
+Guidance is added to the classifier prompt on every future run. It is
+advisory rather than enforced, so prefer `recordCategoryRule`
+when the condition is a label the model could match itself.
+
+## When each is right
+
+| Situation | Tool |
+|---|---|
+| A judgment about these specific issues | `recordAssessment` |
+| "Anything with this label belongs in this category" | `recordCategoryRule` |
+| A judgment about the classifier itself, not matched by a label | `recordGuidance` |
+
+A single-issue correction is an assessment. A whole-class correction
+is a rule. A classification quirk is guidance.
+
+## What learning does not do
+
+Guidance and rules take effect on the next classification pass, not
+retroactively. Existing issue categories only change when the
+classifier re-reads an issue (through `refreshIssues --analyze`, or
+through `classifyIssueTypes` on untyped issues). A rule, in contrast,
+applies immediately to issues that match the label, since it is a
+direct mapping rather than a model instruction.

@@ -1,0 +1,59 @@
+---
+title: Ingestion
+subtitle: How the graph stays current
+---
+
+Three cadences feed the graph. Each has a job the others cannot do.
+
+## Startup
+
+Runs once, triggered manually. Reads issues and pull requests up to
+`ISSUE_LIMIT`, classifies issues, and records `lastIssueSync` and
+`lastPullRequestSync` as the watermark for the next tier.
+
+## Schedule
+
+Runs on a timer. Reads every issue with `updatedAt >
+lastIssueSync` and every pull request with `updatedAt >
+lastPullRequestSync`, upserts them into the graph, and advances the
+watermarks. New comments, new assignments, state changes, and new
+pull requests flow through here.
+
+The scheduled container bakes `ISSUE_LIMIT=0` and `ISSUE_STATE=all`
+as build args. Both are promoted to env in the Dockerfile, so the
+scheduled run is never capped and always re-fetches closed issues,
+which is how a close on GitHub reaches the graph.
+
+## On-demand
+
+Four chat-callable tools fix the gaps the other two cadences leave:
+
+| Tool | What it fixes |
+|---|---|
+| `reconcileIssueState` | Open or closed state drift on issues the graph already holds |
+| `ingestMissingIssues` | Issues the graph never held, which `reconcileIssueState` cannot see |
+| `refreshIssues` | Stale title, body, labels, or comments on issues the graph does hold |
+| `refreshPullRequests` | Dormant open pull requests the scheduled sync skipped over |
+
+## The dormant-PR gap, explained
+
+The schedule sync walks pull requests in `UPDATED_AT, DESC` order and
+breaks on the first all-older page. That is correct for the steady
+state, but a pull request opened before the first run and never
+touched again has `updatedAt < lastPullRequestSync`, so the
+incremental pass skips it and the page-break terminates the walk
+before anything older is seen.
+
+The on-demand `refreshPullRequests` fetches every pull request
+without a since filter, upserts the graph, and advances
+`lastPullRequestSync` so the next scheduled tick does not re-walk the
+same window.
+
+## When each tool is right
+
+- A total looks short on GitHub: `ingestMissingIssues` for issues,
+  `refreshPullRequests` for pull requests.
+- An issue the graph calls open is really closed: `reconcileIssueState`.
+- An issue's text or comments are out of date in the graph:
+  `refreshIssues`.
+- Everything else: the scheduled sync picks it up on its next tick.

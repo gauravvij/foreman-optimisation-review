@@ -1,0 +1,59 @@
+---
+title: Confirmations
+subtitle: Preview, then apply
+---
+
+Every write Foreman makes to GitHub pauses to show you the diff
+first. The pattern is the same across every write tool.
+
+## The three-step flow
+
+1. **Plan.** The tool reads the live state from GitHub (not the
+   graph), computes the diff against what you asked for, and calls
+   `ctx.agent.suspend` with a `message` that names the issue, the
+   change, and any guardrails that apply.
+2. **Confirm.** The chat shows the suspend message. You reply yes
+   (confirm) or no (cancel). The runtime attaches your choice to the
+   paused run and resumes it.
+3. **Apply.** On confirm, the tool re-reads live state and writes.
+   On cancel, nothing happens and the tool returns "cancelled".
+
+The planning read is deliberate: confirming against a stale state is
+how the wrong thing gets closed. The write-side re-plan is also
+deliberate: a stale confirmation cannot push changes the graph no
+longer supports.
+
+## Which tools confirm
+
+| Tool | Confirmation |
+|---|---|
+| `updateIssue` | Yes, with a diff on title, state, assignees, and comment |
+| `createIssue` | Yes, with a duplicate check against the graph |
+| `commentOnPullRequest` | Yes, with the PR title and the comment preview |
+| `applyLabelSync` | Yes, with the first 15 per-issue changes and label create/delete lists |
+| `applyIssueTypeSync` | Yes, with the first 20 kind changes and a count of replacements |
+| `applyBoardSync` | Yes, with the first 20 field changes, add-to-board counts, and downgrade warnings |
+| `setBoardColumn` | Yes, with the moves listed and the override note |
+
+## Which tools do not confirm
+
+Dry-run tools (`previewLabelSync`, `previewBoardSync`,
+`listProjectBoards`, read-only queries) never confirm; they never
+write.
+
+Classification tools (`classifyIssueTypes`, `refreshIssues --analyze`)
+write to the graph, not to GitHub, so they do not confirm. The graph
+is a mirror the agent owns, so a classification pass is treated as a
+read-side operation.
+
+Memory tools (`recordAssessment`, `recordCategoryRule`,
+`recordGuidance`) also write only to the graph. They do not confirm
+because the chat utterance that triggered them is itself the
+confirmation.
+
+## Auto-confirm
+
+The platform supports an auto-confirm mode where confirmations are
+granted automatically. Prefer manual confirmation on anything that
+touches GitHub. The agent will still show the diff; auto-confirm just
+replies yes to it.

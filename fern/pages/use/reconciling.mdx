@@ -1,0 +1,69 @@
+---
+title: Reconciling the graph
+subtitle: When a count disagrees with GitHub
+---
+
+Three things can be wrong with the graph, and each needs its own
+tool.
+
+## A stale open or closed state
+
+An issue the graph says is open is really closed, or the other way
+round. Fix: `reconcileIssueState`.
+
+> **You:** check whether the graph matches GitHub on open/closed state
+
+Reports the drift. Re-run with `apply: true` to correct it. Only
+writes to the graph, never to GitHub.
+
+This also finds issues that GitHub no longer has (deleted or never
+created) and reports them as ghosts. On apply, ghosts are removed
+except where a recorded `Assessment` would be lost with them. A kept
+ghost is reported so you can decide what to do about the stranded
+assessment.
+
+## An issue the graph never held
+
+The count looks short. Not a state issue, since there is no state to
+drift. Fix: `ingestMissingIssues`.
+
+> **You:** are any open issues missing from the graph?
+
+Reports the gap. Re-run with `ingest: true` to fetch and classify them,
+bounded by `limit` (default 25). A chunk at a time.
+
+## Stale content on an issue the graph does hold
+
+An issue the graph calls "needs clarification" was reworded on
+GitHub, and now reads fine. Fix: `refreshIssues`.
+
+> **You:** refresh #1169 and #2464 from GitHub
+
+Named issues only. Or omit `issueNumbers` to find every issue whose
+title, body, labels, or comments have changed since ingestion. Pass
+`analyze: true` to re-classify what was refreshed.
+
+## A dormant open pull request
+
+The scheduled sync walks pull requests in `UPDATED_AT, DESC`. A pull
+request opened long ago and never touched since has `updatedAt <
+lastPullRequestSync` and never comes through. Fix: `refreshPullRequests`.
+
+> **You:** reconcile the pull requests against GitHub
+
+Dry run first. The reply names the gap. Re-run with `refresh: true` to
+fetch every pull request and upsert the graph. The timestamp advances
+so the next scheduled tick does not re-walk the same window.
+
+## Which tool, when
+
+| Symptom | Tool |
+|---|---|
+| Issue state looks wrong | `reconcileIssueState` |
+| Open-issue count looks short | `ingestMissingIssues` |
+| Issue text or comments are out of date | `refreshIssues` |
+| Open-PR count looks short | `refreshPullRequests` |
+
+`reconcileIssueState` cannot see issues the graph never held, so it
+reports no drift while a count stays short. When a total looks wrong,
+check for missing issues; when the text looks wrong, refresh it.

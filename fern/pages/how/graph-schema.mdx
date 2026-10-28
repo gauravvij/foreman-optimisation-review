@@ -1,0 +1,76 @@
+---
+title: Graph schema
+subtitle: What lives in Neo4j
+---
+
+The agent's instructions carry a copy of the schema so every Cypher
+query it writes is grounded in real labels. The same schema is
+reproduced here.
+
+## Nodes
+
+| Label | What it is | Key properties |
+|---|---|---|
+| `Issue` | A GitHub issue, mirrored | `number`, `title`, `bodyText`, `state`, `authorLogin`, `category`, `subcategory`, `severity`, `impact`, `effort`, `priorityScore`, `priorityRationale`, `issueType`, `needsClarification`, `clarificationReason` |
+| `PullRequest` | A GitHub pull request, mirrored | `number`, `title`, `url`, `state`, `isDraft`, `isMerged`, `createdAt`, `updatedAt`, `closedAt`, `mergedAt`, `additions`, `deletions`, `changedFiles`, `authorLogin` |
+| `Comment` | A comment on an issue | `commentId`, `bodyText`, `createdAt`, `authorLogin` |
+| `User` | A GitHub user referenced on an issue or pull request | `login`, `name`, `company` |
+| `Label` | A GitHub label | `name`, `description`, `color` |
+| `Reaction` | A reaction on an issue or comment | `content`, `userLogin`, `issueId`, `commentId` |
+| `Category` | Free-text category (legacy, noisier than `Issue.category`) | `name` |
+| `Competitor` | A competitor named in an issue or comment | `name` |
+| `Workaround` | A workaround extracted from a comment | `workaroundText`, `embedding` |
+| `Solution` | A proposed solution extracted from a comment | `solutionText`, `embedding` |
+| `Keyword` | A keyword tag on a workaround or solution | `name` |
+| `Subcategory` | The subcategory vocabulary | `name`, `definition`, `derivedAt` |
+| `Guidance` | A standing instruction for the classifier | `text`, `recordedAt`, `recordedBy` |
+| `Rule` | A standing label-to-category rule | `kind`, `label`, `category`, `note`, `recordedAt`, `recordedBy` |
+| `Assessment` | A triage decision recorded by a user | `decision`, `note`, `recordedAt`, `recordedBy` |
+
+## Relationships
+
+```
+(Issue)-[:HAS_COMMENT]->(Comment)
+(Issue)-[:AUTHORED_BY]->(User)
+(Issue)-[:ASSIGNED_TO]->(User)
+(Issue)-[:HAS_LABEL]->(Label)
+(Issue)-[:HAS_REACTION]->(Reaction)
+(Issue)-[:MENTIONS_COMPETITOR]->(Competitor)
+(Issue)-[:HAS_WORKAROUND]->(Workaround)
+(Issue)-[:HAS_SOLUTION]->(Solution)
+(Issue)-[:BELONGS_TO_CATEGORY]->(Category)
+(Issue)-[:HAS_ASSESSMENT]->(Assessment)
+(Comment)-[:AUTHORED_BY]->(User)
+(Comment)-[:HAS_REACTION]->(Reaction)
+(Comment)-[:HAS_WORKAROUND]->(Workaround)
+(Comment)-[:HAS_SOLUTION]->(Solution)
+(Comment)-[:MENTIONS_COMPETITOR]->(Competitor)
+(Workaround)-[:HAS_KEYWORD]->(Keyword)
+(Solution)-[:HAS_KEYWORD]->(Keyword)
+(PullRequest)-[:AUTHORED_BY]->(User)
+(PullRequest)-[:ASSIGNED_TO]->(User)
+(PullRequest)-[:HAS_LABEL]->(Label)
+(PullRequest)-[:CLOSES]->(Issue)
+```
+
+`:CLOSES` edges come from the pull request's own "closes #N" references.
+`:ASSIGNED_TO` edges, on both `Issue` and `PullRequest`, are refreshed
+on every incremental sync, so they reflect live assignment state.
+
+## Properties on Issue that need a note
+
+| Property | Meaning |
+|---|---|
+| `category` | One of `frontend`, `backend`, `cli`, `infra`, `docs`, `security`, `observability`, `tooling`, `other`. The field for grouping. |
+| `subcategory` | A finer axis drawn from the repository's own issues; read `Subcategory` nodes for the vocabulary. |
+| `issueType` | `bug`, `feature`, or `task`. Writable to GitHub through `applyIssueTypeSync`. |
+| `priorityScore` | 0 to 100, higher first. Derived from severity, impact, and effort. |
+| `priorityRationale` | A short human-readable sentence explaining the score. |
+| `needsClarification` | True when the issue cannot be acted on as written. |
+| `categorySource` | Names the `Rule` that set the category, when one did. |
+
+## Properties on PullRequest that are not in the graph
+
+Review decision, check status, labels, and the pull request body are
+not stored. They change too often for the mirror to be useful. Fetch
+them live with `inspectPullRequest`.

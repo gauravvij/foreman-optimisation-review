@@ -1,0 +1,298 @@
+---
+title: Research tools
+subtitle: Read the graph, read GitHub, summarise
+---
+
+Read-only tools. None of these writes to GitHub or the graph.
+
+## queryNeo4j
+
+Execute a read-only Cypher query against the knowledge graph.
+
+**When to use.** Any count, breakdown, filter, or cross-tab the graph
+can answer. Point-in-time pull-request totals, label distributions,
+issues with a specific property.
+
+**When not to use.** For a live field GitHub holds and the graph does
+not (review decision, check status, PR body), use
+`inspectPullRequest`.
+
+### Input
+
+<ParamField path="cypher" type="string" required="true">
+  A read-only Cypher query. Always include `LIMIT`.
+</ParamField>
+
+### Response
+
+<ResponseField name="rows" type="array">
+  The rows the query returned.
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  How many rows came back.
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message when the query failed. Omitted when the call succeeded.
+</ResponseField>
+
+### Example
+
+> **You:** how many open pull requests have no assignee?
+>
+> **Foreman:** runs
+> ```cypher
+> MATCH (pr:PullRequest {state: 'OPEN'})
+> WHERE NOT (pr)-[:ASSIGNED_TO]->(:User)
+> RETURN count(pr) AS n LIMIT 1
+> ```
+
+---
+
+## prioritizeIssues
+
+List issues ranked by priority score, flat or grouped by category.
+
+**When to use.** "What should I work on", "top 10 security issues",
+"how do things break down by area".
+
+**When not to use.** For questions about PRs, counts, or anything the
+graph can answer with a direct Cypher query, go through `queryNeo4j`.
+
+### Input
+
+<ParamField path="category" type="enum">
+  Restrict to one category: `frontend`, `backend`, `cli`, `infra`,
+  `docs`, `security`, `observability`, `tooling`, `other`. Omit for
+  all categories.
+</ParamField>
+<ParamField path="limit" type="number" default="20">
+  Max issues to return, or per group when grouping.
+</ParamField>
+<ParamField path="groupByCategory" type="boolean" default="false">
+  Return issues grouped by category instead of a flat ranked list.
+</ParamField>
+
+### Response
+
+Each issue carries `number`, `title`, `category`, `severity`,
+`impact`, `effort`, `priorityScore`, and `priorityRationale`. Grouped
+mode adds `groups`, each with a `category`, a `count`, and the list
+of issues in that bucket.
+
+Issues with no `priorityScore` are omitted; the classifier has not
+run on them yet.
+
+---
+
+## summarizeComments
+
+Summarise every comment on one issue, optionally focused on a user
+query.
+
+**When to use.** "What are the workarounds mentioned on #412",
+"summarise the discussion on #1169", "what does the thread say about
+Windows".
+
+### Input
+
+<ParamField path="issueNumber" type="number" required="true">
+  The GitHub issue number.
+</ParamField>
+<ParamField path="userQuery" type="string">
+  Optional. Focus the summary on one angle.
+</ParamField>
+
+### Response
+
+<ResponseField name="summary" type="string">
+  The summary from the fast model.
+</ResponseField>
+
+<ResponseField name="commentCount" type="number">
+  How many comments were in the thread.
+</ResponseField>
+
+Pulls out workflows, competitor mentions, workarounds, proposed
+solutions, and emotional tone by default. A `userQuery` steers the
+focus; it does not change what is read.
+
+---
+
+## readPullRequests
+
+Read pull requests linked to a list of issue numbers.
+
+**When to use.** "Which of these issues have a pull request", "which
+are awaiting review", "which have shipped but are still open".
+
+**When not to use.** When starting from a pull request number, use
+`inspectPullRequest`. When counting activity in a window, use
+`pullRequestStats`.
+
+### Input
+
+<ParamField path="issueNumbers" type="number[]" required="true">
+  Issues to look up. Ask for the ones you care about, not the whole
+  repository.
+</ParamField>
+<ParamField path="openOnly" type="boolean" default="false">
+  Report only issues that have an open pull request.
+</ParamField>
+
+### Response
+
+Each issue in the response carries `issueNumber`, the list of
+`pullRequests`, and three booleans: `hasOpenReadyPR`, `hasDraftPR`,
+`hasMergedPR`. A `shippedButOpen` list flags issues whose pull request
+merged while the issue stayed open.
+
+Read-only. Graph-backed, so no GitHub call per look-up.
+
+---
+
+## inspectPullRequest
+
+Read one pull request as it is right now, from GitHub.
+
+**When to use.** Starting from a pull request number, and when
+freshness matters: review decision, check status, draft flag.
+
+### Input
+
+<ParamField path="number" type="number" required="true">
+  The pull request number.
+</ParamField>
+<ParamField path="includeBody" type="boolean" default="true">
+  Include the PR description. Set `false` for just the state.
+</ParamField>
+
+### Response
+
+A `pullRequest` object with `number`, `title`, `url`, `state`,
+`isDraft`, `reviewDecision`, `author`, `body`, `bodyTruncated`,
+`createdAt`, `updatedAt`, `mergedAt`, `headRefName`, `baseRefName`,
+`additions`, `deletions`, `changedFiles`, `labels`, `closesIssues`,
+`checksState`. A one-line `message` summarises the state for direct
+display.
+
+Body is truncated at 4000 characters when included.
+
+---
+
+## pullRequestStats
+
+Count pull requests opened, merged, or closed in a time window,
+optionally filtered to one author.
+
+**When to use.** "How many PRs did @alice open this week", "how many
+merged in September", "weekly activity for the team".
+
+**When not to use.** For a point-in-time total ("how many open",
+"how many drafts"), use `queryNeo4j` on `PullRequest` nodes. This
+tool is windowed and will not answer that.
+
+### Input
+
+<ParamField path="author" type="string">
+  GitHub login (no leading `@`). Omit for repo-wide counts across
+  every author.
+</ParamField>
+<ParamField path="since" type="string">
+  ISO 8601 window start. Omit to use `windowDays` ending at `until`
+  or now.
+</ParamField>
+<ParamField path="until" type="string">
+  ISO 8601 window end. Omit to use now.
+</ParamField>
+<ParamField path="windowDays" type="number" default="7">
+  Window length when `since` is omitted. Min 1, max 90.
+</ParamField>
+<ParamField path="sampleLimit" type="number" default="5">
+  Example pull requests to return, newest activity first. 0 to 20.
+</ParamField>
+
+### Response
+
+Three counts (`opened`, `merged`, `closed`) and a `sample` list.
+Counts are independent: a PR merged this week may have been opened
+earlier, and a PR closed without being merged lands under `closed`.
+
+---
+
+## listProjectBoards
+
+List the project boards linked to the repository and the managed
+fields each one carries.
+
+**When to use.** To pick which board to target, or when a sync
+reports the target as ambiguous.
+
+### Input
+
+Empty.
+
+### Response
+
+<ResponseField name="boards" type="array">
+  Each with `number`, `title`, `items`, and `fields`. Each field has
+  a `name` and the list of `options`.
+</ResponseField>
+
+A board with no option-bearing fields is still listed, but is not
+"usable" for a sync.
+
+---
+
+## readAttachment
+
+Read a non-image file the user attached to this turn.
+
+**When to use.** A log, a transcript, a markdown note. The adapter
+inlines images under 2 MiB automatically, so this tool is for files
+whose text content you need to see.
+
+**When not to use.** For a screenshot. Images are already visible to
+the model; reading their bytes as text is noise.
+
+### Input
+
+<ParamField path="path" type="string" required="true">
+  Absolute path as the adapter named it in "Open them with a
+  file-reading tool at the paths below." Not the filename alone.
+</ParamField>
+<ParamField path="limitBytes" type="number" default="65536">
+  Max bytes to return. Cap is 524288.
+</ParamField>
+
+### Response
+
+<ResponseField name="ok" type="boolean">
+  Whether the file was readable as text.
+</ResponseField>
+
+<ResponseField name="path" type="string">
+  The resolved absolute path.
+</ResponseField>
+
+<ResponseField name="size" type="number">
+  File size in bytes.
+</ResponseField>
+
+<ResponseField name="bytesReturned" type="number">
+  Bytes actually read.
+</ResponseField>
+
+<ResponseField name="truncated" type="boolean">
+  True when the file was larger than the limit.
+</ResponseField>
+
+<ResponseField name="content" type="string">
+  The file contents.
+</ResponseField>
+
+Resolves symlinks and refuses paths that escape `AGENT_FILES_DIR`
+(default `/data/files`). A binary-looking file comes back with
+`ok: false` and a message suggesting a smaller re-upload if it was a
+screenshot.

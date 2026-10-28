@@ -1,0 +1,92 @@
+instances:
+  - url: foreman.docs.buildwithfern.com
+
+title: Foreman
+
+navigation:
+  - section: Overview
+    contents:
+      - page: What is Foreman
+        path: pages/overview/what-is-foreman.mdx
+      - page: Mental model
+        path: pages/overview/mental-model.mdx
+      - page: At a glance
+        path: pages/overview/at-a-glance.mdx
+  - section: Getting started
+    contents:
+      - page: Deploy
+        path: pages/start/deploy.mdx
+      - page: Environment
+        path: pages/start/environment.mdx
+      - page: First ingestion
+        path: pages/start/first-ingestion.mdx
+      - page: First conversation
+        path: pages/start/first-conversation.mdx
+  - section: How Foreman works
+    contents:
+      - page: Architecture
+        path: pages/how/architecture.mdx
+      - page: Graph schema
+        path: pages/how/graph-schema.mdx
+      - page: Ingestion
+        path: pages/how/ingestion.mdx
+      - page: Learning loops
+        path: pages/how/learning.mdx
+      - page: Confirmations
+        path: pages/how/confirmations.mdx
+  - section: Using Foreman
+    contents:
+      - page: Asking questions
+        path: pages/use/asking-questions.mdx
+      - page: Making changes
+        path: pages/use/making-changes.mdx
+      - page: Working with pull requests
+        path: pages/use/working-with-prs.mdx
+      - page: Working with issues
+        path: pages/use/working-with-issues.mdx
+      - page: Reconciling the graph
+        path: pages/use/reconciling.mdx
+      - page: Teaching Foreman
+        path: pages/use/teaching.mdx
+  - section: Tool reference
+    contents:
+      - page: Research
+        path: pages/tools/research.mdx
+      - page: Writes
+        path: pages/tools/writes.mdx
+      - page: Sync workflows
+        path: pages/tools/sync.mdx
+      - page: Reconciliation
+        path: pages/tools/reconciliation.mdx
+      - page: Memory and learning
+        path: pages/tools/memory.mdx
+  - section: Playbooks
+    contents:
+      - page: Weekly PR activity
+        path: pages/playbooks/pr-counts.mdx
+      - page: Reconciling dormant pull requests
+        path: pages/playbooks/reconciling-dormant-prs.mdx
+      - page: Teaching a category rule
+        path: pages/playbooks/teaching-category-rule.mdx
+  - section: Operations
+    contents:
+      - page: Astropods deployment
+        path: pages/ops/astropods.mdx
+      - page: Ingestion triggers
+        path: pages/ops/triggers.mdx
+      - page: Observability
+        path: pages/ops/observability.mdx
+      - page: Durability
+        path: pages/ops/durability.mdx
+  - section: Reference
+    contents:
+      - page: Environment variables
+        path: pages/ref/env-vars.mdx
+      - page: Graph schema
+        path: pages/ref/graph-schema.mdx
+      - page: Models
+        path: pages/ref/models.mdx
+      - page: FAQ
+        path: pages/ref/faq.mdx
+      - page: Changelog
+        path: pages/ref/changelog.mdx

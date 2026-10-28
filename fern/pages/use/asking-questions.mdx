@@ -1,0 +1,63 @@
+---
+title: Asking questions
+subtitle: Research patterns
+---
+
+Research in Foreman is Cypher under the hood. You can ask in plain
+English and let the agent pick the tool, or you can be specific.
+
+## By rank
+
+Phrases that trigger `prioritizeIssues`:
+
+- "what should I work on"
+- "top N issues"
+- "top N frontend issues"
+- "group the top 50 by category"
+
+The tool reads classified issues (ones with a `priorityScore`), sorts
+by score descending, and returns a flat list or a grouped one.
+
+## By count or breakdown
+
+Phrases that trigger `queryNeo4j`:
+
+- "how many open bugs are there"
+- "how many issues are in each category"
+- "how many open pull requests have no assignee"
+- "show me the full issue taxonomy as two tables"
+
+The agent writes the Cypher itself and runs it against the graph.
+Every query goes out with a `LIMIT`.
+
+## By comment content
+
+Phrases that trigger `summarizeComments`:
+
+- "summarise the comments on #1169"
+- "what are the workarounds people have found on #1169"
+- "what does the discussion on #412 say about the Windows failure"
+
+The tool reads every comment on the issue and asks the fast model for
+a summary. A `userQuery` focuses the summary on one angle.
+
+## By pull-request linkage
+
+Two tools, two starting points:
+
+- "which of the top 10 issues already have a pull request?" is
+  `readPullRequests` with a list of issue numbers. Read-only, from
+  the graph.
+- "show me PR 88, is it ready to merge?" is `inspectPullRequest`
+  with a pull-request number. Reads live from GitHub so review
+  decisions and check status are current.
+
+## By time window
+
+`pullRequestStats` answers "how many did @X open this week" and the
+same for merged and closed. The three counts are independent: a pull
+request merged this week may have been opened earlier.
+
+For point-in-time totals ("how many open right now", "how many
+drafts"), use `queryNeo4j` on `PullRequest` nodes. `pullRequestStats`
+is windowed and will not answer those.

@@ -1,0 +1,60 @@
+---
+title: Deploy
+subtitle: Run Foreman on Astropods
+---
+
+Foreman is an Astropods blueprint. The blueprint declares one agent
+container (the chat) and three ingestion containers (startup,
+schedule, label sync).
+
+## Prerequisites
+
+- An Astropods account and the `ast` CLI installed.
+- A GitHub token with `repo` scope for the repository you are
+  triaging. For writes that touch labels, issue types, or project
+  boards, the token also needs `issues:write` and `project` scopes.
+- A Neo4j instance Astropods can reach. The blueprint uses the managed
+  `knowledge.graph.provider: neo4j` entry, so this is wired up for you
+  at deploy time.
+- An AI gateway Astropods can reach. The blueprint uses two tiers,
+  `reasoning` (Claude Sonnet / Opus) and `fast` (Claude Haiku), both
+  wired through the gateway Astropods manages.
+
+## First deploy
+
+```bash
+# Pick up GITHUB_OWNER, GITHUB_REPO, and the startup ISSUE_LIMIT.
+ast configure
+
+# Build the agent and both ingestion images, push, and launch.
+ast up
+```
+
+The startup container runs once with `SYNC_MODE=startup` and seeds the
+graph. Progress shows up in the ingestion logs. The chat is reachable
+on the web interface Astropods exposes once the agent container is
+healthy.
+
+## Local development
+
+```bash
+# Runs the agent with bun --watch, so an edit to a tool or instruction
+# file reloads without stopping the stack.
+ast dev
+```
+
+`ast dev` auto-injects `GRPC_SERVER_ADDR`, `ASTRO_GATEWAY_URL`,
+`ASTRO_GATEWAY_API_KEY`, `NEO4J_URI`, and the model keys. You still
+set `GITHUB_OWNER`, `GITHUB_REPO`, and the GitHub token through
+`ast configure`.
+
+## Repository shape
+
+```
+foreman/
+  agent/            The Mastra agent and its tools
+  src/services/     Graph access, GitHub access, classification, writes
+  ingestion/        Dockerfiles and entrypoints for the ingestion tiers
+  astropods.yml     The blueprint
+  Dockerfile        The agent image
+```

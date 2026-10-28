@@ -1,0 +1,56 @@
+---
+title: At a glance
+subtitle: A worked example in one page
+---
+
+Foreman is deployed against `your-org/your-repo`. Here is a short
+conversation that touches research, a reconciliation, and a write.
+
+## Ask what to work on
+
+> **You:** what are the top 10 issues by priority?
+
+Foreman runs `prioritizeIssues` and comes back with a ranked table.
+Severity, impact, effort, and the priority score are shown for each
+one. Issues with no classification yet are not in the list, since the
+score is only set after the classifier has run.
+
+## Spot a wrong-looking count
+
+> **You:** how many open pull requests are there?
+
+Foreman runs a Cypher count on the graph. If the number looks lower
+than you expect, the usual cause is dormant open pull requests the
+scheduled sync has not seen since the first ingestion.
+
+> **You:** reconcile the pull requests against GitHub
+
+Foreman runs `refreshPullRequests` as a dry run first, so you see the
+gap before any writes land. On confirmation it fetches every pull
+request and upserts the graph. The next count is accurate.
+
+## Make a change
+
+> **You:** assign chris to #3145
+
+Foreman runs `updateIssue` with `addAssignees: ["chris"]`. The tool
+reads the live issue, shows a diff ("assignees: (none) -> @chris"),
+and suspends. You confirm, and the write lands on GitHub. The graph
+is updated to match.
+
+If the login does not exist, the tool refuses before any write
+happens. If the token lacks `issues:write`, the tool says so instead
+of silently failing.
+
+## Record a decision
+
+> **You:** #412 and #530 are nice-to-have, defer them
+
+Foreman runs `recordAssessment` with the decision and the issues. The
+decision lives in the graph on an `Assessment` node attached to each
+issue, with the user who recorded it and when. Future turns surface it
+when ranking, because an assessment outranks the model's priority
+score.
+
+That is the shape of most sessions: ask, inspect, act, record. The
+rest of these docs break each piece down.

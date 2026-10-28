@@ -1,0 +1,61 @@
+---
+title: Working with pull requests
+subtitle: Three tools, three starting points
+---
+
+Pull requests have their own corner of the graph, with a few live
+reads layered on top where freshness matters.
+
+## Start from an issue
+
+> **You:** which of the top 10 issues have a pull request?
+
+Foreman runs `readPullRequests` with those issue numbers. The reply
+names the issues that have a linked pull request, whether the PR is
+in draft, whether it is awaiting review, and whether any have merged
+while the issue is still open ("shipped but open").
+
+Read-only. Graph-backed. Good for a batch over several issues.
+
+## Start from a pull request number
+
+> **You:** show me PR 88, is it ready to merge?
+
+Foreman runs `inspectPullRequest`. This one goes to GitHub, not the
+graph, because review decisions and check status are not in the
+mirror. You get the title, state, draft flag, review decision, check
+status, branches, diff size, labels, closed-issues list, and the
+body.
+
+Also the right tool when a pull request's state has moved on since it
+was last ingested and you want the current picture.
+
+## Count activity in a window
+
+> **You:** how many PRs did @alice merge this week?
+
+Foreman runs `pullRequestStats` with `author: "alice"` and a seven-day
+window. Opened, merged, and closed are three independent counts: a
+PR merged this week could have been opened earlier.
+
+For "how many are open right now" or "how many are drafts", use
+`queryNeo4j` on `PullRequest` nodes directly. Windowed stats cannot
+answer point-in-time totals.
+
+## Comment on a pull request
+
+> **You:** leave a note on PR 88 about the Windows failure
+
+Foreman runs `commentOnPullRequest`, reads the PR to confirm the
+title, shows you the comment preview, and waits for yes. A comment
+about the code under review belongs on the PR; a comment about
+whether the work is worth doing belongs on the issue, through
+`updateIssue`.
+
+## When a count looks wrong
+
+The scheduled sync walks pull requests by `UPDATED_AT, DESC`. A pull
+request that was open before the first ingestion and has not been
+touched since will not be in the graph. Run `refreshPullRequests` to
+reconcile, dry-run first. See [Reconciling](/use/reconciling) for the
+full walk-through.

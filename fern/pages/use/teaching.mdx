@@ -1,0 +1,64 @@
+---
+title: Teaching Foreman
+subtitle: Three memory tools, three distinct jobs
+---
+
+Foreman has no memory between conversations. What survives is what
+you record into the graph. Three node types carry user guidance
+forward.
+
+## Assessments: judgments about specific issues
+
+> **You:** #412 and #530 are nice to have
+
+`recordAssessment` writes an `Assessment` node attached to each issue
+with `decision: "nice-to-have"`. Future turns surface it when ranking
+work, because an assessment outranks the model's priority score.
+
+Replace a prior assessment on the same issue by recording a new one;
+the tool reports which ones were replaced.
+
+## Rules: label-to-category mappings
+
+> **You:** anything labelled infra-team should be categorised as infra
+
+`recordCategoryRule` writes a `Rule` node and applies it immediately
+to every matching issue. The rule keeps applying to issues ingested
+later, and it wins over the model's own classification.
+
+`Issue.categorySource` records which rule set the category, so
+"why is this issue categorised that way" has a direct answer.
+
+Remove a rule by passing its label to `listCategoryRules` with
+`remove: "the-label"`.
+
+## Guidance: free-text instructions for the classifier
+
+> **You:** tooling issues should not carry the ui-polish subcategory
+
+`recordGuidance` writes a `Guidance` node. The text is added to the
+classifier prompt on every future run, so it steers how new issues
+are classified. Guidance is advisory rather than enforced; prefer
+`recordCategoryRule` when the condition is a GitHub label.
+
+## When to use which
+
+| Situation | Tool |
+|---|---|
+| "These specific issues are X" | `recordAssessment` |
+| "Anything with this label is X" | `recordCategoryRule` |
+| "The classifier should never do X" | `recordGuidance` |
+
+A single-issue correction is an assessment. A whole-class correction
+is a rule. A classifier-level nudge is guidance.
+
+## What teaching does not do
+
+Guidance and rules take effect on the next classification pass, not
+retroactively. Issue categories only change when the classifier
+re-reads an issue (through `refreshIssues --analyze`, or through
+`classifyIssueTypes` on untyped issues).
+
+A rule applies immediately to existing issues that carry the label,
+because it is a direct label-to-category write rather than a model
+instruction. Guidance never does.

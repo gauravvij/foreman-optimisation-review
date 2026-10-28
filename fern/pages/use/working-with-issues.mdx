@@ -1,0 +1,66 @@
+---
+title: Working with issues
+subtitle: Classify, label, size, decide
+---
+
+Four flows cover the day-to-day work on the backlog.
+
+## Classify a batch
+
+> **You:** classify issue kinds, up to 25
+
+Foreman runs `classifyIssueTypes`. The tool fills in `bug`, `feature`,
+or `task` on issues that have no kind yet, and marks any that need
+clarification. One model call per issue, so pass a `limit` and work
+in batches. Safe to re-run as new issues arrive.
+
+Writes to the graph. GitHub is not touched until you ask to apply.
+
+## Push issue types to GitHub
+
+> **You:** set the issue types on GitHub
+
+Foreman runs `applyIssueTypeSync`. Shows the diff, names any
+replacements, and warns if the repository has no issue type for a
+classification the graph holds. The default leaves a type a person
+already set alone; pass `overwrite: true` to change them too.
+
+## Sync labels
+
+> **You:** preview the GitHub label sync
+>
+> **You:** apply the label sync, but only the first 10 issues
+
+The preview is read-only. The apply shows the full diff (adds,
+removes, creates, deletes) and waits for confirmation. Only labels
+under `area/`, `type/`, and `priority/` are touched; everything else
+on an issue is left alone.
+
+The sync walks in chunks. Applied changes drop out of the plan, so a
+re-run continues where the last one stopped.
+
+## Record a decision
+
+> **You:** #412 and #530 are nice to have, defer them
+
+Foreman runs `recordAssessment` with `decision: "nice-to-have"` and
+the issue numbers. The decision outranks the model's priority score,
+so a future "what should I work on" question surfaces the assessment
+rather than the raw score.
+
+> **You:** what decisions have I recorded?
+
+`listAssessments` reads them back, optionally filtered to one
+decision.
+
+## Open or edit one issue
+
+| Change | Tool |
+|---|---|
+| Retitle, close, reopen, assign, or add a one-off comment | `updateIssue` |
+| File a new issue | `createIssue` |
+
+`createIssue` searches the graph for likely duplicates and shows them
+in the confirmation. When the intent is to record a pattern you
+noticed across several issues, pass their numbers as `derivedFrom` so
+the new issue links back to the evidence.

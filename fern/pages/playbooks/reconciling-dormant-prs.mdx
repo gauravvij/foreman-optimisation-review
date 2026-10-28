@@ -1,0 +1,79 @@
+---
+title: Reconciling dormant pull requests
+subtitle: Fix a point-in-time count that disagrees with GitHub
+---
+
+The scheduled sync walks pull requests in `UPDATED_AT, DESC`. A pull
+request opened long ago and never touched since has `updatedAt <
+lastPullRequestSync`, so the incremental pass skips it. The result:
+a count on the graph that is lower than GitHub shows.
+
+## The ask
+
+> **You:** how many open pull requests are there?
+
+> **Foreman:** 15.
+
+The real number on GitHub is 36. Twenty-one dormant open pull
+requests have been sitting on the repo since before the first
+ingestion.
+
+## The dry run
+
+> **You:** reconcile the pull requests against GitHub
+
+Foreman runs `refreshPullRequests` with `refresh: false`.
+
+```
+GitHub holds 500 pull request(s); the graph holds 25. 475 are new.
+Re-run with refresh to upsert them.
+```
+
+The gap is `fetched - graphBefore`. It is a one-shot sample, not an
+ongoing report; the dry run already walked GitHub, so re-running the
+same dry run costs the same.
+
+## The write
+
+> **You:** run refreshPullRequests with refresh true
+
+Foreman runs the tool with `refresh: true`.
+
+```
+Reconciled 475 pull request(s). Graph went from 25 to 500.
+```
+
+The tool advances `lastPullRequestSync` to the current time, so the
+next scheduled tick does not re-walk the same window. New pull
+requests opened or updated after this call come through the regular
+incremental sync.
+
+## Verify
+
+> **You:** how many open pull requests are there?
+
+> **Foreman:** 36.
+
+If the number is still off, run `queryNeo4j`:
+
+```cypher
+MATCH (pr:PullRequest {state: 'OPEN'})
+RETURN count(pr) AS n LIMIT 1
+```
+
+If that returns 36 and GitHub shows a different number, something is
+closing pull requests server-side while you reconcile; re-run the
+tool.
+
+## When this is the wrong fix
+
+Not every mismatch is a dormant PR. A pull request that merged last
+night and has `state: 'OPEN'` in the graph is a stale
+`PullRequest.state` property; the next scheduled tick fixes it. If
+the symptom is "a PR I know about shows the wrong state", the right
+tool is a one-off fetch:
+
+> **You:** inspect PR 88
+
+`inspectPullRequest` goes to GitHub, not the graph, so it is never
+stale.

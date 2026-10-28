@@ -1,0 +1,49 @@
+---
+title: First ingestion
+subtitle: Seeding the graph on first deploy
+---
+
+The startup container is what fills the graph the first time. It runs
+once, with `SYNC_MODE=startup`, and reads up to `ISSUE_LIMIT` issues
+and the pull requests it finds alongside them.
+
+## Pick a safe ISSUE_LIMIT
+
+The default is `20`. That gives you a working chat in a minute or two
+on a repository of any size. Set it to `0` to seed the whole backlog
+on the first run, which is slower (one model call per issue for
+classification), but gets you a graph that matches your repository in
+full from the start.
+
+If you leave the default and want the rest later, two options are
+open:
+
+- Use `ingestMissingIssues` from the chat to walk the gap in bounded
+  chunks. The tool reports how many open issues the graph does not
+  hold, and `--ingest` fetches them with a limit per call.
+- Wait. The scheduled trigger walks the pull-request update stream on
+  its own cadence, and the chat picks up new issues through
+  `ingestMissingIssues` whenever you ask.
+
+## What the first run does
+
+1. Fetches issues in the chosen state up to the limit.
+2. Fetches pull requests up to the limit, newest first by `updatedAt`.
+3. Classifies each issue: category, subcategory, severity, impact,
+   effort, priority score, issue type, and whether it needs
+   clarification.
+4. Records `lastIssueSync` and `lastPullRequestSync` so the scheduled
+   trigger can pick up from there.
+
+## What the scheduled trigger does afterwards
+
+The scheduled container runs with `ISSUE_LIMIT=0` and
+`ISSUE_STATE=all`. It reads every issue updated since
+`lastIssueSync` and every pull request updated since
+`lastPullRequestSync`. New activity flows in without re-walking the
+whole repository.
+
+A pull request that was open before the first run and has not been
+touched since has `updatedAt < lastPullRequestSync`, so the
+incremental pass skips it. See [Reconciling](/use/reconciling) for the
+on-demand tool that fixes that gap.

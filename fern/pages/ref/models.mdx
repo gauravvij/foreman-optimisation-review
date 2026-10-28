@@ -1,0 +1,55 @@
+---
+title: Models
+subtitle: Which model does which job
+---
+
+Foreman uses two tiers through the Astropods AI gateway. The mapping
+of task to tier lives in `src/services/models.ts`.
+
+## Tiers
+
+| Tier | Env | Default | Used for |
+|---|---|---|---|
+| Reasoning | `MODEL_REASONING` | `claude-sonnet-4-6` | The agent itself. |
+| Fast | `MODEL_FAST` | `claude-haiku-4-5` | Classification, comment summaries. |
+
+The gateway accepts the model ids declared in `astropods.yml`
+(`claude-sonnet-4-6`, `claude-opus-4-8`, `claude-haiku-4-5`). An id
+the gateway does not know will fail at request time.
+
+## Task to tier
+
+| Task | Tier |
+|---|---|
+| Agent turns (every chat message) | Reasoning |
+| `summarizeComments` | Fast |
+| `classifyIssueTypes` (one call per issue) | Fast |
+| Ingestion classification pass (category, subcategory, severity, etc.) | Fast |
+
+## Why two tiers
+
+A fast model is cheap and quick enough to classify every issue on
+ingestion and in `classifyIssueTypes`. A reasoning model is the right
+fit for the agent itself, where turns are longer and the tool calls
+depend on structured reasoning across many facts.
+
+The agent never calls the fast model directly for a user-facing
+response. Fast-model output lands in the graph (classification) or in
+a short structured summary (`summarizeComments`); the reasoning model
+is what the user talks to.
+
+## Gateway
+
+`ASTRO_GATEWAY_URL` and `ASTRO_GATEWAY_API_KEY` are injected by the
+platform. The gateway exposes OpenTelemetry-compatible traces, so
+model calls can be correlated with the tool calls that spawned them.
+
+Rate limits, retries, and backoff are handled at the gateway level;
+the agent's log line for a retried call carries a `backoff` tag.
+
+## Overrides
+
+Set `MODEL_REASONING` or `MODEL_FAST` at deploy time to use a
+different model for either tier. The ids must be in the list declared
+on the `models` entry of `astropods.yml`; the gateway will not accept
+one that is not.

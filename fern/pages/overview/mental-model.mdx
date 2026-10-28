@@ -1,0 +1,44 @@
+---
+title: Mental model
+subtitle: "Three parts: the chat, the graph, and GitHub"
+---
+
+Foreman sits between you and GitHub. Three things are always in play:
+
+**The chat.** You and the agent talk. The agent calls tools to answer
+you or to carry out writes you have asked for. Every write pauses for
+you to confirm.
+
+**The knowledge graph.** A Neo4j database that mirrors the issues,
+pull requests, labels, comments, users, and classifications. Research
+questions go here, which is why Foreman can answer "how many open
+pull requests have no assignee" in one Cypher pass instead of paging
+through the GitHub API.
+
+**GitHub.** The source of truth for everything the graph mirrors. Live
+writes land here. For live reads that need freshness (review
+decisions, check status, the full PR body), Foreman goes to GitHub
+directly rather than trusting a possibly stale copy.
+
+## How a turn flows
+
+1. You ask something.
+2. Foreman picks a tool: a query on the graph, a live GitHub read, or
+   a preview of a write.
+3. For a write, the tool reads the live state first, builds the diff,
+   and suspends the agent so the chat can show you the plan.
+4. You confirm or cancel. On confirm, the tool writes to GitHub and
+   updates the graph to match.
+
+## The three places state lives
+
+| Place | What it holds | Freshness |
+|---|---|---|
+| The graph | Issues, pull requests, labels, comments, classifications, assessments, rules, guidance | Rebuilt by the ingestion pipeline on a schedule, patched by write tools, backfilled on demand |
+| GitHub | The source of truth for everything the graph mirrors | Live |
+| Agent memory | Working memory for the current conversation and the last N turns | Volatile between conversations; the graph is the only place a decision survives |
+
+The ingestion story on how the graph stays in sync is covered in
+[Ingestion](/how/ingestion). The one-liner is: a startup trigger seeds
+the graph, a scheduled trigger patches incrementally, and on-demand
+tools fix the gaps those cadences leave behind.

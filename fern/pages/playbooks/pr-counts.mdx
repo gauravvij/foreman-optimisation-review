@@ -1,0 +1,70 @@
+---
+title: Weekly PR activity
+subtitle: "How many pull requests did @X open, merge, and close this week?"
+---
+
+The question looks simple. The nuance is that opened, merged, and
+closed are three independent counts, and the usual "this week" window
+is seven days ending now.
+
+## The ask
+
+> **You:** how many PRs did @alice open, merge, and close this week?
+
+## What Foreman does
+
+Runs `pullRequestStats` with `author: "alice"`. No `since` or `until`,
+so the window defaults to seven days ending now.
+
+```
+@alice in the last 7 days: opened 3, merged 1, closed without
+merge 0.
+```
+
+A sample list follows, newest activity first. The sample is five by
+default; pass `sampleLimit` up to 20 for a longer one.
+
+## Variations
+
+> **You:** how about last month?
+
+Add `windowDays: 30`. Or give explicit dates:
+
+> **You:** between Sep 1 and Sep 30
+
+Foreman passes `since` and `until` as ISO 8601 strings. The window's
+`days` is the span of what you actually gave, not the default.
+
+## Why the three counts are independent
+
+A pull request merged this week may have been opened earlier. The
+tool reports it under `merged`, not `opened`. A pull request closed
+this week without being merged is counted under `closed`.
+
+If you want unique pull requests touched in the window regardless of
+transition, use `queryNeo4j`:
+
+```cypher
+MATCH (pr:PullRequest)
+WHERE datetime(pr.updatedAt) >= datetime('2026-10-21T00:00:00Z')
+  AND datetime(pr.updatedAt) <= datetime('2026-10-28T00:00:00Z')
+  AND pr.authorLogin = 'alice'
+RETURN count(pr) AS touched LIMIT 1
+```
+
+## When the count looks wrong
+
+A dormant open pull request opened long ago and never touched since
+can be missing from the graph. `pullRequestStats` would still
+undercount `opened` for that author if the pull request was opened
+before the window too.
+
+For "how many are open right now by @alice" use `queryNeo4j`:
+
+```cypher
+MATCH (pr:PullRequest {state: 'OPEN', authorLogin: 'alice'})
+RETURN count(pr) AS n LIMIT 1
+```
+
+If that disagrees with GitHub, run `refreshPullRequests` to backfill.
+See [Reconciling dormant PRs](/playbooks/reconciling-dormant-prs).

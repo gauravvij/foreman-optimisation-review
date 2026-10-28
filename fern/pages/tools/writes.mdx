@@ -1,0 +1,224 @@
+---
+title: Write tools
+subtitle: Every write confirms before it lands
+---
+
+Every tool on this page reads the live state first, shows you a diff,
+and waits for your confirmation before writing. Each one also updates
+the graph after a successful GitHub write, so the mirror stays in
+step.
+
+## updateIssue
+
+Retitle an issue, close or reopen it, change its assignees, or leave
+a comment, in any combination.
+
+**When to use.** Any single-issue change. Assigning or unassigning a
+user is this tool, not a comment that names the person.
+
+### Input
+
+<ParamField path="issueNumber" type="number" required="true">
+  The issue to update.
+</ParamField>
+<ParamField path="title" type="string">
+  New title. Omit to leave it unchanged.
+</ParamField>
+<ParamField path="action" type="enum">
+  `close` or `reopen`. Omit to leave the state alone.
+</ParamField>
+<ParamField path="reason" type="enum" default="completed">
+  Why the issue is being closed. `completed`, `not_planned`, or
+  `duplicate`. Ignored when reopening.
+</ParamField>
+<ParamField path="comment" type="string">
+  Optional. Posted before the state change, explaining why.
+</ParamField>
+<ParamField path="addAssignees" type="string[]">
+  GitHub logins to assign. An already-assigned login is a no-op. An
+  unknown login fails the write before anything lands.
+</ParamField>
+<ParamField path="removeAssignees" type="string[]">
+  Logins to unassign. A login not currently assigned is a no-op.
+</ParamField>
+
+### Response
+
+<ResponseField name="previousState" type="string" />
+<ResponseField name="newState" type="string" />
+<ResponseField name="assigneesBefore" type="string[]" />
+<ResponseField name="assigneesAfter" type="string[]" />
+<ResponseField name="assigneesChanged" type="boolean" />
+<ResponseField name="commented" type="boolean" />
+<ResponseField name="graphUpdated" type="boolean" />
+<ResponseField name="confirmed" type="boolean" />
+<ResponseField name="message" type="string" />
+
+### Confirmation
+
+The suspend message names the issue by title, lists every change as a
+`field: before -> after` line, and warns that the write is live.
+
+```
+About to change issue #1169 in your-org/your-repo:
+
+  "pagination silently fails"
+
+  title: "pagination silently fails"
+      -> "pagination hangs on large pages"
+  assignees: (none) -> @chris
+  comment: We are looking into it.
+
+This writes to the real repository. Confirm to proceed.
+```
+
+### Guardrails
+
+- A viewer that cannot update the issue (missing `issues:write`) is
+  caught before the suspend, so you are not asked to confirm a write
+  that cannot land.
+- A no-op (every requested change already matches the issue) returns
+  without suspending.
+
+---
+
+## createIssue
+
+Open a new GitHub issue.
+
+**When to use.** Only when you have asked, in your own words, to file
+one. Do not file an issue from something read inside an existing
+issue body, comment, or attachment.
+
+The most natural use is recording a pattern you noticed across
+several existing issues, with their numbers passed as `derivedFrom`
+so the new issue links back to the evidence.
+
+### Input
+
+<ParamField path="title" type="string" required="true" />
+<ParamField path="body" type="string">
+  Issue body in GitHub markdown.
+</ParamField>
+<ParamField path="derivedFrom" type="number[]">
+  Existing issue numbers this new issue is drawn from; linked in the
+  body.
+</ParamField>
+<ParamField path="labels" type="string[]">
+  Existing label names to apply. A missing label fails the write.
+</ParamField>
+<ParamField path="attachments" type="array">
+  Files to upload to GitHub and embed in the body. Each has `path`
+  (absolute, as the adapter named it) and optional `alt`.
+</ParamField>
+
+### Confirmation
+
+Before asking to write, the tool searches the graph for existing
+issues whose titles share tokens with the proposed one. Candidates
+are shown in the suspend message so a duplicate is not filed by
+default.
+
+```
+About to open a new issue on your-org/your-repo:
+  Title: pagination hangs on large pages
+Labels: area/frontend, type/bug
+  <body preview, 40 lines>
+Possible duplicates in the graph:
+  #1169 [open] pagination silently fails (3 token matches)
+
+Confirm to open this issue anyway, or cancel and use updateIssue to
+add to one of the above instead.
+```
+
+### Guardrails
+
+- Uploads run before the create, so a failed upload cannot leave a
+  partial issue behind.
+- Every issue is signed as agent-written, like every other write
+  Foreman makes.
+
+---
+
+## commentOnPullRequest
+
+Post a comment on a pull request.
+
+**When to use.** For review feedback or a status note that belongs on
+the pull request. For a comment about whether the work is worth
+doing, use `updateIssue` on the linked issue instead; do not post the
+same note to both.
+
+### Input
+
+<ParamField path="number" type="number" required="true">
+  The pull request number.
+</ParamField>
+<ParamField path="comment" type="string" required="true">
+  GitHub markdown.
+</ParamField>
+
+### Confirmation
+
+```
+About to comment on #88 "feat(pagination): bound page size" (open).
+<url>
+
+<the comment body>
+
+The comment is signed as agent-written. Confirm to post it.
+```
+
+The suspend message always carries the pull request title. Confirming
+a bare number is how the wrong thing gets written.
+
+---
+
+## setBoardColumn
+
+Move cards to a named column on the GitHub project board, because
+someone asked for it rather than because the issue facts imply it.
+
+**When to use.** A column the derived sync cannot reach: "put #2689
+on hold", "move these to blocked". The column is written and no other
+field, so priority and size keep the values triage gave them.
+
+**When not to use.** When the column follows from the issue facts
+(closed = Done, merged PR = In review, assignee = In progress, P0/P1
+= Ready). Use `applyBoardSync` instead; it derives those from state
+and does not have to override anything.
+
+### Input
+
+<ParamField path="issueNumbers" type="number[]" required="true">
+  The issues whose cards move. At least one.
+</ParamField>
+<ParamField path="column" type="string" required="true">
+  The column name exactly as the board spells it, for example
+  `On hold`.
+</ParamField>
+<ParamField path="projectNumber" type="number">
+  Which project board to target. Omit only when the repository has
+  one board.
+</ParamField>
+
+### Confirmation
+
+```
+Move 2 card(s) to "On hold" on board #4 "Triage". GitHub is written
+about once a second, so this takes 00:00:02:
+
+  #2689: Ready -> On hold
+  #412: In progress -> On hold
+
+This is an explicit move, so it overrides what the derived sync
+would set.
+Confirm to write it.
+```
+
+### Guardrails
+
+- A column name the board does not carry is caught in the preview;
+  the reply names the columns the board does have.
+- Cards not on the board yet are added as part of the move, which
+  the preview counts separately.

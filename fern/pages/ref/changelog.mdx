@@ -1,0 +1,51 @@
+---
+title: Changelog
+subtitle: What has shipped
+---
+
+## Unreleased
+
+- `refreshPullRequests` tool for on-demand full backfill of pull
+  requests, with a dry-run default. Fixes the dormant-PR gap left by
+  the incremental scheduled sync.
+- `updateIssue` now takes `addAssignees` and `removeAssignees`. The
+  tool reads the live issue, shows a diff, and refuses an unknown
+  login before any write.
+- Pull requests are ingested into the graph as `(:PullRequest)`
+  nodes, with `AUTHORED_BY`, `ASSIGNED_TO`, `HAS_LABEL`, and
+  `CLOSES` edges. The scheduled sync advances
+  `lastPullRequestSync` incrementally.
+- `pullRequestStats` tool answers "how many did @X open/merge/close
+  this week" from the graph.
+- `inspectPullRequest` reads one pull request live from GitHub,
+  including review decision, check status, and body.
+- `readPullRequests` reads pull requests linked to a list of issue
+  numbers.
+- `commentOnPullRequest` posts a review-style comment with
+  confirmation.
+- Scheduled ingestion container bakes `ISSUE_LIMIT=0` and
+  `ISSUE_STATE=all` as build args, so the incremental sync is never
+  capped and always re-fetches closed issues.
+- The agent is registered on a `Mastra` instance with a libSQL
+  `runs` store, so a suspended elicitation can resume after a
+  restart.
+- Agent memory lives on `/data/agent-memory.db` with
+  `lastMessages: 80` and working memory enabled.
+- Fern-based documentation site added under `fern/`.
+
+## Earlier
+
+- `applyIssueTypeSync` writes GitHub's own issue type from the
+  classified kind, with an `overwrite` opt-in.
+- `applyBoardSync` writes priority and size to project board
+  fields, with downgrade detection and the shipped-but-open
+  callout.
+- `setBoardColumn` moves cards by name, for columns the derived
+  sync cannot reach.
+- `createIssue` with duplicate detection against the graph.
+- `recordAssessment`, `recordCategoryRule`, and `recordGuidance`
+  for the three kinds of persisted correction.
+- `readAttachment` for non-image uploads, with
+  `AGENT_FILES_DIR` sandboxing.
+- `reconcileIssueState`, `ingestMissingIssues`, and
+  `refreshIssues` for the three issue-side reconciliation flows.

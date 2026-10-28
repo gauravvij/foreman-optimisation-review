@@ -1,0 +1,183 @@
+---
+title: Reconciliation tools
+subtitle: Fix the gaps the scheduled sync leaves
+---
+
+Four on-demand tools. Each one fixes a different kind of drift
+between the graph and GitHub. None of these writes to GitHub;
+reconciliation only patches the graph.
+
+## reconcileIssueState
+
+Check every issue in the graph against GitHub, report stale
+open/closed state, and optionally correct it. Also finds issues
+GitHub no longer has (deleted or never created).
+
+**When to use.** Counts look wrong, an issue the graph calls open is
+really closed, or before trusting a state filter.
+
+### Input
+
+<ParamField path="apply" type="boolean" default="false">
+  Write the corrections. False reports the drift without changing
+  anything.
+</ParamField>
+
+### Response
+
+<ResponseField name="checked" type="number" />
+<ResponseField name="resolved" type="number">
+  How many were successfully looked up.
+</ResponseField>
+<ResponseField name="driftCount" type="number" />
+<ResponseField name="applied" type="number">
+  Corrections written (0 on a dry run).
+</ResponseField>
+<ResponseField name="drift" type="array">
+  Per-issue stored vs live state.
+</ResponseField>
+<ResponseField name="unresolved" type="number[]">
+  Issues the check could not reach.
+</ResponseField>
+<ResponseField name="ghosts" type="number[]">
+  Issue numbers GitHub does not have.
+</ResponseField>
+<ResponseField name="ghostsKept" type="number[]">
+  Ghosts not deleted on apply because a recorded `Assessment` would
+  be lost with them.
+</ResponseField>
+<ResponseField name="deleted" type="number" />
+
+Ghosts are why a count can be short while drift reads zero: a
+deleted issue has no state to disagree about. Kept ghosts are
+reported so you can rescue the stranded assessment.
+
+---
+
+## ingestMissingIssues
+
+Find issues that are open on GitHub but absent from the graph, and
+optionally fetch and classify them.
+
+**When to use.** A count looks short, or you want to confirm the
+graph is complete. `reconcileIssueState` cannot answer this: it only
+checks issues the graph already holds.
+
+### Input
+
+<ParamField path="ingest" type="boolean" default="false">
+  Fetch and classify the missing issues. False only reports the gap.
+</ParamField>
+<ParamField path="limit" type="number" default="25">
+  Max issues to fetch in one call. Each carries a model call when
+  classified.
+</ParamField>
+<ParamField path="analyze" type="boolean" default="true">
+  Classify what is fetched. False ingests raw issues with no model
+  calls.
+</ParamField>
+
+### Response
+
+<ResponseField name="githubOpen" type="number">
+  Open issues on GitHub.
+</ResponseField>
+<ResponseField name="graphTotal" type="number">
+  Issues in the graph in total.
+</ResponseField>
+<ResponseField name="missingCount" type="number" />
+<ResponseField name="missing" type="number[]" />
+<ResponseField name="ingested" type="number[]">
+  Numbers actually brought in.
+</ResponseField>
+<ResponseField name="analyzed" type="number" />
+
+The reply reports the gap first (dry run), then walks it in chunks
+on `ingest: true`. A chunk-sized limit keeps model costs predictable.
+
+---
+
+## refreshIssues
+
+Re-read issues from GitHub whose title, body, labels, or comments
+have changed since they were ingested.
+
+**When to use.** An issue the graph holds is out of date on text,
+labels, or comments. Distinct from `reconcileIssueState` (state only)
+and `ingestMissingIssues` (new issues only).
+
+### Input
+
+<ParamField path="issueNumbers" type="number[]">
+  Refresh exactly these. Omit to find every issue whose content has
+  changed.
+</ParamField>
+<ParamField path="refresh" type="boolean" default="false">
+  Re-read the stale issues. False only reports which ones changed.
+</ParamField>
+<ParamField path="analyze" type="boolean" default="false">
+  Re-classify what was refreshed. Costs a model call per issue.
+</ParamField>
+<ParamField path="limit" type="number" default="25">
+  Max issues to re-read in one call.
+</ParamField>
+
+### Response
+
+<ResponseField name="checked" type="number" />
+<ResponseField name="staleCount" type="number" />
+<ResponseField name="stale" type="number[]" />
+<ResponseField name="refreshed" type="number[]" />
+<ResponseField name="analyzed" type="number" />
+
+A refresh without `analyze` re-reads the content but keeps the
+existing classification. Pass `analyze: true` to re-run the
+classifier on the refreshed issues.
+
+---
+
+## refreshPullRequests
+
+Pull every pull request from GitHub and upsert each into the graph,
+ignoring the scheduled sync's `lastPullRequestSync` filter.
+
+**When to use.** A point-in-time pull-request total (open, closed, by
+author) disagrees with what you see on GitHub. This happens for pull
+requests opened long ago and not touched since the last incremental
+sync fetched them.
+
+**When not to use.** Routine pull-request activity. The scheduled
+sync covers that; this tool is a one-shot reconciliation, not a
+routine refresh.
+
+### Input
+
+<ParamField path="refresh" type="boolean" default="false">
+  Fetch and upsert. False only reports the gap, no writes.
+</ParamField>
+<ParamField path="limit" type="number" default="0">
+  Max pull requests to fetch. 0 means fetch all.
+</ParamField>
+
+### Response
+
+<ResponseField name="graphBefore" type="number">
+  PR count in the graph before the call.
+</ResponseField>
+<ResponseField name="fetched" type="number">
+  PRs read from GitHub.
+</ResponseField>
+<ResponseField name="ingested" type="number">
+  PRs upserted (0 on a dry run).
+</ResponseField>
+<ResponseField name="gap" type="number">
+  `max(fetched - graphBefore, 0)`.
+</ResponseField>
+<ResponseField name="errors" type="string[]">
+  Per-row errors.
+</ResponseField>
+
+Dry run reports the gap and does not advance the timestamp. On
+`refresh: true`, the tool upserts every fetched pull request and
+updates `lastPullRequestSync` so the next scheduled tick does not
+re-walk the same window.

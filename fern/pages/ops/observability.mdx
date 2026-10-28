@@ -1,0 +1,67 @@
+---
+title: Observability
+subtitle: Reading the logs and tracing a turn
+---
+
+Every tool logs a one-line entry when it runs, with the inputs that
+matter and a count or outcome on completion. The pattern is the same
+across every tool: `  [toolName] ...`.
+
+## Examples
+
+```
+  [queryNeo4j] MATCH (i:Issue {state:'OPEN'}) RETURN count(i)...
+  [queryNeo4j] returned 1 rows
+  [prioritizeIssues] category=all limit=20 grouped=false
+  [prioritizeIssues] matched 142 classified issues
+  [updateIssue] suspending for confirmation on #1169
+  [updateIssue] confirmed, close #1169
+  [refreshPullRequests] your-org/your-repo refresh=false limit=0
+  [reconcileIssueState] your-org/your-repo apply=true
+  [reconcileIssueState] drift=3 applied=3 ghosts=0 deleted=0
+```
+
+The two-space indent is deliberate: it marks every line as a tool
+log, so a grep for `^  [` on the agent logs picks every tool call out
+of the surrounding adapter noise.
+
+## Writes that touch GitHub
+
+Every write tool logs three lines in sequence:
+
+1. `suspending for confirmation on #N` or similar
+2. `confirmed, <action>` or `declined, nothing written`
+3. The outcome summary from the tool's return value
+
+So a cancelled write shows up as "declined" in the logs, and the
+line that would have described the write is absent. A failed GitHub
+call surfaces as a tool-level `error: ...` line.
+
+## Classification runs
+
+`classifyIssueTypes`, `refreshIssues --analyze`, and the ingestion
+tiers each use the fast model (`MODEL_FAST`) one call per issue. The
+model layer logs its own request/response pair for each call,
+including token counts. Rate-limit retries are logged with a
+`backoff` tag.
+
+## Gateway
+
+Astropods routes model calls through its gateway. The agent's
+`ASTRO_GATEWAY_URL` and `ASTRO_GATEWAY_API_KEY` are injected at
+deploy time. The gateway exposes OpenTelemetry-compatible traces, so
+the model calls can be correlated with the tool calls that spawned
+them downstream.
+
+## Common log patterns
+
+| Pattern | Means |
+|---|---|
+| `  [tool] ...` | A tool call started. |
+| `  [tool] error: <msg>` | The tool returned an `error` field; the agent will usually recover. |
+| `  [tool] <counts>` | The tool ran to completion. |
+| `suspending for confirmation` | A write is paused and awaiting the chat user's yes/no. |
+| `declined, nothing written` | The user cancelled; the write did not land. |
+
+The ingestion logs follow the same pattern but with a tier prefix,
+`[startup]` or `[schedule]`.

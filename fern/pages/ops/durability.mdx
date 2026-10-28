@@ -1,0 +1,69 @@
+---
+title: Durability
+subtitle: What survives a restart
+---
+
+Three stores sit on the `/data` volume Astropods mounts, so an agent
+restart in the middle of a conversation does not lose state.
+
+## Run store
+
+`file:/data/agent-runs.db` by default. Overridable with
+`RUN_STORE_URL`.
+
+Holds the suspended state for every elicitation. When a write tool
+calls `ctx.agent.suspend` and the chat user takes a minute to reply,
+the suspended run is in this store. A restart in that minute does
+not lose the pending confirmation; the agent reads the suspended run
+back and resumes against the same chat.
+
+The agent is registered on a `Mastra` instance for this reason. An
+unregistered agent falls back to an ephemeral run store, so a
+confirmed elicitation resumes against a run that was never persisted.
+
+## Memory store
+
+`file:/data/agent-memory.db` by default. Overridable with
+`MEMORY_STORE_URL`.
+
+Holds the agent's conversation memory: the last N turns, and a small
+working-memory block the model updates and reads every turn. `N` is
+`MEMORY_LAST_MESSAGES`, default 80.
+
+The working-memory block carries facts past the N-turn window without
+needing a semantic recall layer. It is a short structured block of
+notes the model edits itself.
+
+## Files directory
+
+`/data/files` by default. Overridable with `AGENT_FILES_DIR`.
+
+Holds attachments the chat user uploads. The adapter writes each file
+to this directory and names its absolute path in the attachment
+notice the model sees. `readAttachment` resolves paths against this
+root and refuses anything that escapes it.
+
+## What is not durable
+
+Agent conversation history beyond `MEMORY_LAST_MESSAGES` lives in the
+memory store, but the model only receives the last N turns on every
+request. Earlier turns are retrievable but are not fed into the
+prompt unless you ask the model to look them up.
+
+Working memory survives restarts because the memory store persists
+it, but it is scoped to the thread. A new conversation starts with
+an empty working-memory block.
+
+The graph itself is managed by Neo4j and lives on Neo4j's own
+storage, not on `/data`.
+
+## When state would be lost without this setup
+
+- A rebuild while the user is confirming a write. The suspended run
+  is in the run store, so the resume still finds it.
+- A `bun --watch` restart during `ast dev` while a conversation is
+  in flight. The memory store persists the thread; the run store
+  persists any pending suspensions; the conversation continues.
+- An upload that lands on the agent's local disk rather than the
+  shared volume. `/data/files` is the volume; a path outside it is
+  refused by `readAttachment`.

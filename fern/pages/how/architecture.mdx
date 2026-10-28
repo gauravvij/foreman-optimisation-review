@@ -1,0 +1,77 @@
+---
+title: Architecture
+subtitle: What runs where
+---
+
+Foreman is four processes and one shared volume.
+
+```
+    ┌────────────────────────────────┐
+    │  Chat UI (Astropods web)        │
+    └───────────────┬─────────────────┘
+                    │ messages
+    ┌───────────────▼─────────────────┐
+    │  agent/ (Mastra agent, bun)     │
+    │   ├── tools (27 of them)        │
+    │   ├── memory (libSQL on /data)  │
+    │   └── runs  (libSQL on /data)   │
+    └───────┬───────────────────┬─────┘
+            │                   │
+            │ Cypher            │ GraphQL + REST
+            ▼                   ▼
+    ┌───────────────┐  ┌─────────────────┐
+    │   Neo4j       │  │   GitHub API    │
+    └───────▲───────┘  └─────────────────┘
+            │ writes from the ingestion tiers
+    ┌───────┴───────────────────────────┐
+    │  ingestion/ (startup + schedule)  │
+    │   startup: one-off, seeds graph   │
+    │   schedule: periodic patch        │
+    └───────────────────────────────────┘
+```
+
+## The agent
+
+A Mastra agent with a `Memory` store (libSQL) and a `Mastra` runs
+store (also libSQL) attached. The runs store holds the suspended
+state for every elicitation, so a confirmation can resume after a
+restart. The agent is registered on a Mastra instance for the same
+reason: `resumeStream` needs that registration to find a suspended
+run.
+
+The agent is served through `@astropods/adapter-mastra`, which
+exposes a gRPC endpoint and manages the chat protocol. The sidecar
+also inlines image attachments up to 2 MiB and names any file over
+that on the shared volume at `AGENT_FILES_DIR`.
+
+## Tools
+
+Each tool is a `createTool({ id, description, inputSchema,
+outputSchema, execute })`. Write tools also declare `suspendSchema`
+and `resumeSchema`, and their `execute` splits into three branches:
+the planning branch (reads live state, builds the diff, calls
+`ctx.agent.suspend`), the confirm branch (`resumeData.confirm ===
+true`), and the cancel branch. The agent instructions in
+`agent/instructions.ts` steer the model to the right tool for a given
+question.
+
+## The graph
+
+Neo4j holds the mirror. The ingestion tier builds it, the agent
+reads from it, and write tools patch it after a successful GitHub
+write so the graph stays in step with the repository. The schema is
+documented under [Graph schema](/how/graph-schema).
+
+## The ingestion tiers
+
+Two containers in the blueprint, both built from
+`ingestion/Dockerfile`:
+
+| Tier | Trigger | Scope | ISSUE_LIMIT | ISSUE_STATE |
+|---|---|---|---|---|
+| `startup` | manual | seed | `20` default, user-settable | `open` default |
+| `schedule` | periodic | patch | `0` (baked, uncapped) | `all` (baked) |
+
+A third ingestion entry, `sync-labels`, runs the label sync as a batch
+job rather than through the chat. It has an `APPLY` input that gates
+whether the run writes.

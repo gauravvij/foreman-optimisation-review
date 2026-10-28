@@ -1,0 +1,64 @@
+---
+title: Environment variables
+subtitle: Every variable the agent reads
+---
+
+Astropods injects most of these. The two required ones are
+`GITHUB_OWNER` and `GITHUB_REPO`; the token comes through the
+`integrations.github` provider at the platform level.
+
+## Required
+
+| Variable | Purpose |
+|---|---|
+| `GITHUB_OWNER` | Owner of the repository to triage. Shapes every GitHub call and the issue links in chat replies. |
+| `GITHUB_REPO` | Repository name. |
+
+## GitHub token
+
+The token is supplied by the Astropods GitHub integration. The scopes
+it needs depend on which tools you plan to run:
+
+| Scope | Needed for |
+|---|---|
+| `repo` | Every read, including the ingestion tiers. |
+| `issues:write` | `updateIssue`, `createIssue`, `applyLabelSync`, `applyIssueTypeSync`. |
+| `project` | `applyBoardSync`, `setBoardColumn`, `listProjectBoards`. |
+
+A tool that needs a scope the token does not have fails the preview
+with a message naming the missing scope.
+
+## Ingestion inputs
+
+| Variable | Container | Default | Purpose |
+|---|---|---|---|
+| `ISSUE_LIMIT` | `startup` | `20` | Max issues to fetch on the first run. `0` means all. |
+| `ISSUE_STATE` | `startup` | `open` | Which states to seed. `open`, `closed`, `all`. |
+| `ISSUE_LIMIT` | `schedule` | `0` (baked) | Never capped on the scheduled sync. |
+| `ISSUE_STATE` | `schedule` | `all` (baked) | Always re-fetches closed issues. |
+| `APPLY` | `sync-labels` | `false` | True writes labels to GitHub; false is a dry run. |
+
+## Injected by the platform
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `GRPC_SERVER_ADDR` | `localhost:9090` | Messaging service address. |
+| `ASTRO_GATEWAY_URL` | — | AI gateway host. |
+| `ASTRO_GATEWAY_API_KEY` | — | AI gateway key. |
+| `MODEL_REASONING` | `claude-sonnet-4-6` | Model for the agent. |
+| `MODEL_FAST` | `claude-haiku-4-5` | Model for classification and comment summaries. |
+| `NEO4J_HOST` | `localhost` | Host for `NEO4J_URI`. |
+| `NEO4J_URI` | `bolt://{NEO4J_HOST}:7687` | Full Bolt URI. |
+| `NEO4J_AUTH` | — | Enable auth; left unset by default. |
+
+## Runtime storage
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `RUN_STORE_URL` | `file:/data/agent-runs.db` | Where suspended runs are persisted. |
+| `MEMORY_STORE_URL` | `file:/data/agent-memory.db` | Where agent memory is persisted. |
+| `MEMORY_LAST_MESSAGES` | `80` | How many recent messages carry into every turn. |
+| `AGENT_FILES_DIR` | `/data/files` | Shared volume for user attachments. |
+
+All four live on `/data`, the volume Astropods mounts, so a restart
+mid-conversation does not lose state.

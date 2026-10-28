@@ -1,0 +1,68 @@
+---
+title: Teaching a category rule
+subtitle: Make a whole class of issues move together
+---
+
+The classifier is a model, so it is sometimes wrong on the same way
+on a repeating condition. A rule fixes the whole class, immediately,
+and keeps fixing it for issues ingested later.
+
+## The ask
+
+> **You:** anything labelled infra-team should be categorised as
+> infra. the classifier keeps calling them tooling and that is wrong.
+
+## What Foreman does
+
+Runs `recordCategoryRule` with `label: "infra-team"` and
+`category: "infra"`. The rule writes a `Rule` node to the graph and
+then runs across every issue carrying the label.
+
+```
+Rule saved and applied: 14 issue(s) moved to infra
+(#1169, #1234, #1301, ...). It will apply to future issues too.
+```
+
+## What changed
+
+- A `Rule` node now sits in the graph. It is picked up by every
+  future classification pass, so new issues matching the label land
+  in `infra` without a model call.
+- Each affected issue has `category: "infra"` and
+  `categorySource: "<rule id>"`, so a future "why is this categorised
+  that way" has a direct answer: "because of the infra-team rule".
+- The rule outranks the model's classification. On any future
+  re-analysis, matching issues stay in `infra` regardless of what the
+  model suggests.
+
+## Check the rules on file
+
+> **You:** what classification rules do I have recorded?
+
+Foreman runs `listCategoryRules`. The reply names each rule's
+label, category, note, and the time it was recorded.
+
+## Remove a rule
+
+> **You:** remove the infra-team rule
+
+Foreman runs `listCategoryRules` with `remove: "infra-team"`.
+
+```
+Removed the rule for "infra-team". Existing categories are unchanged;
+re-analysis will reclassify those issues.
+```
+
+Removal does not revert the moved issues. The next time the
+classifier re-reads them (through `refreshIssues --analyze`, say),
+their category is picked by the model.
+
+## When a rule is the wrong tool
+
+- The correction is about a single issue, not a class.
+  `recordAssessment` is the right tool.
+- The condition is not a label (two classification values that
+  should never coexist, say). `recordGuidance` is the right tool.
+
+A rule is the right tool when the condition is a label and the
+intent is "always, from now on".

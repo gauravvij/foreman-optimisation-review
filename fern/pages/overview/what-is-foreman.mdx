@@ -1,0 +1,37 @@
+---
+title: What is Foreman
+subtitle: An AI engineering manager for GitHub issues and pull requests
+---
+
+Foreman is a chat agent that triages a GitHub repository. It keeps a
+Neo4j knowledge graph of every issue, pull request, comment, label,
+and user, and answers questions from the graph rather than re-walking
+the API on every turn. When you ask it to change something, it reads
+the live state, shows you a diff, and waits for you to confirm before
+writing.
+
+## What you get
+
+- A chat you can ask things like "what should I work on next", "how
+  many pull requests did @alice merge this week", or "which open
+  issues already have a pull request waiting to merge".
+- Preview-then-apply writes for labels, issue types, project board
+  fields, assignees, and column moves, so a bulk change always shows
+  you the diff first.
+- A classifier that fills in category, subcategory, priority, and
+  issue type on every issue, and a priority score you can rank by.
+- A memory of the decisions you have made, so an assessment or a
+  classification rule survives the conversation it was recorded in.
+
+## What Foreman is not
+
+A chat with GitHub's API dressed up. Foreman stores the state it reads
+and answers from the graph, which lets it cross-tabulate issues with
+pull requests, rank by priority, and act on the whole backlog at once.
+
+A deciding agent. Every change to the repository pauses for your
+confirmation, and Foreman never closes an issue, files one, or
+replaces a classification someone chose on its own initiative.
+
+A general-purpose assistant. The tools are shaped around triage and
+reconciliation on one configured repository.

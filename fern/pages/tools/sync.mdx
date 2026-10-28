@@ -1,0 +1,268 @@
+---
+title: Sync workflows
+subtitle: Preview, then apply, in chunks
+---
+
+Three bulk flows: labels, issue types, and project board fields. Each
+one has a read-only preview and a write-side apply. The apply always
+shows the diff and waits for your confirmation.
+
+Applied changes drop out of the plan, so re-running an apply
+continues where the last chunk stopped.
+
+## previewLabelSync
+
+Show which GitHub labels would change if the derived category,
+subcategory, and priority were pushed to the repository.
+
+**When to use.** Before `applyLabelSync`, or just to see the diff.
+Never writes.
+
+### Input
+
+<ParamField path="limit" type="number" default="25">
+  Max per-issue changes to list back.
+</ParamField>
+<ParamField path="category" type="enum">
+  Restrict the preview to one category.
+</ParamField>
+
+### Response
+
+<ResponseField name="issuesChanged" type="number" />
+<ResponseField name="labelsToCreate" type="string[]" />
+<ResponseField name="labelsToDelete" type="string[]" />
+<ResponseField name="changes" type="array">
+  Per-issue add/remove lists.
+</ResponseField>
+<ResponseField name="truncated" type="boolean">
+  True when the plan is longer than `limit`.
+</ResponseField>
+
+Only labels under `area/`, `type/`, and `priority/` are considered.
+Everything else on an issue is left alone.
+
+---
+
+## applyLabelSync
+
+Push the derived category, subcategory, and priority to GitHub as
+labels. Creates the labels it needs and deletes the ones it created
+that no issue carries any more.
+
+### Input
+
+<ParamField path="limit" type="number">
+  Apply at most this many issues. Omit for the whole plan.
+</ParamField>
+<ParamField path="category" type="enum">
+  Restrict to one category.
+</ParamField>
+<ParamField path="issueNumbers" type="number[]">
+  Restrict to specific issue numbers.
+</ParamField>
+
+### Confirmation
+
+```
+About to write labels to 42 issues in your-org/your-repo, which
+takes 00:00:42.
+
+#1169 +area/frontend +type/bug -area/ui
+#1234 +priority/p1
+...and 40 more issues
+
+New labels to create: area/observability
+Unused labels to delete: area/legacy-cli
+
+Confirm to apply these changes to GitHub.
+```
+
+### Guardrails
+
+- Re-plans on confirmation, so a stale diff cannot write a change the
+  graph no longer supports.
+- `limit` works as a chunk size; a re-run continues the walk.
+
+---
+
+## classifyIssueTypes
+
+Classify issues as `bug`, `feature`, or `task`, and mark any that
+need clarification.
+
+**When to use.** New issues have been ingested and have no kind yet.
+Safe to re-run as issues arrive, since the tool only touches issues
+with no kind.
+
+**When not to use.** For issues already classified; this tool does
+not re-classify. Use `refreshIssues --analyze` for that.
+
+### Input
+
+<ParamField path="classify" type="boolean" default="false">
+  `false` reports how many are unclassified; `true` spends the model
+  calls.
+</ParamField>
+<ParamField path="limit" type="number" default="25">
+  Classify at most this many in one run.
+</ParamField>
+<ParamField path="issueNumbers" type="number[]">
+  Restrict to specific issue numbers.
+</ParamField>
+
+### Response
+
+<ResponseField name="untyped" type="number">
+  How many open issues had no kind at the start.
+</ResponseField>
+<ResponseField name="classified" type="array">
+  Per-issue kind and clarification flag.
+</ResponseField>
+<ResponseField name="remaining" type="number">
+  How many are still unclassified after this run.
+</ResponseField>
+
+Writes to the graph only. One model call per issue, so passing a
+`limit` keeps the run bounded. The chat prompt steers it: say
+`classify: true` to actually spend the calls.
+
+---
+
+## applyIssueTypeSync
+
+Set GitHub's own issue type on each issue from the classified kind.
+
+### Input
+
+<ParamField path="limit" type="number">
+  Apply at most this many issues. Omit for the whole plan.
+</ParamField>
+<ParamField path="issueNumbers" type="number[]">
+  Restrict to specific issue numbers.
+</ParamField>
+<ParamField path="overwrite" type="boolean" default="false">
+  Also replace a type already set on the issue. Default leaves them
+  alone.
+</ParamField>
+
+### Confirmation
+
+```
+About to set the issue type on 18 issue(s) in your-org/your-repo.
+This writes to the issues themselves, not to a project board, and
+takes 00:00:18.
+
+#1169 (none) -> bug
+#1234 (none) -> feature
+...and 16 more issues
+
+5 of these replace a kind already set on the issue.
+2 issue(s) already have a kind and are left alone; pass overwrite
+to change them too.
+
+Confirm to write these types to GitHub.
+```
+
+### Guardrails
+
+- A kind the repository has no issue type for is reported and
+  skipped. The reply names the issue types the repository offers.
+- `overwrite` is opt-in. The default never replaces a kind a person
+  chose.
+
+---
+
+## previewBoardSync
+
+Show which project-board fields would change if the derived priority
+and size were pushed to the board.
+
+### Input
+
+<ParamField path="limit" type="number" default="25">
+  Max changes to list back.
+</ParamField>
+<ParamField path="issueNumbers" type="number[]">
+  Restrict to specific issue numbers.
+</ParamField>
+<ParamField path="fields" type="enum[]">
+  Which fields to sync. Omit for every field the board supports.
+</ParamField>
+<ParamField path="projectNumber" type="number">
+  Which board to target. Omit only when the repository has one.
+</ParamField>
+
+### Response
+
+<ResponseField name="changesPlanned" type="number" />
+<ResponseField name="issuesAffected" type="number" />
+<ResponseField name="changes" type="array">
+  Each with `issueNumber`, `field`, `fieldName`, `from`, `to`, `addToBoard`.
+</ResponseField>
+<ResponseField name="unmapped" type="array">
+  Fields with no board option for a derived value.
+</ResponseField>
+<ResponseField name="shippedButOpen" type="number[]">
+  Issues with a merged PR still open.
+</ResponseField>
+<ResponseField name="overwrites" type="number">
+  Changes over a value someone already set.
+</ResponseField>
+<ResponseField name="downgrades" type="number">
+  Changes to a lower value than currently held.
+</ResponseField>
+
+Priority and size live in the board fields, not in labels. The sync
+is forward-only on derived values: a downgrade is counted and
+reported, but still planned.
+
+---
+
+## applyBoardSync
+
+Push the derived priority and size to the project-board fields.
+
+### Input
+
+<ParamField path="limit" type="number">
+  Apply at most this many changes. Omit for the whole plan.
+</ParamField>
+<ParamField path="issueNumbers" type="number[]">
+  Restrict to specific issue numbers.
+</ParamField>
+<ParamField path="fields" type="enum[]">
+  Which fields to sync.
+</ParamField>
+<ParamField path="projectNumber" type="number">
+  Which board to target.
+</ParamField>
+
+### Confirmation
+
+```
+About to change priority and size on board #4 "Triage". GitHub is
+written about once a second, so this takes 00:00:33.
+
+#1169 priority: (unset) -> p1 [adds to board]
+#1234 size: m -> l
+...and 31 more changes
+
+6 issue(s) are not on the board yet and will be added.
+8 of these replace a value already set on the board, 2 of them a
+lower value than it holds now. The rest fill an empty field.
+
+3 of these have a merged pull request but are still open, so they
+may be finished: #412, #530, #771.
+
+Confirm to write these changes to the board.
+```
+
+### Guardrails
+
+- When the repository has more than one board, the tool refuses to
+  guess. Run `listProjectBoards` and name the one you mean.
+- Only open issues are touched. A closed card the board still shows
+  is not moved by this tool.
+- The status column is derived from issue facts, not judgment. For a
+  decision-based column (On hold), use `setBoardColumn`.

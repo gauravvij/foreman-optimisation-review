@@ -1,0 +1,81 @@
+---
+title: FAQ
+subtitle: Common questions, short answers
+---
+
+## Why does Foreman mirror GitHub into a graph instead of calling the API every time?
+
+Research questions ("top 10 by priority", "how many PRs by @alice
+this month", "which open issues already have a merged PR") cross
+dozens of issues at once. Each one of those would be several GitHub
+calls. The graph answers them in one Cypher pass and lets Foreman
+cross-tabulate across issues and pull requests.
+
+Live fields (review decision, check status, PR body) are fetched
+live, because they change too often for a mirror to be useful.
+
+## Can Foreman close an issue on its own?
+
+No. An issue closes only when you ask Foreman, in your own words, to
+close it, and only after you confirm the diff. Learning that work is
+finished (through a merged PR, say) does not imply the close;
+Foreman will say which ones look finished and let you ask.
+
+## Why did Foreman comment on an issue instead of doing what I asked?
+
+It should not have. When a tool cannot do what the user asks, the
+rule is for the agent to say so and stop, not to post a comment as a
+stand-in. Earlier builds had a gap where assignee changes were asked
+for but the only available tool was the comment one, which the agent
+sometimes used in place of saying "I can't". The current build has
+`updateIssue` with assignee support; comments are only posted when
+the user asks for one.
+
+## Why is my open PR count lower than GitHub shows?
+
+The scheduled sync is incremental and walks pull requests in
+`UPDATED_AT, DESC`. A pull request opened long ago and not touched
+since has `updatedAt < lastPullRequestSync`, so the incremental pass
+skips it. Fix: run `refreshPullRequests` to reconcile. See
+[Reconciling dormant PRs](/playbooks/reconciling-dormant-prs).
+
+## Why is my open issue count lower than GitHub shows?
+
+Likely for the same reason, if the first ingestion was capped at
+`ISSUE_LIMIT=20`. The scheduled sync picks up updates to issues the
+graph already holds; a wholly new issue flows through on its own
+cadence, but a backlog issue that existed before the first ingestion
+and has not been touched since will still be absent. Fix:
+`ingestMissingIssues`.
+
+## I recorded a guidance note. Why did my existing issues not change?
+
+Guidance is advisory and takes effect on the next classification
+pass. Existing categories only change when the classifier re-reads
+an issue, through `refreshIssues --analyze` or
+`classifyIssueTypes` on untyped issues. A rule
+(`recordCategoryRule`) is enforced rather than advisory, so it
+applies immediately to issues that carry the matching label.
+
+## Can I use Foreman on more than one repository?
+
+Not in one deploy. `GITHUB_OWNER` and `GITHUB_REPO` scope every tool
+to a single repository. For a second repository, run a second
+deploy.
+
+## Can I run Foreman without Astropods?
+
+The agent and the ingestion containers do not depend on Astropods
+APIs directly; they talk to GitHub, Neo4j, and the AI gateway. What
+you lose outside Astropods is the gRPC adapter, the chat UI, the
+managed gateway, and the GitHub integration. You can wire your own
+runtime around the same containers, but the "deploy and use" story
+in these docs assumes Astropods.
+
+## Where does Foreman store memory between conversations?
+
+In the graph. Assessments, category rules, and guidance notes
+persist as nodes. The agent's conversation memory (last N turns and
+a small working-memory block) is in a libSQL store on `/data`, so a
+restart does not lose the thread, but each conversation thread is
+independent.

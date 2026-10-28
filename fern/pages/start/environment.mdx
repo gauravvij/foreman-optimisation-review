@@ -1,0 +1,51 @@
+---
+title: Environment
+subtitle: What each variable controls
+---
+
+Astropods injects most of these automatically. The two you must set
+yourself are `GITHUB_OWNER` and `GITHUB_REPO`.
+
+## What you set
+
+| Variable | Purpose |
+|---|---|
+| `GITHUB_OWNER` | Owner of the repository to triage, used to build issue links and scope every GitHub call. |
+| `GITHUB_REPO` | The repository name. |
+| `GITHUB_TOKEN` | Token the agent uses for live reads and writes. Needs `repo`; add `issues:write` and `project` for labels, issue types, and board fields. |
+
+## Ingestion inputs
+
+The startup container accepts these at `ast configure` time:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ISSUE_LIMIT` | `20` | Max issues the startup ingestion fetches. `0` means fetch all. |
+| `ISSUE_STATE` | `open` | Which issue states the first run brings in. `open`, `closed`, or `all`. |
+
+The scheduled container bakes `ISSUE_LIMIT=0` and `ISSUE_STATE=all` as
+build args, so an incremental sync is never capped and always re-fetches
+closed issues so a state change on GitHub is reflected in the graph.
+
+## Injected by Astropods
+
+These are set automatically by the platform. You do not configure
+them unless you are running outside Astropods.
+
+| Variable | Purpose |
+|---|---|
+| `GRPC_SERVER_ADDR` | Messaging service address. Default `localhost:9090`. |
+| `ASTRO_GATEWAY_URL` | AI gateway host. |
+| `ASTRO_GATEWAY_API_KEY` | AI gateway key. |
+| `MODEL_REASONING` | Model used by the agent. Default `claude-sonnet-4-6`. |
+| `MODEL_FAST` | Model used by classification and comment summaries. Default `claude-haiku-4-5`. |
+| `NEO4J_HOST` or `NEO4J_URI` | Neo4j host or full bolt URI. |
+| `NEO4J_AUTH` | Set when auth is enabled on Neo4j. |
+| `RUN_STORE_URL` | Where suspended runs are persisted. Default `file:/data/agent-runs.db`. |
+| `MEMORY_STORE_URL` | Where agent memory is persisted. Default `file:/data/agent-memory.db`. |
+| `MEMORY_LAST_MESSAGES` | How many recent messages carry into every turn. Default `80`. |
+| `AGENT_FILES_DIR` | Shared volume for user attachments. Default `/data/files`. |
+
+The two libSQL stores and the files directory all sit on the `/data`
+volume Astropods mounts, so a restart mid-conversation does not lose
+state.

@@ -1,0 +1,134 @@
+---
+title: Graph schema
+subtitle: Nodes, properties, relationships
+---
+
+This page is the authoritative schema reference. The narrative
+version in [How Foreman works](/how/graph-schema) is the same
+content shaped for a first read.
+
+## Nodes
+
+### Issue
+
+| Property | Type | Notes |
+|---|---|---|
+| `number` | integer | Unique within the repository. |
+| `issueId` | string | GitHub's node id. |
+| `title` | string | |
+| `bodyText` | string | |
+| `createdAt` | string | ISO 8601. |
+| `updatedAt` | string | ISO 8601. Used as the incremental-sync watermark. |
+| `state` | string | `OPEN` or `CLOSED`. |
+| `authorLogin` | string | |
+| `category` | string | One of the nine values; see below. |
+| `subcategory` | string | Drawn from `Subcategory` nodes. |
+| `severity` | string | |
+| `impact` | string | |
+| `effort` | string | |
+| `priorityScore` | integer | 0-100, higher first. |
+| `priorityRationale` | string | One-sentence human-readable reasoning. |
+| `issueType` | string | `bug`, `feature`, or `task`. |
+| `needsClarification` | boolean | True when the issue cannot be acted on as written. |
+| `clarificationReason` | string | What is missing. |
+
+`Issue.category` is one of: `frontend`, `backend`, `cli`, `infra`,
+`docs`, `security`, `observability`, `tooling`, `other`.
+
+### PullRequest
+
+| Property | Type |
+|---|---|
+| `prId` | string |
+| `number` | integer |
+| `title` | string |
+| `url` | string |
+| `state` | string (`OPEN`, `CLOSED`, `MERGED`) |
+| `isDraft` | boolean |
+| `isMerged` | boolean |
+| `createdAt` | string |
+| `updatedAt` | string |
+| `closedAt` | string or null |
+| `mergedAt` | string or null |
+| `additions` | integer |
+| `deletions` | integer |
+| `changedFiles` | integer |
+| `authorLogin` | string |
+
+Not stored: `reviewDecision`, `checksState`, labels, body. Fetch
+those live with `inspectPullRequest`.
+
+### Comment
+
+`commentId`, `bodyText`, `createdAt`, `authorLogin`.
+
+### User
+
+`login`, `name`, `company`.
+
+### Label
+
+`name`, `description`, `color`.
+
+### Reaction
+
+`content` (e.g. `THUMBS_UP`), `userLogin`, `issueId`, `commentId`.
+
+### Classification support
+
+| Node | Properties |
+|---|---|
+| `Category` | `name`. Free-text, legacy, noisier than `Issue.category`. |
+| `Subcategory` | `name`, `definition`, `derivedAt`. The subcategory vocabulary. |
+| `Competitor` | `name` |
+| `Keyword` | `name` |
+| `Workaround` | `workaroundText`, `embedding` |
+| `Solution` | `solutionText`, `embedding` |
+
+### Learning state
+
+| Node | Properties |
+|---|---|
+| `Guidance` | `text`, `recordedAt`, `recordedBy` |
+| `Rule` | `kind`, `label`, `category`, `note`, `recordedAt`, `recordedBy` |
+| `Assessment` | `decision`, `note`, `recordedAt`, `recordedBy` |
+
+## Relationships
+
+| From | Edge | To |
+|---|---|---|
+| `Issue` | `:HAS_COMMENT` | `Comment` |
+| `Issue` | `:AUTHORED_BY` | `User` |
+| `Issue` | `:ASSIGNED_TO` | `User` |
+| `Issue` | `:HAS_LABEL` | `Label` |
+| `Issue` | `:HAS_REACTION` | `Reaction` |
+| `Issue` | `:MENTIONS_COMPETITOR` | `Competitor` |
+| `Issue` | `:HAS_WORKAROUND` | `Workaround` |
+| `Issue` | `:HAS_SOLUTION` | `Solution` |
+| `Issue` | `:BELONGS_TO_CATEGORY` | `Category` |
+| `Issue` | `:HAS_ASSESSMENT` | `Assessment` |
+| `Comment` | `:AUTHORED_BY` | `User` |
+| `Comment` | `:HAS_REACTION` | `Reaction` |
+| `Comment` | `:HAS_WORKAROUND` | `Workaround` |
+| `Comment` | `:HAS_SOLUTION` | `Solution` |
+| `Comment` | `:MENTIONS_COMPETITOR` | `Competitor` |
+| `Workaround` | `:HAS_KEYWORD` | `Keyword` |
+| `Solution` | `:HAS_KEYWORD` | `Keyword` |
+| `PullRequest` | `:AUTHORED_BY` | `User` |
+| `PullRequest` | `:ASSIGNED_TO` | `User` |
+| `PullRequest` | `:HAS_LABEL` | `Label` |
+| `PullRequest` | `:CLOSES` | `Issue` |
+
+## Meta keys
+
+The ingestion tier stores two watermarks as graph properties on a
+singleton meta node:
+
+| Key | Purpose |
+|---|---|
+| `lastIssueSync` | Latest `updatedAt` seen by the issue ingestion. |
+| `lastPullRequestSync` | Latest `updatedAt` seen by the pull-request ingestion. |
+
+Both are read by the scheduled trigger to bound its fetch window, and
+advanced on each successful run. `refreshPullRequests` writes the
+pull-request key when its on-demand pass completes.
