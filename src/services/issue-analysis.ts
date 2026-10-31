@@ -29,15 +29,25 @@ export interface AnalysisInput {
   comments: { commentId: string; author: string; text: string }[];
 }
 
+/**
+ * A solution the model extracted from a comment.
+ *
+ * `source` is optional because the model does not always supply it: the schema
+ * marks it required, but the schema travels as a tool definition rather than as
+ * `response_format: json_schema`, so a completion can omit the key. Ingestion
+ * therefore treats a missing source as "attach to the issue only" rather than
+ * as a reason to drop the record.
+ */
 export interface SolutionAnalysis {
   solutionText: string;
-  source: string; // commentId
+  source?: string; // commentId, when the model named one
   keywords: string[];
 }
 
+/** A workaround the model extracted from a comment; `source` is optional as above. */
 export interface WorkaroundAnalysis {
   workaroundText: string;
-  source: string; // commentId
+  source?: string; // commentId, when the model named one
   keywords: string[];
 }
 

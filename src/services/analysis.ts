@@ -104,42 +104,106 @@ async function clearExistingAnalysis(session: Session, issueNumber: number): Pro
   );
 }
 
-async function ingestSolution(session: Session, solution: SolutionAnalysis): Promise<void> {
+/**
+ * The text a record actually carries, or null when there is nothing usable.
+ *
+ * The model's schema marks `solutionText`/`workaroundText` required, but the
+ * schema travels as a tool definition rather than as `response_format:
+ * json_schema`, so it is advisory: a completion can omit the key entirely. A
+ * record with no text is not worth a node, and must not reach Cypher — an
+ * absent parameter makes the driver reject the whole statement.
+ */
+function usableText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/** Keyword names worth writing: strings, trimmed, no blanks, de-duplicated. */
+function usableKeywords(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  for (const kw of value) {
+    if (typeof kw !== 'string') continue;
+    const trimmed = kw.trim();
+    if (trimmed) seen.add(trimmed);
+  }
+  return [...seen];
+}
+
+/**
+ * Attaches a Solution to the issue being analysed, and to the comment that
+ * proposed it when the model named one that exists.
+ *
+ * Why this is issue-scoped rather than comment-scoped: the prompt tells the
+ * model to extract solutions only from comments and to cite the commentId as
+ * the source, but a completion can still omit that field. The previous
+ * statement began `MATCH (c:Comment {commentId: $source})`, which failed two
+ * ways — an absent `$source` made the driver reject the statement outright
+ * ("Expected parameter(s): text, source"), aborting the rest of the issue's
+ * ingest, and a source that matched no comment was accepted while silently
+ * leaving an orphan Solution with no relationship at all.
+ *
+ * So the Issue edge is now unconditional and the Comment edge is best-effort.
+ * The prompt is deliberately unchanged: this is a runtime fix, and tightening
+ * the extraction guidance would move QA scores for reasons unrelated to the
+ * defect.
+ */
+async function ingestSolution(
+  session: Session,
+  issueNumber: number,
+  solution: SolutionAnalysis,
+): Promise<void> {
   await session.run(
-    `MERGE (s:Solution {solutionText: $text})
+    `MATCH (i:Issue {number: $n})
+     MERGE (s:Solution {solutionText: $text})
      SET s.embedding = []
-     WITH s
-     MATCH (c:Comment {commentId: $source})
-     MERGE (c)-[:HAS_SOLUTION]->(s)
-     WITH s, c
-     MATCH (c)<-[:HAS_COMMENT]-(i:Issue)
      MERGE (i)-[:HAS_SOLUTION]->(s)
      WITH s
-     UNWIND $keywords AS kw
-     MERGE (k:Keyword {name: kw})
-     MERGE (s)-[:HAS_KEYWORD]->(k)`,
-    { text: solution.solutionText, source: solution.source, keywords: solution.keywords ?? [] },
+     OPTIONAL MATCH (c:Comment {commentId: $source})
+     WHERE $source <> ''
+     FOREACH (_ IN CASE WHEN c IS NULL THEN [] ELSE [1] END |
+       MERGE (c)-[:HAS_SOLUTION]->(s)
+     )
+     FOREACH (kw IN $keywords |
+       MERGE (k:Keyword {name: kw})
+       MERGE (s)-[:HAS_KEYWORD]->(k)
+     )`,
+    {
+      n: issueNumber,
+      text: solution.solutionText,
+      source: solution.source ?? '',
+      keywords: usableKeywords(solution.keywords),
+    },
   );
 }
 
-async function ingestWorkaround(session: Session, workaround: WorkaroundAnalysis): Promise<void> {
+/** The Workaround counterpart of {@link ingestSolution}; same scoping rules. */
+async function ingestWorkaround(
+  session: Session,
+  issueNumber: number,
+  workaround: WorkaroundAnalysis,
+): Promise<void> {
   await session.run(
-    `MERGE (w:Workaround {workaroundText: $text})
+    `MATCH (i:Issue {number: $n})
+     MERGE (w:Workaround {workaroundText: $text})
      SET w.embedding = []
-     WITH w
-     MATCH (c:Comment {commentId: $source})
-     MERGE (c)-[:HAS_WORKAROUND]->(w)
-     WITH w, c
-     MATCH (c)<-[:HAS_COMMENT]-(i:Issue)
      MERGE (i)-[:HAS_WORKAROUND]->(w)
      WITH w
-     UNWIND $keywords AS kw
-     MERGE (k:Keyword {name: kw})
-     MERGE (w)-[:HAS_KEYWORD]->(k)`,
+     OPTIONAL MATCH (c:Comment {commentId: $source})
+     WHERE $source <> ''
+     FOREACH (_ IN CASE WHEN c IS NULL THEN [] ELSE [1] END |
+       MERGE (c)-[:HAS_WORKAROUND]->(w)
+     )
+     FOREACH (kw IN $keywords |
+       MERGE (k:Keyword {name: kw})
+       MERGE (w)-[:HAS_KEYWORD]->(k)
+     )`,
     {
+      n: issueNumber,
       text: workaround.workaroundText,
-      source: workaround.source,
-      keywords: workaround.keywords ?? [],
+      source: workaround.source ?? '',
+      keywords: usableKeywords(workaround.keywords),
     },
   );
 }
@@ -242,12 +306,24 @@ async function processIssueAnalysis(session: Session, data: AnalysisData): Promi
 
   const stats: AnalysisStats = { solutions: 0, workarounds: 0, competitors: 0, categories: 0 };
 
+  // A record with no usable text is dropped before it reaches Cypher. The model
+  // can emit one — its schema is advisory — and an absent `text` parameter makes
+  // the driver reject the statement, which used to abort the rest of the issue's
+  // ingest, classification included.
   for (const s of analysis.solutions ?? []) {
-    await ingestSolution(session, s);
+    if (usableText(s?.solutionText) === null) {
+      console.warn(`  Skipping a solution for #${issueNumber}: no solutionText`);
+      continue;
+    }
+    await ingestSolution(session, issueNumber, s);
     stats.solutions++;
   }
   for (const w of analysis.workarounds ?? []) {
-    await ingestWorkaround(session, w);
+    if (usableText(w?.workaroundText) === null) {
+      console.warn(`  Skipping a workaround for #${issueNumber}: no workaroundText`);
+      continue;
+    }
+    await ingestWorkaround(session, issueNumber, w);
     stats.workarounds++;
   }
   stats.competitors = await ingestCompetitors(session, analysis.competitors ?? [], issueNumber);

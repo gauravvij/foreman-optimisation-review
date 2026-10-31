@@ -99,3 +99,171 @@ describe('ingestAnalysisResults classification', () => {
     expect(unsized, 'an unknown effort earns no effort points').toBeLessThan(sized);
   });
 });
+
+/**
+ * The #1776 defect: a solution or workaround the model returned without a
+ * `source` used to reach the driver as an absent parameter, which Neo4j rejects
+ * with "Expected parameter(s): text, source". The throw aborted the rest of the
+ * issue's ingest, so its classification was never written either.
+ *
+ * These tests pin the two properties that fix it: the params map always carries
+ * every key the statement references, and the Issue edge no longer depends on a
+ * comment hop that can fail.
+ */
+describe('ingestAnalysisResults solutions and workarounds', () => {
+  /** The statement that writes a Solution, as opposed to the cleanup that deletes one. */
+  const solutionWrite = () =>
+    db.queries.find((q) => q.query.includes('MERGE (s:Solution {solutionText: $text})'));
+  const workaroundWrite = () =>
+    db.queries.find((q) => q.query.includes('MERGE (w:Workaround {workaroundText: $text})'));
+
+  it('supplies every parameter when the model omits the comment source', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          solutions: [{ solutionText: 'Stream the transform.', keywords: ['stream'] } as never],
+        }),
+      },
+    ]);
+
+    const write = solutionWrite();
+    expect(write, 'the solution is written rather than dropped').toBeDefined();
+    expect(Object.keys(write!.params).sort(), 'no referenced parameter is absent').toEqual([
+      'keywords',
+      'n',
+      'source',
+      'text',
+    ]);
+    expect(write!.params.source, 'an omitted source becomes the empty string').toBe('');
+    expect(write!.params.text, 'the text survives').toBe('Stream the transform.');
+    expect(write!.params.n, 'the statement is scoped to the issue').toBe(1776);
+  });
+
+  it('attaches the solution to the issue without a comment hop', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          solutions: [{ solutionText: 'Stream the transform.', keywords: [] } as never],
+        }),
+      },
+    ]);
+
+    const query = solutionWrite()!.query;
+    expect(query, 'the issue edge is unconditional').toContain('MERGE (i)-[:HAS_SOLUTION]->(s)');
+    expect(query, 'the comment hop is guarded').toContain("WHERE $source <> ''");
+    expect(query, 'a missing comment cannot abort the write').toContain('OPTIONAL MATCH');
+  });
+
+  it('still links the comment when the model names one', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          solutions: [
+            { solutionText: 'Stream the transform.', source: 'IC_1776_0', keywords: [] } as never,
+          ],
+        }),
+      },
+    ]);
+
+    const write = solutionWrite()!;
+    expect(write.params.source, 'the named comment is passed through').toBe('IC_1776_0');
+    expect(write.query, 'the comment edge is still written').toContain(
+      'MERGE (c)-[:HAS_SOLUTION]->(s)',
+    );
+  });
+
+  it('applies the same scoping to workarounds', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          workarounds: [{ workaroundText: 'Use set_transform.', keywords: ['transform'] } as never],
+        }),
+      },
+    ]);
+
+    const write = workaroundWrite();
+    expect(write, 'the workaround is written rather than dropped').toBeDefined();
+    expect(Object.keys(write!.params).sort()).toEqual(['keywords', 'n', 'source', 'text']);
+    expect(write!.params.source).toBe('');
+    expect(write!.query).toContain('MERGE (i)-[:HAS_WORKAROUND]->(w)');
+    expect(write!.query).toContain("WHERE $source <> ''");
+  });
+
+  it.each([
+    ['undefined', undefined],
+    ['an empty string', ''],
+    ['whitespace only', '   '],
+  ])('issues no Cypher for a solution whose text is %s', async (_label, text) => {
+    const { results, errors } = await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          solutions: [{ solutionText: text, keywords: [] } as never],
+        }),
+      },
+    ]);
+
+    expect(solutionWrite(), 'a text-less record never reaches the driver').toBeUndefined();
+    expect(errors, 'and it does not fail the batch').toEqual([]);
+    expect(results[0].stats.solutions, 'it is not counted as written').toBe(0);
+  });
+
+  it('keeps the records around a malformed one', async () => {
+    const { results, errors } = await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          solutions: [
+            { solutionText: 'First good one.', keywords: [] } as never,
+            { solutionText: undefined, keywords: [] } as never,
+            { solutionText: 'Second good one.', keywords: [] } as never,
+          ],
+        }),
+      },
+    ]);
+
+    expect(errors, 'the malformed record does not abort the issue').toEqual([]);
+    expect(results[0].stats.solutions, 'both usable records are written').toBe(2);
+    expect(
+      db.queries.filter((q) => q.query.includes('MERGE (s:Solution {solutionText: $text})')),
+      'one statement per usable record',
+    ).toHaveLength(2);
+  });
+
+  it('writes the classification even when a record was malformed', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          solutions: [{ solutionText: undefined, keywords: [] } as never],
+        }),
+      },
+    ]);
+
+    expect(
+      classification().n,
+      'the issue is still classified, which the old throw prevented',
+    ).toBe(1776);
+  });
+
+  it('drops blank keywords instead of merging an empty name', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          solutions: [
+            { solutionText: 'Stream it.', keywords: ['stream', '  ', 'stream', ''] } as never,
+          ],
+        }),
+      },
+    ]);
+
+    expect(solutionWrite()!.params.keywords, 'blank and duplicate keywords are removed').toEqual([
+      'stream',
+    ]);
+  });
+});
