@@ -21,6 +21,7 @@ import {
   ingestPullRequests,
   setLastPullRequestSyncTimestamp,
   setLastSyncTimestamp,
+  setupDatabaseSchema,
 } from './neo4j';
 import { applyCategoryRules } from './rules';
 import { ensureVocabulary } from './subcategory';
@@ -87,6 +88,24 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   console.log(`  Analyze: ${config.analyze}`);
   console.log(`  Mode:    ${incremental ? `incremental (since ${since})` : 'full sync'}`);
   console.log('========================================\n');
+
+  // Schema bootstrap. Runs once per process, before the first write, and costs
+  // twelve `IF NOT EXISTS` statements. Applying it here rather than inside the
+  // ingest loop keeps it off the per-issue path: a graph that is already
+  // constrained pays one failed-create check each, not one per issue.
+  console.log('Applying graph schema (constraints + indexes)...');
+  const schema = await setupDatabaseSchema();
+  if (schema.ran) {
+    if (schema.failures.length > 0) {
+      console.warn(
+        `  Schema bootstrap: ${schema.failures.length} statement(s) failed — ` +
+          'graph is usable but not fully constrained',
+      );
+      for (const f of schema.failures) errors.push(`schema: ${f.statement}`);
+    } else {
+      console.log('  Schema in place');
+    }
+  }
 
   // 1. Discover issue numbers
   console.log('Step 1/5: Discovering issues...');

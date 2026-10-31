@@ -120,6 +120,102 @@ export async function closeDriver(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Schema bootstrap
+// ---------------------------------------------------------------------------
+
+/**
+ * The graph is written with MERGE only, and every MERGE anchors on a property
+ * (`{issueId: …}`, `{login: …}`, `{commentId: …}`). Without a constraint or
+ * index behind that property, each MERGE is a full scan of its label, and
+ * nothing stops two concurrent writers creating the same logical node twice.
+ *
+ * These constraints therefore do two jobs: they make the anchored MERGE lookups
+ * index-backed, and they make duplicate nodes impossible rather than merely
+ * unlikely. The property names are taken from the MERGE statements in this
+ * file, not invented.
+ *
+ * Deliberately not constrained here: Reaction ({content, issueId, userLogin}),
+ * Competitor.name, Category.name, Keyword.name and Rule ({kind, label}). They
+ * are legitimate MERGE keys too, but this bootstrap is scoped to the ten that
+ * cover node identity and the issue/PR ingest path; extending it is a separate
+ * change that also needs a de-dup migration for existing graphs.
+ */
+const SCHEMA_STATEMENTS: readonly string[] = [
+  // --- Constraints: node identity (one logical node per key) ----------------
+  'CREATE CONSTRAINT issue_id_unique IF NOT EXISTS FOR (n:Issue) REQUIRE n.issueId IS UNIQUE',
+  'CREATE CONSTRAINT issue_number_unique IF NOT EXISTS FOR (n:Issue) REQUIRE n.number IS UNIQUE',
+  'CREATE CONSTRAINT user_login_unique IF NOT EXISTS FOR (n:User) REQUIRE n.login IS UNIQUE',
+  'CREATE CONSTRAINT comment_id_unique IF NOT EXISTS FOR (n:Comment) REQUIRE n.commentId IS UNIQUE',
+  'CREATE CONSTRAINT label_name_unique IF NOT EXISTS FOR (n:Label) REQUIRE n.name IS UNIQUE',
+  'CREATE CONSTRAINT pull_request_id_unique IF NOT EXISTS FOR (n:PullRequest) REQUIRE n.prId IS UNIQUE',
+  'CREATE CONSTRAINT meta_key_unique IF NOT EXISTS FOR (n:Meta) REQUIRE n.key IS UNIQUE',
+  'CREATE CONSTRAINT subcategory_name_unique IF NOT EXISTS FOR (n:Subcategory) REQUIRE n.name IS UNIQUE',
+  'CREATE CONSTRAINT solution_text_unique IF NOT EXISTS FOR (n:Solution) REQUIRE n.solutionText IS UNIQUE',
+  'CREATE CONSTRAINT workaround_text_unique IF NOT EXISTS FOR (n:Workaround) REQUIRE n.workaroundText IS UNIQUE',
+
+  // --- Indexes: the two predicates the pipeline filters on ------------------
+  // ensureVocabulary() and the agent read whole labels by state; the incremental
+  // sync (getLastSyncTimestamp) and any since-filter walk updatedAt.
+  'CREATE INDEX issue_state_lookup IF NOT EXISTS FOR (n:Issue) ON (n.state)',
+  'CREATE INDEX issue_updated_at_lookup IF NOT EXISTS FOR (n:Issue) ON (n.updatedAt)',
+];
+
+/** Set once a bootstrap attempt has succeeded, so repeated calls are free. */
+let _schemaEnsured = false;
+
+export interface SchemaSetupResult {
+  /** False when an earlier call in this process already applied the schema. */
+  ran: boolean;
+  /** Statements that failed, with Neo4j's message. Empty on a clean bootstrap. */
+  failures: { statement: string; error: string }[];
+}
+
+/**
+ * Applies the constraint/index bootstrap once per process.
+ *
+ * Idempotent twice over: `IF NOT EXISTS` makes re-running against an existing
+ * schema a no-op, and the module flag makes a second call in the same process
+ * issue no statements at all.
+ *
+ * Failures are collected rather than thrown. A uniqueness constraint cannot be
+ * created over a graph that already holds duplicates, and aborting the whole
+ * pipeline over that would take ingestion down for exactly the deployments that
+ * need it most. Callers that care can inspect `failures`; the pipeline logs them
+ * as warnings. The `IF NOT EXISTS` form is what makes this safe to call on a
+ * graph that already has some of these objects.
+ */
+export async function setupDatabaseSchema(): Promise<SchemaSetupResult> {
+  if (_schemaEnsured) return { ran: false, failures: [] };
+
+  const session = getDriver().session();
+  const failures: { statement: string; error: string }[] = [];
+  try {
+    for (const statement of SCHEMA_STATEMENTS) {
+      try {
+        await session.run(statement);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err.message : String(err);
+        failures.push({ statement, error });
+        console.warn(`  Schema statement failed: ${statement}`);
+        console.warn(`    ${error}`);
+      }
+    }
+    // Only latch on success: a transient failure should be retried next call
+    // rather than silently leaving the graph unconstrained for the process.
+    if (failures.length === 0) _schemaEnsured = true;
+  } finally {
+    await session.close();
+  }
+
+  return { ran: true, failures };
+}
+
+/** Test seam: forget that the schema was applied. */
+export function resetSchemaCache(): void {
+  _schemaEnsured = false;
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
