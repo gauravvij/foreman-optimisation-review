@@ -215,15 +215,24 @@ async function ingestCompetitors(
 ): Promise<number> {
   if (competitors.length === 0) return 0;
 
+  // Same defect class as the one fixed for solutions and workarounds: the
+  // Comment hop used to be a bare `MATCH (cmt:Comment {commentId: comp.source})`,
+  // so a competitor the model reported without a comment source matched nothing
+  // and the whole row was dropped — the Issue edge survived because it is
+  // MERGEd first, but the record vanished from the count and no Comment edge was
+  // written. The Comment hop is now best-effort, exactly as in ingestSolution.
   const result = await session.run(
     `MATCH (i:Issue {number: $n})
      UNWIND $competitors AS comp
      MERGE (c:Competitor {name: comp.name})
      MERGE (i)-[:MENTIONS_COMPETITOR]->(c)
      WITH c, comp
-     MATCH (cmt:Comment {commentId: comp.source})
-     MERGE (cmt)-[:MENTIONS_COMPETITOR]->(c)
-     RETURN count(c) AS cnt`,
+     OPTIONAL MATCH (cmt:Comment {commentId: comp.source})
+     WHERE comp.source IS NOT NULL AND comp.source <> ''
+     FOREACH (_ IN CASE WHEN cmt IS NULL THEN [] ELSE [1] END |
+       MERGE (cmt)-[:MENTIONS_COMPETITOR]->(c)
+     )
+     RETURN count(DISTINCT c) AS cnt`,
     { n: issueNumber, competitors },
   );
   return result.records[0]?.get('cnt')?.toNumber?.() ?? 0;

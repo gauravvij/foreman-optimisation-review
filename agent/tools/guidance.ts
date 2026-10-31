@@ -8,9 +8,9 @@ export const recordGuidanceTool = createTool({
     'Persist a standing instruction about how issues should be classified, in ' +
     "the user's own words. Use it when the user corrects the classification " +
     'itself rather than one issue, for example saying two classification values ' +
-    'should not appear together, or how to treat a kind of work. The note is ' +
-    'added to the classifier prompt on every future run. Prefer recordCategoryRule ' +
-    'when the condition is a GitHub label, since that is enforced rather than advisory.',
+    'should not appear together. The note is added to the classifier prompt on ' +
+    'every future run. Prefer recordCategoryRule when the condition is a GitHub ' +
+    'label, since that is enforced rather than advisory.',
   inputSchema: z.object({
     text: z.string().describe('The instruction, phrased as the user said it'),
   }),
@@ -45,8 +45,7 @@ export const listGuidanceTool = createTool({
   id: 'listGuidance',
   description:
     'Read back the standing classification instructions the user has recorded, ' +
-    'and optionally remove one. Consult this when asked what notes are on record ' +
-    'or why issues are classified the way they are.',
+    'and optionally remove one. Consult this when asked what notes are on record.',
   inputSchema: z.object({
     remove: z.string().optional().describe('Text of the instruction to delete; omit to only list'),
   }),

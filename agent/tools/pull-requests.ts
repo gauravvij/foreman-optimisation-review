@@ -160,11 +160,9 @@ export const inspectPullRequestTool = createTool({
   description:
     'Read one pull request as it stands right now: state, draft flag, review ' +
     'decision, check status, branches, diff size, labels, the issues it closes, ' +
-    'and its body. Always goes to GitHub rather than the graph, which holds ' +
-    'issues only, so this is also how to refetch a PR whose state has moved on ' +
-    'since it was last looked at. Takes a pull request number: use ' +
-    'readPullRequests instead when starting from issue numbers and asking what ' +
-    'is linked to them.',
+    'and its body. Goes to GitHub rather than the graph, so this is also how to ' +
+    'refetch a PR whose state has moved on. Takes a pull request number; use ' +
+    'readPullRequests when starting from issue numbers.',
   inputSchema: z.object({
     number: z.number().describe('The pull request number'),
     includeBody: z
@@ -333,17 +331,13 @@ const STATS_SAMPLE = z.object({
 export const pullRequestStatsTool = createTool({
   id: 'pullRequestStats',
   description:
-    'Count pull requests opened, merged, or closed on this repository during ' +
-    'a time window, optionally filtered to a GitHub login. Answers "how many ' +
-    'did @X open this week" and the same for merged or closed. The three ' +
-    'counts are independent: a PR merged this week may have been opened ' +
-    'earlier, and a PR closed this week without being merged is counted under ' +
-    'closed, not merged. This tool is windowed, so it does NOT answer "how ' +
-    'many PRs are open right now" or "how many are drafts"; use queryNeo4j ' +
-    'with a MATCH on PullRequest nodes for those point-in-time totals. ' +
-    'Read-only, backed by the graph; `inspectPullRequest` is the tool for a ' +
-    'fresh single-PR fetch. Returns a short sample of recent pull requests ' +
-    'from the window alongside the counts.',
+    'Count pull requests opened, merged, or closed during a time window, ' +
+    'optionally filtered to a GitHub login. The three counts are independent: ' +
+    'a PR merged this week may have been opened earlier, and one closed ' +
+    'without being merged counts under closed, not merged. Windowed, so it ' +
+    'does NOT answer point-in-time totals such as "how many are open right ' +
+    'now" — use queryNeo4j on PullRequest nodes for those. Read-only, backed ' +
+    'by the graph. Returns a short sample of recent PRs alongside the counts.',
   inputSchema: z.object({
     author: z
       .string()

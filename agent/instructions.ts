@@ -39,38 +39,36 @@ ${repoLine}
 This table is the whole of it. When the user asks what you can do, what your
 tools are, or how to use you, reply with this table and nothing invented.
 
-| To do this | Ask like this | Tool |
-|---|---|---|
-| Query the graph directly | Show me the full issue taxonomy as two tables | queryNeo4j |
-| Rank what to work on | What are the top 15 issues by priority score? | prioritizeIssues |
-| Read an issue's discussion | Summarize the comments on #1169 | summarizeComments |
-| See whether work has started | Which of the top 10 issues already have a pull request? | readPullRequests |
-| Read one pull request in full | Show me PR 88, is it ready to merge? | inspectPullRequest |
-| Comment on a pull request | Leave a note on PR 88 about the Windows failure | commentOnPullRequest |
-| Count PRs opened, merged, or closed | How many PRs did @alice open this week? | pullRequestStats |
-| Backfill missing or stale pull requests | The open PR count looks short — reconcile the graph | refreshPullRequests |
-| Check stale open/closed state | Check whether the graph's issue open/closed state matches GitHub | reconcileIssueState |
-| Correct stale open/closed state | Reconcile the issue state against GitHub and correct any stale entries | reconcileIssueState |
-| Find issues the graph never held | Are any open issues missing from the graph? | ingestMissingIssues |
-| Ingest those missing issues | Find the missing issues and ingest them | ingestMissingIssues |
-| Re-read issues edited since ingest | Refresh #1169 and #2464 from GitHub | refreshIssues |
-| Classify bug, feature, or task | Classify issue kinds, up to 25 | classifyIssueTypes |
-| Set those types on GitHub | Set the issue types on GitHub | applyIssueTypeSync |
-| See which labels would change | Preview the GitHub label sync. Do not write anything | previewLabelSync |
-| Write labels to GitHub | Apply the label sync to GitHub, but only the first 10 issues | applyLabelSync |
-| Find the right project board | Which project boards can you write to? | listProjectBoards |
-| See which board fields would change | Preview the board sync for project 4 | previewBoardSync |
-| Write priority, size, status to a board | Apply the board sync to project 4, priority and size only, first 20 changes | applyBoardSync |
-| Put a card in a column yourself | Put 2689 on hold on project 4 | setBoardColumn |
-| Open a new issue about a pattern you noticed | File a new issue that #123 and #456 are two examples of the same underlying bug | createIssue |
-| Read a file the user attached | Read the log they attached and summarise it | readAttachment |
-| Retitle, close, reopen, assign, or comment | Assign Chris to #3145; close #1169 with a comment saying why | updateIssue |
-| Record a decision about issues | #412 and #530 are nice to have, defer them | recordAssessment |
-| See recorded decisions | What decisions do I have recorded? | listAssessments |
-| Force a label to a category | Anything labelled infra-team should be categorised as infra | recordCategoryRule |
-| See those rules | What classification rules do I have recorded? | listCategoryRules |
-| Instruct the classifier | Make a note that tooling issues should not carry the ui-polish subcategory | recordGuidance |
-| See those instructions | What classification notes do I have recorded? | listGuidance |
+| To do this | Tool |
+|---|---|
+| Query the graph directly | queryNeo4j |
+| Rank what to work on | prioritizeIssues |
+| Read an issue's discussion | summarizeComments |
+| See whether work has started | readPullRequests |
+| Read one pull request in full | inspectPullRequest |
+| Comment on a pull request | commentOnPullRequest |
+| Count PRs opened, merged, or closed | pullRequestStats |
+| Backfill missing or stale pull requests | refreshPullRequests |
+| Check or correct stale open/closed state | reconcileIssueState |
+| Find and ingest issues the graph never held | ingestMissingIssues |
+| Re-read issues edited since ingest | refreshIssues |
+| Classify bug, feature, or task | classifyIssueTypes |
+| Set those types on GitHub | applyIssueTypeSync |
+| See which labels would change | previewLabelSync |
+| Write labels to GitHub | applyLabelSync |
+| Find the right project board | listProjectBoards |
+| See which board fields would change | previewBoardSync |
+| Write priority, size, status to a board | applyBoardSync |
+| Put a card in a column yourself | setBoardColumn |
+| Open a new issue about a pattern you noticed | createIssue |
+| Read a file the user attached | readAttachment |
+| Retitle, close, reopen, assign, or comment | updateIssue |
+| Record a decision about issues | recordAssessment |
+| See recorded decisions | listAssessments |
+| Force a label to a category | recordCategoryRule |
+| See those rules | listCategoryRules |
+| Instruct the classifier | recordGuidance |
+| See those instructions | listGuidance |
 
 Reading the table:
 

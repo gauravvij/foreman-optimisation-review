@@ -267,3 +267,88 @@ describe('ingestAnalysisResults solutions and workarounds', () => {
     ]);
   });
 });
+
+describe('ingestAnalysisResults competitors', () => {
+  /** The statement that writes competitors for an issue. */
+  const competitorWrite = () =>
+    db.queries.find((q) => q.query.includes('MERGE (c:Competitor {name: comp.name})'));
+
+  it('guards the comment hop so a competitor with no source is not dropped', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          competitors: [{ name: 'Weights & Biases' } as never],
+        }),
+      },
+    ]);
+
+    const write = competitorWrite();
+    expect(write, 'the competitor statement is issued').toBeDefined();
+    expect(write!.query, 'the issue edge is unconditional').toContain(
+      'MERGE (i)-[:MENTIONS_COMPETITOR]->(c)',
+    );
+    expect(write!.query, 'the comment hop is optional').toContain('OPTIONAL MATCH');
+    expect(write!.query, 'a missing source cannot drop the row').toContain(
+      'comp.source IS NOT NULL',
+    );
+    expect(write!.query, 'the comment edge is still written when one exists').toContain(
+      'MERGE (cmt)-[:MENTIONS_COMPETITOR]->(c)',
+    );
+  });
+
+  it('counts a competitor that carries no source', async () => {
+    // Answer the competitor statement with a count and everything else with no
+    // rows, so the assertion does not depend on how many statements precede it.
+    db.mockSession.run.mockImplementation(async (query: string, params = {}) => {
+      db.queries.push({ query, params });
+      if (query.includes('count(DISTINCT c) AS cnt')) {
+        return { records: [{ keys: ['cnt'], get: () => ({ toNumber: () => 1 }) }] };
+      }
+      return { records: [] };
+    });
+
+    const { results, errors } = await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          competitors: [{ name: 'Weights & Biases' } as never],
+        }),
+      },
+    ]);
+
+    expect(errors, 'a source-less competitor does not fail the batch').toEqual([]);
+    expect(results[0].stats.competitors, 'the competitor is counted as written').toBe(1);
+  });
+
+  it('passes the named comment source through to the statement', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({
+          competitors: [{ name: 'Weights & Biases', source: 'IC_1776_0' } as never],
+        }),
+      },
+    ]);
+
+    const write = competitorWrite()!;
+    const competitors = write.params.competitors as { name: string; source?: string }[];
+    expect(competitors[0].source, 'the named comment is passed through').toBe('IC_1776_0');
+  });
+
+  it('leaves the category statement untouched', async () => {
+    await ingestAnalysisResults([
+      {
+        issueNumber: 1776,
+        analysis: analysis({ categories: ['tooling'] }),
+      },
+    ]);
+
+    const write = db.queries.find((q) => q.query.includes('MERGE (cat:Category {name: name})'));
+    expect(write, 'categories are still written').toBeDefined();
+    expect(write!.query, 'categories have no comment hop to guard').not.toContain('OPTIONAL MATCH');
+    expect(write!.query).toContain('MERGE (i)-[:BELONGS_TO_CATEGORY]->(cat)');
+  });
+});
+
+

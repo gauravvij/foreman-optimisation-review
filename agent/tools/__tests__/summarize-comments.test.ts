@@ -125,6 +125,131 @@ describe('summarizeCommentsTool', () => {
     expect(prompt).toContain('[unknown — 2025-02-01]: Anonymous feedback');
   });
 
+  // -------------------------------------------------------------------------
+  // Regression: the summary must be anchored on the issue, not on whichever
+  // comment sub-thread happens to be most quotable.
+  //
+  // dev-038 asked for a summary of #5111, whose title is "map and filter not
+  // working properly in multiprocessing with the new release 2.6.0". One
+  // comment carries a minimum-reproducible-example that loads
+  // `copenlu/answerable_tydiqa`, and the pre-fix tool — which fetched only
+  // comments and never the title or body — produced a summary about that
+  // dataset instead of the reported bug. Same shape for dev-040 / #3504.
+  // -------------------------------------------------------------------------
+
+  it('fetches the issue title and body alongside the comments', async () => {
+    mockSession.run.mockResolvedValueOnce({
+      records: [
+        fakeRecord({
+          issueTitle: 'map and filter not working properly in multiprocessing',
+          issueBody: 'When mapping is used on a dataset with more than one process...',
+          text: 'Minimum reproducible example using copenlu/answerable_tydiqa',
+          date: '2022-10-13',
+          author: 'loubnabnl',
+        }),
+      ],
+    });
+    mockOpenAICreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'A multiprocessing bug in map/filter.' } }],
+    });
+
+    await summarizeCommentsTool.execute!({ issueNumber: 5111 }, ctx);
+
+    const cypher = mockSession.run.mock.calls[0][0] as string;
+    expect(cypher, 'the issue title must be selected').toContain('i.title AS issueTitle');
+    expect(cypher, 'the issue body must be selected').toContain('i.bodyText AS issueBody');
+    expect(cypher, 'the issue must be matched before its comments').toMatch(
+      /MATCH \(i:Issue \{number: \$n\}\)/,
+    );
+  });
+
+  it('anchors the summary prompt on the issue title and body', async () => {
+    mockSession.run.mockResolvedValueOnce({
+      records: [
+        fakeRecord({
+          issueTitle: 'map and filter not working properly in multiprocessing',
+          issueBody: 'When mapping is used on a dataset with more than one process, filter misbehaves.',
+          text: 'Minimum reproducible example using copenlu/answerable_tydiqa',
+          date: '2022-10-13',
+          author: 'loubnabnl',
+        }),
+      ],
+    });
+    mockOpenAICreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'A multiprocessing bug in map/filter.' } }],
+    });
+
+    await summarizeCommentsTool.execute!({ issueNumber: 5111 }, ctx);
+
+    const prompt = mockOpenAICreate.mock.calls[0][0].messages[1].content as string;
+    expect(prompt, 'the issue number must be named').toContain('#5111');
+    expect(prompt, 'the issue title must anchor the summary').toContain(
+      'map and filter not working properly in multiprocessing',
+    );
+    expect(prompt, 'the issue body must anchor the summary').toContain(
+      'filter misbehaves',
+    );
+    expect(prompt, 'the model must be told the comments are detail, not the subject').toMatch(
+      /not the subject of the issue/,
+    );
+    // The comments are still supplied — the anchor is added, not substituted.
+    expect(prompt).toContain('copenlu/answerable_tydiqa');
+  });
+
+  it('still summarizes when the issue has a title but no body', async () => {
+    mockSession.run.mockResolvedValueOnce({
+      records: [
+        fakeRecord({
+          issueTitle: 'Unable to download PUBMED_title_abstracts_2019_baseline.jsonl.zst',
+          issueBody: null,
+          text: 'I was able to find a torrent with The Pile dataset',
+          date: '2021-12-30',
+          author: 'someone',
+        }),
+      ],
+    });
+    mockOpenAICreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'A broken download URL.' } }],
+    });
+
+    const result = (await summarizeCommentsTool.execute!(
+      { issueNumber: 3504 },
+      ctx,
+    )) as SummaryResult;
+
+    expect(result.commentCount).toBe(1);
+    const prompt = mockOpenAICreate.mock.calls[0][0].messages[1].content as string;
+    expect(prompt).toContain('PUBMED_title_abstracts_2019_baseline.jsonl.zst');
+    expect(prompt).not.toContain('Its body states the problem as');
+  });
+
+  it('does not count the anchor row as a comment when the issue has none', async () => {
+    // OPTIONAL MATCH yields one row with a null comment when there are no
+    // comments; that row must not be reported as a comment.
+    mockSession.run.mockResolvedValueOnce({
+      records: [
+        fakeRecord({
+          issueTitle: 'An issue with no discussion',
+          issueBody: 'Body text',
+          text: null,
+          date: null,
+          author: null,
+        }),
+      ],
+    });
+
+    const result = (await summarizeCommentsTool.execute!(
+      { issueNumber: 123 },
+      ctx,
+    )) as SummaryResult;
+
+    expect(result).toEqual({
+      summary: 'No comments found for issue #123.',
+      commentCount: 0,
+    });
+    expect(mockOpenAICreate).not.toHaveBeenCalled();
+  });
+
   it('always closes the session even when Neo4j fails', async () => {
     mockSession.run.mockRejectedValueOnce(new Error('connection lost'));
 
