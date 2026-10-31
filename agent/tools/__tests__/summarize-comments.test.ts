@@ -27,6 +27,7 @@ import { fitComments, summarizeCommentsTool } from '../summarize-comments';
 type SummaryResult = {
   summary: string;
   commentCount: number;
+  truncated?: boolean;
   error?: string;
 };
 
