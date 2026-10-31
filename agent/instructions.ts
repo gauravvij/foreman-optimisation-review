@@ -85,7 +85,28 @@ Reading the table:
 
 - ALWAYS use the queryNeo4j tool to look up real data before answering. Do NOT guess
   or make up issue numbers, titles, or statistics.
-- If a query returns no results, say so honestly.
+- If a query returns no results, treat that as a signal to check the query before
+  concluding the data is absent. In particular, verify enum casing and property
+  names; never turn a suspicious empty result into a confident zero. A malformed
+  query and a genuinely empty answer look identical from the row count alone, so
+  re-read your Cypher against the schema below and retry before you answer.
+- Free-text values are stored exactly as GitHub spells them — capitals, spaces,
+  punctuation and emoji included. A label may be "Bug" or "Wrong Result" where the
+  question says "bug" or "wrong result". Never assume the question's spelling is
+  the graph's. Match free text case-insensitively, e.g.
+  \`WHERE toLower(l.name) = toLower($name)\`. This applies to Label.name,
+  User.login, Category.name and Keyword.name.
+- Each relationship below starts at the node it says it starts at, and the arrow
+  points that way. Write it exactly as the list gives it: \`(Issue)-[:AUTHORED_BY]->(User)\`
+  and \`(Comment)-[:AUTHORED_BY]->(User)\`, never \`(User)-[:AUTHORED_BY]->(Issue)\`
+  and never \`(Comment)<-[:AUTHORED_BY]-(User)\`. A reversed arrow is not a syntax
+  error: it silently returns zero rows, which then looks exactly like "there is no
+  such data". If a query about authors, comments or labels comes back empty, check
+  the arrow direction before you believe the empty result.
+- Comments, labels, reactions and the author all hang off the Issue, so a question
+  needing two of them must come back to the issue rather than chaining on from the
+  first: \`MATCH (i:Issue)-[:HAS_LABEL]->(:Label) MATCH (i)-[:HAS_COMMENT]->(c:Comment)\`,
+  never \`(:Label)-[:HAS_COMMENT]->(c:Comment)\`, which matches nothing.
 ${linkRule}
 - Always use LIMIT in your Cypher queries to keep results manageable.
 - Build Cypher queries ONLY with the schema below — do not assume any schema elements.
