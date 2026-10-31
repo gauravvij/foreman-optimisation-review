@@ -485,6 +485,11 @@ export async function setLastSyncTimestamp(iso: string): Promise<void> {
 /**
  * Get the stored updatedAt for an issue, so we can skip re-analysis
  * if the issue hasn't changed since last ingestion.
+ *
+ * NOTE: this reads whatever is currently persisted. If ingestion has already
+ * run for this issue in the same pipeline pass, that value is the one just
+ * written, not the previous one. Use `getIssueUpdatedAtBatch` before ingestion
+ * when the previous value is what you need.
  */
 export async function getIssueUpdatedAt(issueNumber: number): Promise<string | null> {
   const session = getDriver().session();
@@ -497,6 +502,42 @@ export async function getIssueUpdatedAt(issueNumber: number): Promise<string | n
   } finally {
     await session.close();
   }
+}
+
+/**
+ * Read the previously persisted updatedAt for many issues in one statement.
+ *
+ * This exists because the incremental-skip comparison has to happen against
+ * the value from the *previous* run. Ingestion overwrites `Issue.updatedAt`
+ * with the freshly fetched value, so a read issued after ingestion compares
+ * the new value against itself and every issue looks unchanged. Callers must
+ * therefore snapshot with this function BEFORE ingesting.
+ *
+ * Issues absent from the graph are simply missing from the returned map; the
+ * caller treats a missing entry as "never seen before" and analyses it.
+ */
+export async function getIssueUpdatedAtBatch(
+  issueNumbers: number[],
+): Promise<Map<number, string>> {
+  const previous = new Map<number, string>();
+  if (issueNumbers.length === 0) return previous;
+
+  const session = getDriver().session();
+  try {
+    const result = await session.run(
+      `UNWIND $numbers AS n
+       MATCH (i:Issue {number: n})
+       WHERE i.updatedAt IS NOT NULL
+       RETURN n AS number, i.updatedAt AS ts`,
+      { numbers: issueNumbers },
+    );
+    for (const record of result.records) {
+      previous.set(record.get('number'), record.get('ts') as string);
+    }
+  } finally {
+    await session.close();
+  }
+  return previous;
 }
 
 // ---------------------------------------------------------------------------
