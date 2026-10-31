@@ -10,7 +10,12 @@ export const refreshIssuesTool = createTool({
     'or commented on, or when the graph disagrees with what the user sees on ' +
     'GitHub. Distinct from reconcileIssueState, which only syncs open and ' +
     'closed, and from ingestMissingIssues, which only adds issues the graph ' +
-    'does not hold.',
+    'does not hold.\n\n' +
+    'Rules:\n' +
+    '- analyze defaults to false, which re-reads the text but leaves the ' +
+    'classification alone. Turning it on costs a model call per issue, so do it ' +
+    'when the user asked for the classification to be redone, not merely to see ' +
+    'the new text.',
   inputSchema: z.object({
     issueNumbers: z
       .array(z.number())

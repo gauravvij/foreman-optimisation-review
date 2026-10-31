@@ -15,15 +15,19 @@ import {
   gatewayClient,
   gatewayModel,
   modelFor,
+  resetGatewayClient,
   structuredCompletion,
   textCompletion,
 } from '../models';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetGatewayClient();
   // stubEnv with undefined unsets the variable; assigning it would store "undefined".
   vi.stubEnv('MODEL_FAST', undefined);
   vi.stubEnv('MODEL_REASONING', undefined);
+  vi.stubEnv('MODEL_TIMEOUT_MS', undefined);
+  vi.stubEnv('MODEL_MAX_TOKENS', undefined);
   vi.stubEnv('ASTRO_GATEWAY_URL', 'https://aig.test');
   vi.stubEnv('ASTRO_GATEWAY_API_KEY', 'gw-key');
 });
@@ -76,12 +80,14 @@ describe('gatewayBaseUrl', () => {
 });
 
 describe('gatewayClient', () => {
-  it('points the OpenAI SDK at the gateway', () => {
+  it('points the OpenAI SDK at the gateway, with a timeout and bounded retries', () => {
     gatewayClient();
 
     expect(OpenAI).toHaveBeenCalledWith({
       apiKey: 'gw-key',
       baseURL: 'https://aig.test/v1',
+      timeout: 60_000,
+      maxRetries: 2,
     });
   });
 
@@ -89,6 +95,54 @@ describe('gatewayClient', () => {
     vi.stubEnv('ASTRO_GATEWAY_API_KEY', undefined);
 
     expect(() => gatewayClient()).toThrow('ASTRO_GATEWAY_API_KEY is not set');
+  });
+
+  it('returns one client for the process rather than one per call', () => {
+    const first = gatewayClient();
+    const second = gatewayClient();
+
+    expect(second, 'a fresh client per call leaks a connection pool per call').toBe(first);
+    expect(OpenAI).toHaveBeenCalledTimes(1);
+  });
+
+  it('rebuilds the client when the gateway endpoint changes', () => {
+    const first = gatewayClient();
+    vi.stubEnv('ASTRO_GATEWAY_URL', 'https://other.test');
+
+    const second = gatewayClient();
+
+    expect(second).not.toBe(first);
+    expect((second as unknown as { options: { baseURL: string } }).options.baseURL).toBe(
+      'https://other.test/v1',
+    );
+  });
+
+  it('rebuilds the client when the key rotates', () => {
+    const first = gatewayClient();
+    vi.stubEnv('ASTRO_GATEWAY_API_KEY', 'rotated-key');
+
+    const second = gatewayClient();
+
+    expect(second).not.toBe(first);
+    expect((second as unknown as { options: { apiKey: string } }).options.apiKey).toBe(
+      'rotated-key',
+    );
+  });
+
+  it('takes the timeout from MODEL_TIMEOUT_MS so a slow gateway can be accommodated', () => {
+    vi.stubEnv('MODEL_TIMEOUT_MS', '5000');
+
+    gatewayClient();
+
+    expect((OpenAI as unknown as { mock: { calls: { timeout: number }[][] } }).mock.calls[0][0].timeout).toBe(
+      5000,
+    );
+  });
+
+  it('rejects a nonsense timeout instead of silently falling back to ten minutes', () => {
+    vi.stubEnv('MODEL_TIMEOUT_MS', 'soon');
+
+    expect(() => gatewayClient()).toThrow('MODEL_TIMEOUT_MS must be a positive number');
   });
 });
 
@@ -180,8 +234,36 @@ describe('structuredCompletion', () => {
     expect(tokenUsage).toEqual({ prompt_tokens: 11, completion_tokens: 22, total_tokens: 33 });
   });
 
-  it('names the call when the model answers without one', async () => {
-    mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'sure, here goes' } }] });
+  it('retries once when the model answers without a tool call', async () => {
+    mockCreate
+      .mockResolvedValueOnce({ choices: [{ message: { content: 'sure, here goes' } }] })
+      .mockResolvedValueOnce({
+        choices: [
+          {
+            message: {
+              tool_calls: [{ function: { name: 'issue_analysis', arguments: '{"category":"docs"}' } }],
+            },
+          },
+        ],
+        usage: { prompt_tokens: 11, completion_tokens: 22, total_tokens: 33 },
+      });
+
+    const { data } = await structuredCompletion<{ category: string }>({
+      task: 'analysis',
+      system: 's',
+      prompt: 'p',
+      name: 'issue_analysis',
+      schema: SCHEMA,
+    });
+
+    expect(data, 'the retry answer is used').toEqual({ category: 'docs' });
+    expect(mockCreate, 'exactly one retry, not a loop').toHaveBeenCalledTimes(2);
+  });
+
+  it('names the call when the model answers without one twice', async () => {
+    mockCreate
+      .mockResolvedValueOnce({ choices: [{ message: { content: 'sure, here goes' } }] })
+      .mockResolvedValueOnce({ choices: [{ message: { content: 'still prose' } }] });
 
     await expect(
       structuredCompletion({
@@ -192,5 +274,7 @@ describe('structuredCompletion', () => {
         schema: SCHEMA,
       }),
     ).rejects.toThrow('issue_analysis: the model returned no tool call');
+
+    expect(mockCreate, 'the retry is bounded to one').toHaveBeenCalledTimes(2);
   });
 });

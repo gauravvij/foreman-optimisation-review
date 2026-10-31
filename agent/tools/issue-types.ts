@@ -109,7 +109,10 @@ export const applyIssueTypeSyncTool = createTool({
     "Set GitHub's own issue type (bug, feature, task) from the classified kind. " +
     'This writes to the issues themselves, not to a project board. Leaves a ' +
     'type someone already set alone unless overwrite is passed. Always shows ' +
-    'the full diff and waits for explicit user confirmation before writing.',
+    'the full diff and waits for explicit user confirmation before writing.\n\n' +
+    'Rules:\n' +
+    '- Never pass overwrite unless the user asks for it. The default leaves a ' +
+    'type a person already chose alone.',
   inputSchema: z.object({
     limit: z
       .number()

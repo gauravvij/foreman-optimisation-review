@@ -74,11 +74,76 @@ export function gatewayBaseUrl(): string {
   return `${requireEnv('ASTRO_GATEWAY_URL').replace(/\/+$/, '')}/v1`;
 }
 
+/**
+ * How long a single model call may hang before it is treated as failed. The
+ * SDK's own default is ten minutes, which outlives every caller here: a tool
+ * call that hangs that long stalls the agent turn and the person waiting on
+ * it. One minute is above the slowest call measured on the bench (9.5s at
+ * p100) with room for a cold gateway, and short enough to surface as an error.
+ */
+function timeoutMs(): number {
+  const raw = process.env.MODEL_TIMEOUT_MS;
+  if (!raw) return 60_000;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`MODEL_TIMEOUT_MS must be a positive number of milliseconds, got "${raw}"`);
+  }
+  return parsed;
+}
+
+/**
+ * Retries the SDK performs itself, on top of the one this module does for a
+ * missing tool call. Two covers a dropped connection or a 5xx without turning
+ * one slow call into a eight-minute wait.
+ */
+const MAX_RETRIES = 2;
+
+/**
+ * Cap on a free-text answer. Nothing this module asks for is longer than a
+ * summary or a classification rationale, and an uncapped completion is a cost
+ * ceiling nobody chose. Override per deployment rather than editing this.
+ */
+function maxTokens(): number {
+  const raw = process.env.MODEL_MAX_TOKENS;
+  if (!raw) return 1_024;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`MODEL_MAX_TOKENS must be a positive integer, got "${raw}"`);
+  }
+  return parsed;
+}
+
+/**
+ * One client for the process, keyed on the endpoint and key it was built from.
+ *
+ * Each `new OpenAI(...)` allocates its own connection pool, so building one per
+ * call opened a fresh pool for every request and threw it away. Keying the memo
+ * rather than caching unconditionally keeps a reloaded environment — a rotated
+ * key, a different gateway in a test — from serving calls through the old one.
+ */
+let _client: OpenAI | null = null;
+let _clientKey: string | null = null;
+
 export function gatewayClient(): OpenAI {
-  return new OpenAI({
-    apiKey: requireEnv('ASTRO_GATEWAY_API_KEY'),
-    baseURL: gatewayBaseUrl(),
+  const baseURL = gatewayBaseUrl();
+  const apiKey = requireEnv('ASTRO_GATEWAY_API_KEY');
+  const key = `${baseURL}\u0000${apiKey}`;
+  if (_client && _clientKey === key) return _client;
+
+  _client = new OpenAI({
+    apiKey,
+    baseURL,
+    timeout: timeoutMs(),
+    maxRetries: MAX_RETRIES,
   });
+  _clientKey = key;
+  return _client;
+}
+
+/** Drops the memoised client. For tests that change the gateway environment. */
+export function resetGatewayClient(): void {
+  _client = null;
+  _clientKey = null;
 }
 
 /** Mastra reads this shape as an OpenAI-compatible provider. */
@@ -110,6 +175,7 @@ export async function textCompletion(call: ModelCall): Promise<string | null> {
   const completion = await gatewayClient().chat.completions.create({
     model: modelFor(call.task),
     messages: messagesFor(call),
+    max_tokens: maxTokens(),
   });
   return completion.choices[0]?.message.content ?? null;
 }
@@ -118,18 +184,32 @@ export async function textCompletion(call: ModelCall): Promise<string | null> {
  * Runs a call whose answer must match a JSON schema. Claude has no
  * response_format: json_schema, so the schema travels as a single tool the
  * model is required to call, which enforces the enums the same way.
+ *
+ * A tool-forced call still comes back empty now and then: the gateway answers
+ * with prose, or with a tool call whose arguments are not valid JSON. One
+ * retry covers that. It is deliberately bounded to one, because a model that
+ * will not call the tool on the second ask will not call it on the fourth, and
+ * every retry is a paid call on a path that ingests a whole corpus.
  */
 export async function structuredCompletion<T>(
   call: StructuredCall,
 ): Promise<{ data: T; tokenUsage: TokenUsage }> {
-  const completion = await gatewayClient().chat.completions.create({
+  const request = {
     model: modelFor(call.task),
     messages: messagesFor(call),
-    tools: [{ type: 'function', function: { name: call.name, parameters: call.schema } }],
-    tool_choice: { type: 'function', function: { name: call.name } },
-  });
+    tools: [{ type: 'function' as const, function: { name: call.name, parameters: call.schema } }],
+    tool_choice: { type: 'function' as const, function: { name: call.name } },
+  };
 
-  const toolCall = completion.choices[0]?.message.tool_calls?.[0];
+  let completion = await gatewayClient().chat.completions.create(request);
+  let toolCall = completion.choices[0]?.message.tool_calls?.[0];
+
+  if (!toolCall) {
+    console.warn(`  [structuredCompletion] ${call.name}: no tool call, retrying once`);
+    completion = await gatewayClient().chat.completions.create(request);
+    toolCall = completion.choices[0]?.message.tool_calls?.[0];
+  }
+
   if (!toolCall) throw new Error(`${call.name}: the model returned no tool call`);
 
   return { data: JSON.parse(toolCall.function.arguments) as T, tokenUsage: usageOf(completion) };

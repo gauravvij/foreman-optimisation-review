@@ -30,7 +30,14 @@ export const setBoardColumnTool = createTool({
     'triage gave them, and ignores the forward-only rule that stops a derived ' +
     'sync moving a card backwards. Adds an issue to the board when it is not ' +
     'on it. Shows the diff and waits for confirmation. Prefer applyBoardSync ' +
-    'when the column follows from the issue facts.',
+    'when the column follows from the issue facts.\n\n' +
+    'Rules:\n' +
+    '- Like applyBoardSync, this refuses to guess which board to write to when ' +
+    'the repository has more than one. Do not pick one: run listProjectBoards ' +
+    'and ask the user which board they mean.\n' +
+    '- Use this for a column that stands for a decision rather than a fact, such ' +
+    'as putting work on hold. Do not record an Assessment in place of the move, ' +
+    'because nothing reads a decision or a note when deriving the column.',
   inputSchema: z.object({
     issueNumbers: z.array(z.number()).min(1).describe('The issues whose cards move'),
     column: z.string().describe('The column name exactly as the board spells it, e.g. "On hold"'),

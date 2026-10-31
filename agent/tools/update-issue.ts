@@ -9,7 +9,18 @@ export const updateIssueTool = createTool({
     'assignees, or leave a comment, in any combination. This writes to the real ' +
     'repository. It always shows what it is about to do and waits for the user ' +
     'to confirm before writing. Only call this when the user has asked, in ' +
-    'their own words, to change the issue.',
+    'their own words, to change the issue.\n\n' +
+    'Rules:\n' +
+    '- Use addAssignees and removeAssignees for a request to assign or unassign ' +
+    'a user, not a comment that only names the person.\n' +
+    '- Closing an issue is not implied by learning that the work is finished: ' +
+    'say what you would close and let the user ask for it.\n' +
+    '- An open issue whose pull request already merged is probably finished. Say ' +
+    'which ones and let the user decide; do not close one yourself.\n' +
+    '- A comment about whether the work is worth doing belongs on the issue, ' +
+    'through this tool. A comment about the code under review belongs on the ' +
+    'pull request, through commentOnPullRequest. Do not post the same note to ' +
+    'both.',
   inputSchema: z.object({
     issueNumber: z.number().describe('The issue to update'),
     title: z.string().optional().describe('New title. Omit to leave it unchanged.'),

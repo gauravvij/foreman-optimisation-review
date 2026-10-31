@@ -10,7 +10,13 @@ export const recordGuidanceTool = createTool({
     'itself rather than one issue, for example saying two classification values ' +
     'should not appear together. The note is added to the classifier prompt on ' +
     'every future run. Prefer recordCategoryRule when the condition is a GitHub ' +
-    'label, since that is enforced rather than advisory.',
+    'label, since that is enforced rather than advisory.\n\n' +
+    'Rules:\n' +
+    '- Guidance is for a judgment about the classification itself, where there is ' +
+    'no input to match on. A judgment naming particular issues is an Assessment; ' +
+    'a mapping from a label to a category is a Rule.\n' +
+    '- Guidance takes effect on the next analysis, not retroactively. Say so, ' +
+    'rather than implying existing issues have already changed.',
   inputSchema: z.object({
     text: z.string().describe('The instruction, phrased as the user said it'),
   }),

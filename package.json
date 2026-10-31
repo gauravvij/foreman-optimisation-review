@@ -2,7 +2,7 @@
   "name": "@astropods/foreman",
   "version": "0.1.0",
   "type": "module",
-  "description": "Foreman \u2014 an AI engineering manager that reads GitHub issues into a Neo4j knowledge graph and answers questions about them",
+  "description": "Foreman — an AI engineering manager that reads GitHub issues into a Neo4j knowledge graph and answers questions about them",
   "scripts": {
     "dev": "bun --watch agent/index.ts",
     "dev:ingest": "bun --watch ingestion/index.ts",
@@ -32,6 +32,7 @@
     "@mastra/evals": "^1.10.0",
     "@testcontainers/neo4j": "^10.0.0",
     "@types/bun": "^1.1.14",
+    "gpt-tokenizer": "^4.1.0",
     "testcontainers": "^10.0.0",
     "typescript": "^5.9.3",
     "vitest": "^3.0.0"
