@@ -62,16 +62,44 @@ async function clearExistingAnalysis(session: Session, issueNumber: number): Pro
     { n: issueNumber },
   );
 
-  // Clean up orphaned competitors/categories
+  // Remove only the competitors/categories this issue was attached to and that
+  // nothing else references any more.
+  //
+  // This used to finish with a graph-wide `MATCH (comp:Competitor) WHERE NOT
+  // (comp)<-[:MENTIONS_COMPETITOR]-() DELETE comp` (and the Category
+  // equivalent), which reads every node of both labels on every analysed issue
+  // — an O(graph) sweep per issue, repeated 60 times in a 60-issue run. The
+  // CALL subqueries bind the cleanup to the node the issue just detached, so
+  // the work is proportional to this issue's own analysis instead of the size
+  // of the graph. Node deletion stays a plain DELETE rather than DETACH DELETE
+  // so the failure mode is unchanged: a candidate that still carries other
+  // relationships is an error, exactly as before, instead of being silently
+  // detached from them.
   await session.run(
     `MATCH (i:Issue {number: $n})
-     OPTIONAL MATCH (i)-[r1:MENTIONS_COMPETITOR]->(comp:Competitor) DELETE r1
-     WITH i
-     OPTIONAL MATCH (i)-[r2:BELONGS_TO_CATEGORY]->(cat:Category) DELETE r2
-     WITH i
-     MATCH (comp:Competitor) WHERE NOT (comp)<-[:MENTIONS_COMPETITOR]-() DELETE comp
-     WITH i
-     MATCH (cat:Category) WHERE NOT (cat)<-[:BELONGS_TO_CATEGORY]-() DELETE cat`,
+     CALL {
+       WITH i
+       OPTIONAL MATCH (i)-[r:MENTIONS_COMPETITOR]->(comp:Competitor)
+       DELETE r
+       WITH collect(comp) AS detached
+       UNWIND detached AS candidate
+       WITH candidate
+       WHERE candidate IS NOT NULL AND NOT (candidate)<-[:MENTIONS_COMPETITOR]-()
+       DELETE candidate
+       RETURN count(*) AS competitors_deleted
+     }
+     CALL {
+       WITH i
+       OPTIONAL MATCH (i)-[r:BELONGS_TO_CATEGORY]->(cat:Category)
+       DELETE r
+       WITH collect(cat) AS detached
+       UNWIND detached AS candidate
+       WITH candidate
+       WHERE candidate IS NOT NULL AND NOT (candidate)<-[:BELONGS_TO_CATEGORY]-()
+       DELETE candidate
+       RETURN count(*) AS categories_deleted
+     }
+     RETURN i`,
     { n: issueNumber },
   );
 }
