@@ -248,28 +248,67 @@ export async function getAllIssueNumbers(
   };
 }
 
+/**
+ * How many issue fetches may be in flight at once.
+ *
+ * Defaults to 1, which is the pre-existing behaviour: issues are fetched one at
+ * a time, in listing order. That default is deliberate rather than timid. Each
+ * complete-issue fetch is already several GraphQL round trips (comment pages,
+ * then reaction pages), so a pool multiplies the request rate at GitHub and
+ * burns secondary-rate-limit budget faster than it saves wall clock. Operators
+ * who know their rate-limit headroom can opt in via the environment.
+ */
+export function fetchConcurrency(issueCount: number): number {
+  const raw = Number.parseInt(process.env.GITHUB_FETCH_CONCURRENCY ?? '', 10);
+  const configured = Number.isFinite(raw) && raw > 0 ? raw : 1;
+  return Math.max(1, Math.min(issueCount || 1, configured));
+}
+
 export async function getIssuesData(
   owner: string,
   repo: string,
   issueNumbers: number[],
 ): Promise<{ results: IssueData[]; errors: { issueNumber: number; error: string }[] }> {
-  const results: IssueData[] = [];
-  const errors: { issueNumber: number; error: string }[] = [];
+  const concurrency = fetchConcurrency(issueNumbers.length);
 
-  console.log(`Fetching ${issueNumbers.length} issues from ${owner}/${repo}...`);
+  // Results are written back by index rather than appended, so concurrent
+  // workers cannot reorder the output. Callers (and the analysis stage that
+  // maps issues back by id) depend on listing order, and a pool that reordered
+  // would change which issue is analysed first rather than just how fast.
+  const resultsByIndex: (IssueData | undefined)[] = new Array(issueNumbers.length);
+  const errorsByIndex: ({ issueNumber: number; error: string } | undefined)[] = new Array(
+    issueNumbers.length,
+  );
+  let nextIndex = 0;
 
-  for (let i = 0; i < issueNumbers.length; i++) {
-    const num = issueNumbers[i];
-    try {
-      console.log(`[${i + 1}/${issueNumbers.length}] Issue #${num}...`);
-      const data = await fetchCompleteIssue(owner, repo, num);
-      results.push(data);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`  Failed #${num}: ${msg}`);
-      errors.push({ issueNumber: num, error: msg });
+  console.log(
+    `Fetching ${issueNumbers.length} issues from ${owner}/${repo}` +
+      `${concurrency > 1 ? ` (concurrency ${concurrency})` : ''}...`,
+  );
+
+  async function worker(): Promise<void> {
+    while (true) {
+      const index = nextIndex++;
+      if (index >= issueNumbers.length) return;
+
+      const num = issueNumbers[index];
+      try {
+        console.log(`[${index + 1}/${issueNumbers.length}] Issue #${num}...`);
+        resultsByIndex[index] = await fetchCompleteIssue(owner, repo, num);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`  Failed #${num}: ${msg}`);
+        errorsByIndex[index] = { issueNumber: num, error: msg };
+      }
     }
   }
+
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+
+  const results = resultsByIndex.filter((r): r is IssueData => r !== undefined);
+  const errors = errorsByIndex.filter(
+    (e): e is { issueNumber: number; error: string } => e !== undefined,
+  );
 
   console.log(`Fetch complete: ${results.length} ok, ${errors.length} failed`);
   return { results, errors };
