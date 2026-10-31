@@ -237,7 +237,8 @@ ${linkRule}
 ## Nodes
 
 1. Issue — number (INTEGER), issueId (STRING), title (STRING), bodyText (STRING),
-   createdAt (STRING), updatedAt (STRING), state (STRING), authorLogin (STRING),
+   createdAt (STRING), updatedAt (STRING), state (STRING: OPEN, CLOSED),
+   authorLogin (STRING),
    category (STRING), subcategory (STRING), severity (STRING), impact (STRING),
    effort (STRING), priorityScore (INTEGER), priorityRationale (STRING),
    issueType (STRING: bug, feature, or task), needsClarification (BOOLEAN),

@@ -8,7 +8,10 @@ export const queryNeo4jTool = createTool({
   description:
     'Execute a read-only Cypher query against the Neo4j knowledge graph. ' +
     'Returns JSON rows. Always use LIMIT to keep results manageable. ' +
-    'Build queries ONLY with the schema provided in your instructions.',
+    'Build queries ONLY with the schema provided in your instructions. ' +
+    'If execution returns an error, use the exact error message to correct the ' +
+    'Cypher and retry the query before answering; never treat a failed query as ' +
+    'empty data.',
   inputSchema: z.object({
     cypher: z.string().describe('A read-only Cypher query'),
   }),
