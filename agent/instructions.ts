@@ -91,8 +91,8 @@ Reading the table:
   query and a genuinely empty answer look identical from the row count alone, so
   re-read your Cypher against the schema below and retry before you answer.
 - Free-text values are stored exactly as GitHub spells them — capitals, spaces,
-  punctuation and emoji included. A label may be "Bug" or "Wrong Result" where the
-  question says "bug" or "wrong result". Never assume the question's spelling is
+  punctuation and emoji included. A label may be "Bug" or "Good First Issue" where the
+  question says "bug" or "good first issue". Never assume the question's spelling is
   the graph's. Match free text case-insensitively, e.g.
   \`WHERE toLower(l.name) = toLower($name)\`. This applies to Label.name,
   User.login, Category.name and Keyword.name.

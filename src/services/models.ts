@@ -30,7 +30,11 @@ const TASKS = {
   vocabulary: 'reasoning',
   /** The conversational agent, which plans over five tools. */
   agent: 'reasoning',
-  /** LLM-as-judge scorers in the eval suite. */
+  /**
+   * LLM-as-judge scorers in the eval suite. MODEL_JUDGE moves it off the fast
+   * tier, and JUDGE_GATEWAY_URL / JUDGE_GATEWAY_API_KEY off the gateway, so
+   * the judge can differ from the model whose answers it marks.
+   */
   judge: 'fast',
 } as const satisfies Record<string, Tier>;
 
@@ -66,12 +70,17 @@ function requireEnv(name: string): string {
  * model without a code change.
  */
 export function modelFor(task: Task): string {
+  if (task === 'judge' && process.env.MODEL_JUDGE) return process.env.MODEL_JUDGE;
   const tier: Tier = TASKS[task];
   return process.env[`MODEL_${tier.toUpperCase()}`] || DEFAULTS[tier];
 }
 
+function baseUrlFrom(name: string): string {
+  return `${requireEnv(name).replace(/\/+$/, '')}/v1`;
+}
+
 export function gatewayBaseUrl(): string {
-  return `${requireEnv('ASTRO_GATEWAY_URL').replace(/\/+$/, '')}/v1`;
+  return baseUrlFrom('ASTRO_GATEWAY_URL');
 }
 
 /**
@@ -146,13 +155,18 @@ export function resetGatewayClient(): void {
   _clientKey = null;
 }
 
-/** Mastra reads this shape as an OpenAI-compatible provider. */
+/**
+ * Mastra reads this shape as an OpenAI-compatible provider. Only the judge may
+ * leave the gateway, and only when JUDGE_GATEWAY_URL is set; it then needs its
+ * own key, so a judge endpoint can never be sent the gateway's.
+ */
 export function gatewayModel(task: Task) {
+  const ownJudge = task === 'judge' && !!process.env.JUDGE_GATEWAY_URL;
   return {
-    providerId: 'astro-gateway',
+    providerId: ownJudge ? 'judge-gateway' : 'astro-gateway',
     modelId: modelFor(task),
-    url: gatewayBaseUrl(),
-    apiKey: requireEnv('ASTRO_GATEWAY_API_KEY'),
+    url: ownJudge ? baseUrlFrom('JUDGE_GATEWAY_URL') : gatewayBaseUrl(),
+    apiKey: requireEnv(ownJudge ? 'JUDGE_GATEWAY_API_KEY' : 'ASTRO_GATEWAY_API_KEY'),
   };
 }
 

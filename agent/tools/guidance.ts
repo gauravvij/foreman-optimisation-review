@@ -34,10 +34,7 @@ export const recordGuidanceTool = createTool({
       return {
         text: g.text,
         total: all.length,
-        message:
-          `Noted. This will be given to the classifier on every future run ` +
-          `(${all.length} standing instruction(s) now). It does not reclassify ` +
-          `existing issues; re-analysis will apply it.`,
+        message: `Noted. This will be given to the classifier on every future run (${all.length} standing instruction(s) now). It does not reclassify existing issues; re-analysis will apply it.`,
       };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);

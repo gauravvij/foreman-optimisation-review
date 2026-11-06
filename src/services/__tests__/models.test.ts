@@ -28,6 +28,9 @@ beforeEach(() => {
   vi.stubEnv('MODEL_REASONING', undefined);
   vi.stubEnv('MODEL_TIMEOUT_MS', undefined);
   vi.stubEnv('MODEL_MAX_TOKENS', undefined);
+  vi.stubEnv('MODEL_JUDGE', undefined);
+  vi.stubEnv('JUDGE_GATEWAY_URL', undefined);
+  vi.stubEnv('JUDGE_GATEWAY_API_KEY', undefined);
   vi.stubEnv('ASTRO_GATEWAY_URL', 'https://aig.test');
   vi.stubEnv('ASTRO_GATEWAY_API_KEY', 'gw-key');
 });
@@ -58,6 +61,41 @@ describe('modelFor', () => {
 
     expect(modelFor('analysis')).toBe('nova-micro');
     expect(modelFor('agent')).toBe('claude-opus-4-8');
+  });
+});
+
+describe('judge', () => {
+  it('moves only the judge when MODEL_JUDGE is set', () => {
+    vi.stubEnv('MODEL_JUDGE', 'anthropic/claude-haiku-5.5');
+
+    expect(modelFor('judge')).toBe('anthropic/claude-haiku-5.5');
+    for (const task of ['analysis', 'summary'] as const) {
+      expect(modelFor(task), `${task} is the system under test, not the judge`).toBe(
+        'claude-haiku-4-5',
+      );
+    }
+  });
+
+  it('stays on the gateway unless JUDGE_GATEWAY_URL is set', () => {
+    expect(gatewayModel('judge')).toMatchObject({ url: 'https://aig.test/v1', apiKey: 'gw-key' });
+  });
+
+  it('routes only the judge to its own endpoint, with its own key', () => {
+    vi.stubEnv('JUDGE_GATEWAY_URL', 'https://openrouter.ai/api/');
+    vi.stubEnv('JUDGE_GATEWAY_API_KEY', 'judge-key');
+
+    expect(gatewayModel('judge')).toMatchObject({
+      providerId: 'judge-gateway',
+      url: 'https://openrouter.ai/api/v1',
+      apiKey: 'judge-key',
+    });
+    expect(gatewayModel('agent')).toMatchObject({ url: 'https://aig.test/v1', apiKey: 'gw-key' });
+  });
+
+  it('never sends the gateway key to a judge endpoint', () => {
+    vi.stubEnv('JUDGE_GATEWAY_URL', 'https://openrouter.ai/api');
+
+    expect(() => gatewayModel('judge')).toThrow('JUDGE_GATEWAY_API_KEY is not set');
   });
 });
 
@@ -134,9 +172,9 @@ describe('gatewayClient', () => {
 
     gatewayClient();
 
-    expect((OpenAI as unknown as { mock: { calls: { timeout: number }[][] } }).mock.calls[0][0].timeout).toBe(
-      5000,
-    );
+    expect(
+      (OpenAI as unknown as { mock: { calls: { timeout: number }[][] } }).mock.calls[0][0].timeout,
+    ).toBe(5000);
   });
 
   it('rejects a nonsense timeout instead of silently falling back to ten minutes', () => {
@@ -241,7 +279,9 @@ describe('structuredCompletion', () => {
         choices: [
           {
             message: {
-              tool_calls: [{ function: { name: 'issue_analysis', arguments: '{"category":"docs"}' } }],
+              tool_calls: [
+                { function: { name: 'issue_analysis', arguments: '{"category":"docs"}' } },
+              ],
             },
           },
         ],

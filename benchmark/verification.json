@@ -1,0 +1,189 @@
+{
+ "about": "Record of the independent check of the benchmark and of every proof file in this folder. The benchmark (question sets, scoring program, ingestion profiler) was built by NEO. These checks were performed with Claude Code, Anthropic's AI coding agent, using Claude Opus 5.5, on 2026-11-04.",
+ "terms": {
+  "question_set": "A fixed list of questions about a fixed collection of 60 GitHub issues.",
+  "attempt": "One try at answering one question. Every question was asked 3 times, so each question has 3 attempts, each marked right or wrong on its own."
+ },
+ "question_sets": {
+  "SymPy Core 50": {
+   "file_name": "sympy2-dev",
+   "questions": 50,
+   "one_answer_questions": 44,
+   "summary_questions": 6,
+   "attempts_per_question": 3,
+   "attempts": 150,
+   "issues": 60,
+   "question_file_sha256": "ec3f977ff78cfb4d515362152ddf6a70da6f3f315c5186dc45394b647ec872fc",
+   "issue_file_sha256": "979eec5d6636c63a9babcfb35d3e571f4d9201e807954d809f2a34966af2a874"
+  },
+  "Hugging Face 50": {
+   "file_name": "lewtun-holdout",
+   "questions": 50,
+   "one_answer_questions": 44,
+   "summary_questions": 6,
+   "attempts_per_question": 3,
+   "attempts": 150,
+   "issues": 60,
+   "question_file_sha256": "0b404f46c7ab0489268dfecb271080b17e6c2008a7563d7f7dd32e00a6e7e7ad",
+   "issue_file_sha256": "c50584fb553320745b8f7be5070f96c2ccfe5d629bf8012aa1bfb8aa6c4a59ad"
+  },
+  "SymPy Extended 81": {
+   "file_name": "sympy2-dev-81",
+   "questions": 81,
+   "one_answer_questions": 73,
+   "summary_questions": 8,
+   "attempts_per_question": 3,
+   "attempts": 243,
+   "issues": 60,
+   "question_file_sha256": "0c8e91202cc1a9677c655eb094ce2c36e8b615262e91732234ad57ecb7148f1b",
+   "issue_file_sha256": "979eec5d6636c63a9babcfb35d3e571f4d9201e807954d809f2a34966af2a874"
+  }
+ },
+ "checks": {
+  "frozen_files_unchanged": {
+   "result": "pass",
+   "detail": "The SymPy issue file and the frozen SymPy Core 50 question file match the SHA-256 fingerprints recorded when they were frozen (verification_bench/SPLITS.sha256). The question file the runs used has the same 50 questions and the same expected answers as the frozen original; only internal category labels differ."
+  },
+  "expected_answers_rederived": {
+   "result": "pass",
+   "detail": "Every expected answer for a one-answer question was worked out again from the raw issue data by a separate program that shares no code with the benchmark.",
+   "per_set": {
+    "sympy2-dev": {
+     "checked": 44,
+     "matching": 44
+    },
+    "lewtun-holdout": {
+     "checked": 44,
+     "matching": 44
+    },
+    "sympy2-dev-81": {
+     "checked": 73,
+     "matching": 73
+    }
+   },
+   "self_test": "3 deliberately wrong expected answers planted in a copy were all detected."
+  },
+  "reports_use_these_questions": {
+   "result": "pass",
+   "detail": "All 12 stored question reports contain exactly the questions and expected answers in the question files, use gpt-4o for answering and judging, are marked valid, and pass their built-in sanity questions. Every report asks each question 3 times, except the single-attempt confirmation run (foreman-fresh-v8)."
+  },
+  "stored_verdicts_reproduced": {
+   "result": "pass",
+   "detail": "Every one-answer attempt in every stored report was marked again with the benchmark's scoring program. All verdicts match, except 7 in the raw original report (foreman-fresh-baseline/report.json), which are exactly the 7 correct answers the earlier scoring rules wrongly rejected; its corrected copy (report.regraded.json) matches 132 of 132.",
+   "per_report": {
+    "foreman-fresh-baseline/report.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 125
+    },
+    "foreman-fresh-baseline/report.regraded.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    },
+    "foreman-fresh-v6/report.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    },
+    "foreman-fresh-v7/report.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    },
+    "foreman-fresh-v8/report.json": {
+     "one_answer_attempts": 44,
+     "same_verdict": 44
+    },
+    "rerun/baseline-lewtun-holdout.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    },
+    "rerun/baseline-sympy2-dev-81.json": {
+     "one_answer_attempts": 219,
+     "same_verdict": 219
+    },
+    "rerun/baseline-sympy2-dev.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    },
+    "rerun/branch-lewtun-holdout.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    },
+    "rerun/branch-neutral-example-sympy2-dev.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    },
+    "rerun/branch-sympy2-dev-81.json": {
+     "one_answer_attempts": 219,
+     "same_verdict": 219
+    },
+    "rerun/branch-sympy2-dev.json": {
+     "one_answer_attempts": 132,
+     "same_verdict": 132
+    }
+   }
+  },
+  "scores_recomputed": {
+   "result": "pass",
+   "detail": "Every headline score in every stored report equals the score recomputed from its individual attempts."
+  },
+  "failed_attempts_read": {
+   "result": "pass",
+   "detail": "Every failed attempt in the re-run reports was read. All 11 failed one-answer attempts of the original version are genuinely wrong (for example '44 issues tagged bug' when the answer is 4, or 'no users commented' when four did).",
+   "summaries_note": "Summaries are marked by an AI judge and are less certain. On issue #1830 (Hugging Face 50) the original's two failed summaries read much like its passing one, so those two failures are probably judge noise. On issue #15623 the original's failed summaries miss the actual LaTeX error, so failing them is fair; the branch's one failed summary there is borderline."
+  },
+  "reports_match_the_code": {
+   "result": "pass",
+   "detail": "Each report records a fingerprint of the code it tested. Recomputing those fingerprints from the code ties every report to the version it claims. foreman-fresh-v6 was run on an uncommitted copy and cannot be tied to a commit; nothing in OPTIMISATION.md relies on it.",
+   "per_report": {
+    "foreman-fresh-baseline/report.json": {
+     "tested_code": "original, commit 3cd3dde"
+    },
+    "foreman-fresh-baseline/report.regraded.json": {
+     "tested_code": "original, commit 3cd3dde"
+    },
+    "foreman-fresh-v6/report.json": {
+     "tested_code": "uncommitted copy (no commit to compare)"
+    },
+    "foreman-fresh-v7/report.json": {
+     "tested_code": "earlier branch commit 14166da"
+    },
+    "foreman-fresh-v8/report.json": {
+     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+    },
+    "rerun/baseline-lewtun-holdout.json": {
+     "tested_code": "original, commit 3cd3dde"
+    },
+    "rerun/baseline-sympy2-dev-81.json": {
+     "tested_code": "original, commit 3cd3dde"
+    },
+    "rerun/baseline-sympy2-dev.json": {
+     "tested_code": "original, commit 3cd3dde"
+    },
+    "rerun/branch-lewtun-holdout.json": {
+     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+    },
+    "rerun/branch-neutral-example-sympy2-dev.json": {
+     "tested_code": "final branch code (all changes in this pull request; only the two new test files are excluded, and they never run inside the assistant)"
+    },
+    "rerun/branch-sympy2-dev-81.json": {
+     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+    },
+    "rerun/branch-sympy2-dev.json": {
+     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+    }
+   }
+  },
+  "query_checker_on_original_failures": {
+   "result": "pass",
+   "detail": "The query checker was run over the queries behind the original version's failed one-answer attempts in the re-run. It warns on 8 of 11: all 5 two-step questions, plus the comment-count, people-who-opened-issues and top-author questions. The 3 it does not flag are the 'tagged bug' capitalisation mistake, which the instruction changes address."
+  },
+  "database_contents": {
+   "result": "pass",
+   "detail": "Re-run on the final branch code: identical database contents to the original at 5, 20 and 60 issues and with richer model output, and every behaviour change in section 6 reproduced. See profile/repeat-runs.json, database_comparison."
+  },
+  "code_checks": {
+   "result": "pass",
+   "detail": "On the final branch code: type check passes; 614 of 614 automated tests pass (36 files); style check reports 26 problems in the whole project against 29 before the changes, none introduced by this branch; the benchmark's own scoring and data-integrity self-tests pass 90 of 90.",
+   "note": "An older test file from the first project (verification_bench/grade-v2.test.ts) has 5 out-of-date checks that expect a scoring bug which has since been fixed; both scoring programs give the correct result on those answers. It is not used by anything in this folder."
+  }
+ }
+}

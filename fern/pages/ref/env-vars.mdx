@@ -47,6 +47,8 @@ with a message naming the missing scope.
 | `ASTRO_GATEWAY_API_KEY` | — | AI gateway key. |
 | `MODEL_REASONING` | `claude-sonnet-4-6` | Model for the agent. |
 | `MODEL_FAST` | `claude-haiku-4-5` | Model for classification and comment summaries. |
+| `MODEL_JUDGE` | `MODEL_FAST` | Eval suite only: the model that scores answers. |
+| `JUDGE_GATEWAY_URL` / `JUDGE_GATEWAY_API_KEY` | — | Eval suite only: an OpenAI-compatible endpoint and key for the judge. |
 | `NEO4J_HOST` | `localhost` | Host for `NEO4J_URI`. |
 | `NEO4J_URI` | `bolt://{NEO4J_HOST}:7687` | Full Bolt URI. |
 | `NEO4J_AUTH` | — | Enable auth; left unset by default. |

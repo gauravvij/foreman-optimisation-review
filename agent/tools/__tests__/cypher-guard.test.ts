@@ -144,7 +144,8 @@ describe('checkCypherAgainstSchema — robustness', () => {
   });
 
   it('does not read a relationship out of a line comment', () => {
-    const cypher = `MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) // (u:User)-[:AUTHORED_BY]->(i:Issue)\nRETURN l.name LIMIT 5`;
+    const cypher =
+      'MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) // (u:User)-[:AUTHORED_BY]->(i:Issue)\nRETURN l.name LIMIT 5';
     expect(checkCypherAgainstSchema(cypher)).toEqual([]);
   });
 
@@ -224,9 +225,9 @@ describe('SCHEMA_EDGES', () => {
     const end = instructions.indexOf('.trim', start);
     const section = instructions.slice(start, end === -1 ? undefined : end);
 
-    const declared = [...section.matchAll(/^- \(([A-Za-z]+)\)-\[:([A-Z_]+)\]->\(([A-Za-z]+)\)/gm)].map(
-      (m) => ({ from: m[1], rel: m[2], to: m[3] }),
-    );
+    const declared = [
+      ...section.matchAll(/^- \(([A-Za-z]+)\)-\[:([A-Z_]+)\]->\(([A-Za-z]+)\)/gm),
+    ].map((m) => ({ from: m[1], rel: m[2], to: m[3] }));
 
     expect(declared.length, 'the prompt must still list 21 relationships').toBe(21);
     const byKey = (a: SchemaEdgeKey, b: SchemaEdgeKey) => edgeKey(a).localeCompare(edgeKey(b));

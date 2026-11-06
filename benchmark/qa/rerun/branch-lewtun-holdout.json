@@ -1,0 +1,3968 @@
+{
+  "job": "audit-best-lewtun-holdout",
+  "target": "/tmp/claude-1000/-home-azureuser-githubIssue/70da14cc-9b8b-4da2-ad8e-0df4ab1309cd/scratchpad/sut/best",
+  "split": "lewtun-holdout",
+  "startedAt": "2026-11-03T06:30:20.627Z",
+  "valid": true,
+  "invalidReason": null,
+  "config": {
+    "target": "/tmp/claude-1000/-home-azureuser-githubIssue/70da14cc-9b8b-4da2-ad8e-0df4ab1309cd/scratchpad/sut/best",
+    "job": "audit-best-lewtun-holdout",
+    "split": "lewtun-holdout",
+    "stage": "all",
+    "attempts": 3,
+    "latencyMs": 120,
+    "qaConcurrency": 3,
+    "limitTasks": 0,
+    "keepGraph": false,
+    "reasoningModel": "gpt-4o",
+    "fastModel": "gpt-4o-mini",
+    "judgeModel": "gpt-4o",
+    "model": "gpt-4o",
+    "corpusIssues": 60,
+    "tasks": 50,
+    "gateway": "https://api.openai.com"
+  },
+  "sut": {
+    "hash": "dfabe9557c84d2ce",
+    "files": 85,
+    "head": "258000ce0d2cf6b565dc9b71f50c4d36809e3db2",
+    "dirty": false
+  },
+  "preflight": [
+    {
+      "name": "target_present",
+      "pass": true,
+      "detail": "/tmp/claude-1000/-home-azureuser-githubIssue/70da14cc-9b8b-4da2-ad8e-0df4ab1309cd/scratchpad/sut/best"
+    },
+    {
+      "name": "target_deps",
+      "pass": true,
+      "detail": "node_modules present"
+    },
+    {
+      "name": "corpus_present",
+      "pass": true,
+      "detail": "60 issues (meta.count=60, split=lewtun-holdout)"
+    },
+    {
+      "name": "tasks_present",
+      "pass": true,
+      "detail": "50 tasks"
+    },
+    {
+      "name": "canaries_present",
+      "pass": true,
+      "detail": "2 canary task(s)"
+    },
+    {
+      "name": "openai_key_set",
+      "pass": true,
+      "detail": "set"
+    },
+    {
+      "name": "gateway_models_priced",
+      "pass": true,
+      "detail": "gpt-4o=priced, gpt-4o-mini=priced"
+    }
+  ],
+  "ingest": {
+    "durationMs": 195752,
+    "pipeline": {
+      "issuesFetched": 60,
+      "issuesIngested": 60,
+      "issuesAnalyzed": 60,
+      "issuesSkipped": 0,
+      "pullRequestsFetched": 0,
+      "pullRequestsIngested": 0,
+      "errors": [],
+      "durationMs": 195747,
+      "incremental": false
+    },
+    "github": {
+      "requests": 121,
+      "listingRequests": 1,
+      "issueRequests": 120,
+      "maxConcurrent": 1,
+      "busyMs": 14656
+    },
+    "neo4j": {
+      "queries": 349,
+      "sessions": 8,
+      "transactions": 1,
+      "samples": [
+        "CREATE CONSTRAINT issue_id_unique IF NOT EXISTS FOR (n:Issue",
+        "CREATE CONSTRAINT issue_number_unique IF NOT EXISTS FOR (n:I",
+        "CREATE CONSTRAINT user_login_unique IF NOT EXISTS FOR (n:Use",
+        "CREATE CONSTRAINT comment_id_unique IF NOT EXISTS FOR (n:Com",
+        "CREATE CONSTRAINT label_name_unique IF NOT EXISTS FOR (n:Lab",
+        "CREATE CONSTRAINT pull_request_id_unique IF NOT EXISTS FOR (",
+        "CREATE CONSTRAINT meta_key_unique IF NOT EXISTS FOR (n:Meta)",
+        "CREATE CONSTRAINT subcategory_name_unique IF NOT EXISTS FOR ",
+        "CREATE CONSTRAINT solution_text_unique IF NOT EXISTS FOR (n:",
+        "CREATE CONSTRAINT workaround_text_unique IF NOT EXISTS FOR (",
+        "CREATE INDEX issue_state_lookup IF NOT EXISTS FOR (n:Issue) ",
+        "CREATE INDEX issue_updated_at_lookup IF NOT EXISTS FOR (n:Is",
+        "UNWIND $issues AS iss MERGE (i:Issue {issueId: iss.issueId})",
+        "UNWIND $users AS user MERGE (u:User {login: user.login}) SET",
+        "UNWIND $links AS link MATCH (i:Issue {issueId: link.issueId}",
+        "UNWIND $issueIds AS issueId MATCH (i:Issue {issueId: issueId",
+        "UNWIND $labels AS label MERGE (l:Label {name: label.name}) S",
+        "UNWIND $links AS link MATCH (i:Issue {issueId: link.issueId}",
+        "UNWIND $comments AS c MERGE (comment:Comment {commentId: c.i",
+        "MATCH (s:Subcategory) RETURN s.name AS name, s.definition AS",
+        "MATCH (i:Issue) OPTIONAL MATCH (i)-[:HAS_LABEL]->(l:Label) R",
+        "MATCH (s:Subcategory) DETACH DELETE s",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MATCH (g:Guidance) RETURN g.id AS id, g.text AS text, g.reco",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $competitors AS comp MER",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $competitors AS comp MER",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $competitors AS comp MER",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s"
+      ]
+    },
+    "openai": {
+      "requests": 61,
+      "byModel": {
+        "gpt-4o-2024-08-06": {
+          "requests": 1,
+          "promptTokens": 1090,
+          "completionTokens": 282,
+          "cachedInputTokens": 0,
+          "unmetered": 0
+        },
+        "gpt-4o-mini-2024-07-18": {
+          "requests": 60,
+          "promptTokens": 150741,
+          "completionTokens": 10581,
+          "cachedInputTokens": 0,
+          "unmetered": 0
+        }
+      },
+      "byEndpoint": {
+        "/chat/completions": 61
+      },
+      "byHost": {
+        "api.openai.com": 61
+      },
+      "unpricedModels": [],
+      "cachedInputTokens": 0,
+      "cacheHitRate": 0,
+      "costUsd": 0.03450475
+    }
+  },
+  "integrity": [
+    {
+      "name": "issue_count",
+      "pass": true,
+      "expected": "60",
+      "actual": "60",
+      "info": false
+    },
+    {
+      "name": "comment_count",
+      "pass": true,
+      "expected": "237",
+      "actual": "237",
+      "info": false
+    },
+    {
+      "name": "user_count",
+      "pass": true,
+      "expected": "52",
+      "actual": "52",
+      "info": false
+    },
+    {
+      "name": "label_count",
+      "pass": true,
+      "expected": "9",
+      "actual": "9",
+      "info": false
+    },
+    {
+      "name": "no_duplicate_issue_number",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "no_duplicate_issue_id",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "no_duplicate_comment_id",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "issue_author_edges",
+      "pass": true,
+      "expected": "60",
+      "actual": "60",
+      "info": false
+    },
+    {
+      "name": "issue_comment_edges",
+      "pass": true,
+      "expected": "237",
+      "actual": "237",
+      "info": false
+    },
+    {
+      "name": "issue_label_edges",
+      "pass": true,
+      "expected": "35",
+      "actual": "35",
+      "info": false
+    },
+    {
+      "name": "no_orphan_comments",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "issue_numbers_match",
+      "pass": true,
+      "expected": "60 exact numbers",
+      "actual": "60 present"
+    },
+    {
+      "name": "per_issue_comment_counts",
+      "pass": true,
+      "expected": "every issue has its corpus comment count",
+      "actual": "all match"
+    },
+    {
+      "name": "reaction_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "0",
+      "info": true
+    },
+    {
+      "name": "constraints_defined",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "10",
+      "info": true
+    },
+    {
+      "name": "indexes_defined",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "12",
+      "info": true
+    },
+    {
+      "name": "solution_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "48",
+      "info": true
+    },
+    {
+      "name": "workaround_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "30",
+      "info": true
+    },
+    {
+      "name": "category_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "48",
+      "info": true
+    },
+    {
+      "name": "competitor_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "6",
+      "info": true
+    },
+    {
+      "name": "keyword_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "199",
+      "info": true
+    },
+    {
+      "name": "issues_with_category",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "46",
+      "info": true
+    },
+    {
+      "name": "issues_with_priority",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "60",
+      "info": true
+    }
+  ],
+  "qa": {
+    "tasks": [
+      {
+        "id": "lewtun-holdout-001",
+        "template": "total_issues",
+        "kind": "structural",
+        "canary": true,
+        "question": "How many issues are in the knowledge graph in total?",
+        "oracle": "60",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 60",
+            "answer": "The knowledge graph currently contains a total of 60 issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN count(i) AS totalIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17645,
+              "output": 42
+            },
+            "ms": 2794
+          },
+          {
+            "pass": true,
+            "reason": "found 60",
+            "answer": "There are a total of 60 issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17645,
+              "output": 43
+            },
+            "ms": 2934
+          },
+          {
+            "pass": true,
+            "reason": "found 60",
+            "answer": "The knowledge graph contains a total of 60 issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17645,
+              "output": 41
+            },
+            "ms": 3247
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-002",
+        "template": "total_comments",
+        "kind": "structural",
+        "canary": true,
+        "question": "How many comments are stored across all issues in total?",
+        "oracle": "237",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 237",
+            "answer": "There are a total of 237 comments stored across all issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN count(c) AS totalComments"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 50
+            },
+            "ms": 2283
+          },
+          {
+            "pass": true,
+            "reason": "found 237",
+            "answer": "There are a total of 237 comments stored across all issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (c:Comment) RETURN count(c) AS total_comments"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17645,
+              "output": 46
+            },
+            "ms": 2235
+          },
+          {
+            "pass": true,
+            "reason": "found 237",
+            "answer": "There are a total of 237 comments stored across all issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (c:Comment) RETURN count(c) as totalComments"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17645,
+              "output": 43
+            },
+            "ms": 2120
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-003",
+        "template": "open_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues are currently open?",
+        "oracle": "30",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "There are currently 30 open issues in the huggingface/datasets repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'OPEN' RETURN count(i) AS openIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17644,
+              "output": 52
+            },
+            "ms": 2160
+          },
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "There are currently 30 open issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {state: 'OPEN'}) RETURN count(i) AS openIssuesCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17644,
+              "output": 47
+            },
+            "ms": 2100
+          },
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "There are currently 30 open issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'OPEN' RETURN count(i) AS openIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17644,
+              "output": 48
+            },
+            "ms": 2083
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-004",
+        "template": "closed_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues are closed?",
+        "oracle": "30",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "There are 30 issues that are currently closed.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS closedCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17643,
+              "output": 48
+            },
+            "ms": 2226
+          },
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "There are currently 30 closed issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS closedIssuesCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17645,
+              "output": 50
+            },
+            "ms": 2137
+          },
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "There are 30 closed issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS closedIssuesCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17645,
+              "output": 49
+            },
+            "ms": 2343
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-005",
+        "template": "distinct_labels",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many distinct labels exist in the knowledge graph?",
+        "oracle": "9",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "There are 9 distinct labels in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (l:Label) RETURN count(distinct l.name) as labelCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17646,
+              "output": 44
+            },
+            "ms": 2041
+          },
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "There are 9 distinct labels in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (l:Label) RETURN COUNT(DISTINCT l.name) AS distinctLabelCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17649,
+              "output": 46
+            },
+            "ms": 2133
+          },
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "There are 9 distinct labels in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (l:Label) RETURN count(DISTINCT l.name) AS labelCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17647,
+              "output": 45
+            },
+            "ms": 2289
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-006",
+        "template": "distinct_authors",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many distinct users have authored issues in the knowledge graph?",
+        "oracle": "52",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 52",
+            "answer": "There are 52 distinct users who have authored issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTINCT u.login) AS distinctUserCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17664,
+              "output": 61
+            },
+            "ms": 2406
+          },
+          {
+            "pass": true,
+            "reason": "found 52",
+            "answer": "There are 52 distinct users who have authored issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTINCT u.login) AS user_count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17663,
+              "output": 61
+            },
+            "ms": 2353
+          },
+          {
+            "pass": true,
+            "reason": "found 52",
+            "answer": "There are 52 distinct users who have authored issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN count(DISTINCT u) as numUsers"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17661,
+              "output": 59
+            },
+            "ms": 2154
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-007",
+        "template": "zero_comment_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues have no comments at all?",
+        "oracle": "20",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 20",
+            "answer": "There are 20 issues with no comments at all.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RETURN COUNT(i) AS noCommentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 54
+            },
+            "ms": 2307
+          },
+          {
+            "pass": true,
+            "reason": "found 20",
+            "answer": "There are 20 issues that have no comments at all.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 54
+            },
+            "ms": 2296
+          },
+          {
+            "pass": true,
+            "reason": "found 20",
+            "answer": "There are 20 issues that have no comments at all.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RETURN COUNT(i) as noCommentIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 55
+            },
+            "ms": 2115
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-008",
+        "template": "top_author",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which user has authored the most issues, and how many did they author?",
+        "oracle": "stas00 (4)",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The user who has authored the most issues is `stas00`, with a total of 4 issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN u.login as user, COUNT(i) as issueCount ORDER BY issueCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17683,
+              "output": 76
+            },
+            "ms": 2353
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The user who has authored the most issues is **stas00**, with a total of 4 issues authored.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN u.login AS author, COUNT(i) AS issueCount ORDER BY issueCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17683,
+              "output": 77
+            },
+            "ms": 2341
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The user who has authored the most issues is **stas00**, with a total of 4 issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN u.login AS user, COUNT(i) AS issue_count ORDER BY issue_count DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17683,
+              "output": 76
+            },
+            "ms": 2200
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-009",
+        "template": "recent_5",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the 5 most recently created issues. Give their issue numbers.",
+        "oracle": "#2899, #2889, #2877, #2866, #2829",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 2829,2866,2877,2889,2899",
+            "answer": "Here are the 5 most recently created issues along with their issue numbers:\n\n1. [Issue #2899](https://github.com/huggingface/datasets/issues/2899)\n2. [Issue #2889](https://github.com/huggingface/datasets/issues/2889)\n3. [Issue #2877](https://github.com/huggingface/datasets/issues/2877)\n4. [Issue #2866](https://github.com/huggingface/datasets/issues/2866)\n5. [Issue #2829](https://github.com/huggingface/datasets/issues/2829)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN i.number ORDER BY i.createdAt DESC LIMIT 5"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17681,
+              "output": 165
+            },
+            "ms": 2597
+          },
+          {
+            "pass": true,
+            "reason": "cited 2829,2866,2877,2889,2899",
+            "answer": "Here are the 5 most recently created issues, listed by their issue numbers:\n\n1. [#2899](https://github.com/huggingface/datasets/issues/2899)\n2. [#2889](https://github.com/huggingface/datasets/issues/2889)\n3. [#2877](https://github.com/huggingface/datasets/issues/2877)\n4. [#2866](https://github.com/huggingface/datasets/issues/2866)\n5. [#2829](https://github.com/huggingface/datasets/issues/2829)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN i.number ORDER BY i.createdAt DESC LIMIT 5"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17681,
+              "output": 161
+            },
+            "ms": 2475
+          },
+          {
+            "pass": true,
+            "reason": "cited 2829,2866,2877,2889,2899",
+            "answer": "The 5 most recently created issues are:\n\n1. [Issue #2899](https://github.com/huggingface/datasets/issues/2899)\n2. [Issue #2889](https://github.com/huggingface/datasets/issues/2889)\n3. [Issue #2877](https://github.com/huggingface/datasets/issues/2877)\n4. [Issue #2866](https://github.com/huggingface/datasets/issues/2866)\n5. [Issue #2829](https://github.com/huggingface/datasets/issues/2829)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN i.number ORDER BY i.createdAt DESC LIMIT 5"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17681,
+              "output": 159
+            },
+            "ms": 2806
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-010",
+        "template": "label_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues carry the label \"bug\"?",
+        "oracle": "13",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 13",
+            "answer": "There are 13 issues that carry the label \"bug\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'bug' RETURN count(i) AS bugCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 61
+            },
+            "ms": 2151
+          },
+          {
+            "pass": true,
+            "reason": "found 13",
+            "answer": "There are 13 issues carrying the label \"bug\" in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'bug' RETURN count(i) AS count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 63
+            },
+            "ms": 2117
+          },
+          {
+            "pass": true,
+            "reason": "found 13",
+            "answer": "There are 13 issues that carry the label \"bug\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'bug' RETURN count(i) as bug_issue_count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17662,
+              "output": 62
+            },
+            "ms": 2506
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-011",
+        "template": "label_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues carry the label \"enhancement\"?",
+        "oracle": "9",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "There are 9 issues that carry the label \"enhancement\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'enhancement' RETURN count(i) as enhancementCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17664,
+              "output": 63
+            },
+            "ms": 2500
+          },
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "There are 9 issues that carry the label \"enhancement\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'enhancement' RETURN COUNT(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17663,
+              "output": 63
+            },
+            "ms": 2493
+          },
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "There are 9 issues that carry the label \"enhancement\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'enhancement' RETURN COUNT(i) as enhancementIssuesCount LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17669,
+              "output": 67
+            },
+            "ms": 2172
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-012",
+        "template": "label_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues carry the label \"dataset request\"?",
+        "oracle": "5",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 5",
+            "answer": "There are 5 issues that carry the label \"dataset request\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'dataset request' RETURN COUNT(i) AS count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17661,
+              "output": 62
+            },
+            "ms": 2322
+          },
+          {
+            "pass": true,
+            "reason": "found 5",
+            "answer": "There are 5 issues that carry the label \"dataset request\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower($name) RETURN COUNT(i) AS issueCount",
+                  "parameters": {
+                    "name": "dataset request"
+                  }
+                }
+              },
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('dataset request') RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 26626,
+              "output": 122
+            },
+            "ms": 3884
+          },
+          {
+            "pass": true,
+            "reason": "found 5",
+            "answer": "There are 5 issues that carry the label \"dataset request\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'dataset request' RETURN COUNT(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17663,
+              "output": 63
+            },
+            "ms": 2810
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-013",
+        "template": "label_members",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the issue numbers of every issue labelled \"dataset request\".",
+        "oracle": "#336, #815, #2331, #2889, #2899",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 336,815,2331,2889,2899",
+            "answer": "The issues labelled \"dataset request\" are:\n\n- [#2331](https://github.com/huggingface/datasets/issues/2331)\n- [#815](https://github.com/huggingface/datasets/issues/815)\n- [#336](https://github.com/huggingface/datasets/issues/336)\n- [#2889](https://github.com/huggingface/datasets/issues/2889)\n- [#2899](https://github.com/huggingface/datasets/issues/2899)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'dataset request' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17689,
+              "output": 159
+            },
+            "ms": 2852
+          },
+          {
+            "pass": true,
+            "reason": "cited 336,815,2331,2889,2899",
+            "answer": "The issues labelled \"dataset request\" are:\n\n- [#2331](https://github.com/huggingface/datasets/issues/2331)\n- [#815](https://github.com/huggingface/datasets/issues/815)\n- [#336](https://github.com/huggingface/datasets/issues/336)\n- [#2889](https://github.com/huggingface/datasets/issues/2889)\n- [#2899](https://github.com/huggingface/datasets/issues/2899)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('dataset request') RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17691,
+              "output": 161
+            },
+            "ms": 2773
+          },
+          {
+            "pass": true,
+            "reason": "cited 336,815,2331,2889,2899",
+            "answer": "The issue numbers labeled \"dataset request\" are:\n\n- [#2331](https://github.com/huggingface/datasets/issues/2331)\n- [#815](https://github.com/huggingface/datasets/issues/815)\n- [#336](https://github.com/huggingface/datasets/issues/336)\n- [#2889](https://github.com/huggingface/datasets/issues/2889)\n- [#2899](https://github.com/huggingface/datasets/issues/2899)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('dataset request') RETURN i.number AS issueNumber LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17694,
+              "output": 165
+            },
+            "ms": 2695
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-014",
+        "template": "label_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues carry the label \"generic discussion\"?",
+        "oracle": "2",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 2",
+            "answer": "There are 2 issues that carry the label \"generic discussion\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('generic discussion') RETURN count(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17665,
+              "output": 65
+            },
+            "ms": 2024
+          },
+          {
+            "pass": true,
+            "reason": "found 2",
+            "answer": "There are 2 issues that carry the label \"generic discussion.\"",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('generic discussion') RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17665,
+              "output": 65
+            },
+            "ms": 2177
+          },
+          {
+            "pass": true,
+            "reason": "found 2",
+            "answer": "There are 2 issues that carry the label \"generic discussion\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'generic discussion' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17663,
+              "output": 63
+            },
+            "ms": 2465
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-015",
+        "template": "label_members",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the issue numbers of every issue labelled \"generic discussion\".",
+        "oracle": "#217, #1167",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 217,1167",
+            "answer": "The issues labelled \"generic discussion\" are [#1167](https://github.com/huggingface/datasets/issues/1167) and [#217](https://github.com/huggingface/datasets/issues/217).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'generic discussion' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17672,
+              "output": 96
+            },
+            "ms": 2330
+          },
+          {
+            "pass": true,
+            "reason": "cited 217,1167",
+            "answer": "The issue numbers of issues labelled \"generic discussion\" are:\n\n- [#217](https://github.com/huggingface/datasets/issues/217)\n- [#1167](https://github.com/huggingface/datasets/issues/1167)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'generic discussion' RETURN i.number ORDER BY i.number ASC"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17674,
+              "output": 103
+            },
+            "ms": 2295
+          },
+          {
+            "pass": true,
+            "reason": "cited 217,1167",
+            "answer": "The issues labelled \"generic discussion\" are:\n\n- [#1167](https://github.com/huggingface/datasets/issues/1167)\n- [#217](https://github.com/huggingface/datasets/issues/217)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'generic discussion' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17672,
+              "output": 98
+            },
+            "ms": 2574
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-016",
+        "template": "label_members",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the issue numbers of every issue labelled \"question\".",
+        "oracle": "#878, #1167",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 878,1167",
+            "answer": "The following issue numbers have the label \"question\":\n\n- [#878](https://github.com/huggingface/datasets/issues/878)\n- [#1167](https://github.com/huggingface/datasets/issues/1167)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'question' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17669,
+              "output": 98
+            },
+            "ms": 2424
+          },
+          {
+            "pass": true,
+            "reason": "cited 878,1167",
+            "answer": "The issue numbers of issues labelled \"question\" are [#878](https://github.com/huggingface/datasets/issues/878) and [#1167](https://github.com/huggingface/datasets/issues/1167).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'question' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17669,
+              "output": 97
+            },
+            "ms": 2524
+          },
+          {
+            "pass": true,
+            "reason": "cited 878,1167",
+            "answer": "The issues labelled \"question\" are [#878](https://github.com/huggingface/datasets/issues/878) and [#1167](https://github.com/huggingface/datasets/issues/1167).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'question' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17669,
+              "output": 94
+            },
+            "ms": 2348
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-017",
+        "template": "month_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created in 2021-03?",
+        "oracle": "9",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "In March 2021, a total of 9 issues were created in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-03' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 61
+            },
+            "ms": 2192
+          },
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "A total of 9 issues were created in March 2021.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-03' RETURN count(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 57
+            },
+            "ms": 2573
+          },
+          {
+            "pass": true,
+            "reason": "found 9",
+            "answer": "In March 2021, a total of 9 issues were created in the huggingface/datasets repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-03' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 65
+            },
+            "ms": 2247
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-018",
+        "template": "month_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created in 2020-11?",
+        "oracle": "7",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "There were 7 issues created in November 2020.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-11' RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 55
+            },
+            "ms": 2403
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "In November 2020, a total of 7 issues were created in the huggingface/datasets repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt >= '2020-11-01' AND i.createdAt < '2020-12-01' RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17673,
+              "output": 78
+            },
+            "ms": 2557
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "In November 2020, 7 issues were created in the huggingface/datasets repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-11' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 62
+            },
+            "ms": 2631
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-019",
+        "template": "month_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created in 2020-09?",
+        "oracle": "6",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 6",
+            "answer": "In September 2020, a total of 6 issues were created in the `huggingface/datasets` repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-09' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 68
+            },
+            "ms": 2004
+          },
+          {
+            "pass": true,
+            "reason": "found 6",
+            "answer": "In September 2020, a total of 6 issues were created in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)\nWHERE i.createdAt >= '2020-09-01' AND i.createdAt < '2020-10-01'\nRETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17675,
+              "output": 76
+            },
+            "ms": 2303
+          },
+          {
+            "pass": true,
+            "reason": "found 6",
+            "answer": "In September 2020, 6 issues were created in the huggingface/datasets repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-09' RETURN count(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 62
+            },
+            "ms": 2072
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-020",
+        "template": "month_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created in 2021-08?",
+        "oracle": "5",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 5",
+            "answer": "In August 2021, 5 issues were created in the huggingface/datasets repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH \"2021-08\" RETURN count(i) as numberOfIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17662,
+              "output": 63
+            },
+            "ms": 2122
+          },
+          {
+            "pass": true,
+            "reason": "found 5",
+            "answer": "In August 2021, a total of 5 issues were created in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-08' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 61
+            },
+            "ms": 2145
+          },
+          {
+            "pass": true,
+            "reason": "found 5",
+            "answer": "In August 2021, 5 issues were created in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt >= '2021-08-01' AND i.createdAt < '2021-09-01' RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17673,
+              "output": 71
+            },
+            "ms": 2346
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-021",
+        "template": "author_issues",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues were opened by the user \"stas00\"? Give their issue numbers.",
+        "oracle": "#1892, #1957, #1987, #2657",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 1892,1957,1987,2657",
+            "answer": "The issues opened by the user \"stas00\" are:\n\n- [#1987](https://github.com/huggingface/datasets/issues/1987)\n- [#2657](https://github.com/huggingface/datasets/issues/2657)\n- [#1892](https://github.com/huggingface/datasets/issues/1892)\n- [#1957](https://github.com/huggingface/datasets/issues/1957)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User {login: 'stas00'}) RETURN i.number AS issueNumber LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17693,
+              "output": 145
+            },
+            "ms": 2586
+          },
+          {
+            "pass": true,
+            "reason": "cited 1892,1957,1987,2657",
+            "answer": "The issues opened by the user \"stas00\" have the following issue numbers:\n\n- [#1987](https://github.com/huggingface/datasets/issues/1987)\n- [#2657](https://github.com/huggingface/datasets/issues/2657)\n- [#1892](https://github.com/huggingface/datasets/issues/1892)\n- [#1957](https://github.com/huggingface/datasets/issues/1957)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'stas00' RETURN i.number AS issueNumber LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17695,
+              "output": 151
+            },
+            "ms": 2603
+          },
+          {
+            "pass": true,
+            "reason": "cited 1892,1957,1987,2657",
+            "answer": "The issues opened by the user \"stas00\" are:\n\n- [#1987](https://github.com/huggingface/datasets/issues/1987)\n- [#2657](https://github.com/huggingface/datasets/issues/2657)\n- [#1892](https://github.com/huggingface/datasets/issues/1892)\n- [#1957](https://github.com/huggingface/datasets/issues/1957)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'stas00' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17692,
+              "output": 144
+            },
+            "ms": 6259
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-022",
+        "template": "author_issues",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues were opened by the user \"lhoestq\"? Give their issue numbers.",
+        "oracle": "#727, #2829, #2877",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 727,2829,2877",
+            "answer": "The issues opened by the user \"lhoestq\" are:\n\n- [Issue #727](https://github.com/huggingface/datasets/issues/727)\n- [Issue #2829](https://github.com/huggingface/datasets/issues/2829)\n- [Issue #2877](https://github.com/huggingface/datasets/issues/2877)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = \"lhoestq\" RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17688,
+              "output": 126
+            },
+            "ms": 2518
+          },
+          {
+            "pass": true,
+            "reason": "cited 727,2829,2877",
+            "answer": "The issues opened by the user \"lhoestq\" are [#727](https://github.com/huggingface/datasets/issues/727), [#2829](https://github.com/huggingface/datasets/issues/2829), and [#2877](https://github.com/huggingface/datasets/issues/2877).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = toLower('lhoestq') RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17693,
+              "output": 125
+            },
+            "ms": 2894
+          },
+          {
+            "pass": true,
+            "reason": "cited 727,2829,2877",
+            "answer": "The issues opened by the user \"lhoestq\" have the following issue numbers:\n\n- [#727](https://github.com/huggingface/datasets/issues/727)\n- [#2829](https://github.com/huggingface/datasets/issues/2829)\n- [#2877](https://github.com/huggingface/datasets/issues/2877)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'lhoestq' RETURN i.number LIMIT 20"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17688,
+              "output": 127
+            },
+            "ms": 2507
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-023",
+        "template": "author_issues",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues were opened by the user \"timothyjlaurent\"? Give their issue numbers.",
+        "oracle": "#620, #847",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 620,847",
+            "answer": "The issues opened by the user \"timothyjlaurent\" are:\n\n- [Issue #847](https://github.com/huggingface/datasets/issues/847)\n- [Issue #620](https://github.com/huggingface/datasets/issues/620)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'timothyjlaurent' RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17687,
+              "output": 106
+            },
+            "ms": 2695
+          },
+          {
+            "pass": true,
+            "reason": "cited 620,847",
+            "answer": "The issues opened by the user \"timothyjlaurent\" are [#847](https://github.com/huggingface/datasets/issues/847) and [#620](https://github.com/huggingface/datasets/issues/620).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = toLower('timothyjlaurent') RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17692,
+              "output": 107
+            },
+            "ms": 2236
+          },
+          {
+            "pass": true,
+            "reason": "cited 620,847",
+            "answer": "The issues opened by the user \"timothyjlaurent\" are:\n\n- [Issue #847](https://github.com/huggingface/datasets/issues/847)\n- [Issue #620](https://github.com/huggingface/datasets/issues/620)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'timothyjlaurent' RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17687,
+              "output": 106
+            },
+            "ms": 2515
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-024",
+        "template": "author_issues",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues were opened by the user \"sshleifer\"? Give their issue numbers.",
+        "oracle": "#723, #796",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 723,796",
+            "answer": "The issues opened by the user \"sshleifer\" are [#723](https://github.com/huggingface/datasets/issues/723) and [#796](https://github.com/huggingface/datasets/issues/796).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'sshleifer' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17681,
+              "output": 98
+            },
+            "ms": 2737
+          },
+          {
+            "pass": true,
+            "reason": "cited 723,796",
+            "answer": "The issues opened by the user \"sshleifer\" are [#723](https://github.com/huggingface/datasets/issues/723) and [#796](https://github.com/huggingface/datasets/issues/796).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'sshleifer' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17681,
+              "output": 98
+            },
+            "ms": 2401
+          },
+          {
+            "pass": true,
+            "reason": "cited 723,796",
+            "answer": "The issues opened by the user \"sshleifer\" are:\n\n- [#723](https://github.com/huggingface/datasets/issues/723)\n- [#796](https://github.com/huggingface/datasets/issues/796)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User {login:'sshleifer'}) RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17678,
+              "output": 97
+            },
+            "ms": 2592
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-025",
+        "template": "author_issues",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues were opened by the user \"lewtun\"? Give their issue numbers.",
+        "oracle": "#2359, #2799",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 2359,2799",
+            "answer": "The issues opened by the user \"lewtun\" are [#2359](https://github.com/huggingface/datasets/issues/2359) and [#2799](https://github.com/huggingface/datasets/issues/2799).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'lewtun' RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17683,
+              "output": 102
+            },
+            "ms": 2330
+          },
+          {
+            "pass": true,
+            "reason": "cited 2359,2799",
+            "answer": "The user \"lewtun\" authored the following issues:\n\n- [#2359](https://github.com/huggingface/datasets/issues/2359)\n- [#2799](https://github.com/huggingface/datasets/issues/2799)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'lewtun' RETURN i.number AS issueNumber LIMIT 20"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17686,
+              "output": 106
+            },
+            "ms": 2217
+          },
+          {
+            "pass": true,
+            "reason": "cited 2359,2799",
+            "answer": "The issues opened by the user \"lewtun\" are [#2359](https://github.com/huggingface/datasets/issues/2359) and [#2799](https://github.com/huggingface/datasets/issues/2799).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'lewtun' RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17683,
+              "output": 102
+            },
+            "ms": 2526
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-026",
+        "template": "issue_comment_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many comments does issue #211 have?",
+        "oracle": "7",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#211](https://github.com/huggingface/datasets/issues/211) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number = 211 RETURN count(c) as commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2293
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#211](https://github.com/huggingface/datasets/issues/211) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number = 211 RETURN COUNT(c) as commentCount LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17659,
+              "output": 72
+            },
+            "ms": 2255
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#211](https://github.com/huggingface/datasets/issues/211) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 211})-[:HAS_COMMENT]->(c:Comment) RETURN COUNT(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2564
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-027",
+        "template": "issue_comment_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many comments does issue #217 have?",
+        "oracle": "22",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 22",
+            "answer": "Issue [#217](https://github.com/huggingface/datasets/issues/217) has 22 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217})-[:HAS_COMMENT]->(c:Comment) RETURN COUNT(c) AS comment_count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2249
+          },
+          {
+            "pass": true,
+            "reason": "found 22",
+            "answer": "Issue [#217](https://github.com/huggingface/datasets/issues/217) has 22 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217})-[:HAS_COMMENT]->(c:Comment) RETURN COUNT(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2284
+          },
+          {
+            "pass": true,
+            "reason": "found 22",
+            "answer": "Issue [#217](https://github.com/huggingface/datasets/issues/217) has 22 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217})-[:HAS_COMMENT]->(c:Comment) RETURN COUNT(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2215
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-028",
+        "template": "issue_comment_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many comments does issue #514 have?",
+        "oracle": "7",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#514](https://github.com/huggingface/datasets/issues/514) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 514})-[:HAS_COMMENT]->(c:Comment) RETURN count(c) as commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2045
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#514](https://github.com/huggingface/datasets/issues/514) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number = 514 RETURN count(c) as commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2432
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#514](https://github.com/huggingface/datasets/issues/514) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 514})-[:HAS_COMMENT]->(c:Comment) RETURN count(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 1921
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-029",
+        "template": "issue_comment_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many comments does issue #575 have?",
+        "oracle": "6",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 6",
+            "answer": "Issue [#575](https://github.com/huggingface/datasets/issues/575) has 6 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 575})-[:HAS_COMMENT]->(c:Comment) RETURN count(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2229
+          },
+          {
+            "pass": true,
+            "reason": "found 6",
+            "answer": "Issue [#575](https://github.com/huggingface/datasets/issues/575) has 6 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 575})-[:HAS_COMMENT]->(c:Comment) RETURN count(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2241
+          },
+          {
+            "pass": true,
+            "reason": "found 6",
+            "answer": "Issue [#575](https://github.com/huggingface/datasets/issues/575) has 6 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 575})-[:HAS_COMMENT]->(c:Comment) RETURN COUNT(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2397
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-030",
+        "template": "issue_comment_count",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many comments does issue #590 have?",
+        "oracle": "7",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#590](https://github.com/huggingface/datasets/issues/590) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 590})-[:HAS_COMMENT]->(c:Comment) RETURN count(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2149
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#590](https://github.com/huggingface/datasets/issues/590) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 590})-[:HAS_COMMENT]->(c:Comment) RETURN count(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2093
+          },
+          {
+            "pass": true,
+            "reason": "found 7",
+            "answer": "Issue [#590](https://github.com/huggingface/datasets/issues/590) has 7 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 590})-[:HAS_COMMENT]->(c:Comment) RETURN COUNT(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2131
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-031",
+        "template": "issue_title",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "What is the title of issue #211?",
+        "oracle": "[Arrow writer, Trivia_qa] Could not convert TagMe with type str: converting to null type",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#211](https://github.com/huggingface/datasets/issues/211) is \"[Arrow writer, Trivia_qa] Could not convert TagMe with type str: converting to null type\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 211}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17665,
+              "output": 79
+            },
+            "ms": 2249
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#211](https://github.com/huggingface/datasets/issues/211) is \"[Arrow writer, Trivia_qa] Could not convert TagMe with type str: converting to null type\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 211}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17665,
+              "output": 79
+            },
+            "ms": 2173
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#211](https://github.com/huggingface/datasets/issues/211) is \"[Arrow writer, Trivia_qa] Could not convert TagMe with type str: converting to null type\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 211}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17665,
+              "output": 79
+            },
+            "ms": 2545
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-032",
+        "template": "issue_author",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Who opened issue #211?",
+        "oracle": "patrickvonplaten",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#211](https://github.com/huggingface/datasets/issues/211) was opened by the user **patrickvonplaten**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 211})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 77
+            },
+            "ms": 2210
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#211](https://github.com/huggingface/datasets/issues/211) was opened by the user **patrickvonplaten**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 211})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 77
+            },
+            "ms": 2141
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#211](https://github.com/huggingface/datasets/issues/211) was opened by the user `patrickvonplaten`.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 211})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 76
+            },
+            "ms": 2875
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-033",
+        "template": "issue_title",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "What is the title of issue #217?",
+        "oracle": "Multi-task dataset mixing",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#217](https://github.com/huggingface/datasets/issues/217) is \"Multi-task dataset mixing\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 63
+            },
+            "ms": 2023
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#217](https://github.com/huggingface/datasets/issues/217) is \"Multi-task dataset mixing\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 63
+            },
+            "ms": 2092
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#217](https://github.com/huggingface/datasets/issues/217) is \"Multi-task dataset mixing\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue { number: 217 }) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 63
+            },
+            "ms": 2153
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-034",
+        "template": "issue_author",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Who opened issue #217?",
+        "oracle": "ghomasHudson",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue [#217](https://github.com/huggingface/datasets/issues/217) was opened by the user `ghomasHudson`.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 77
+            },
+            "ms": 2603
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue [#217](https://github.com/huggingface/datasets/issues/217) was opened by the user **ghomasHudson**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217})-[:AUTHORED_BY]->(u:User) RETURN u.login AS author LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 80
+            },
+            "ms": 2242
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#217](https://github.com/huggingface/datasets/issues/217) was opened by the user **ghomasHudson**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 217})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 77
+            },
+            "ms": 2149
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-035",
+        "template": "issue_title",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "What is the title of issue #275?",
+        "oracle": "NonMatchingChecksumError when loading pubmed dataset",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#275](https://github.com/huggingface/datasets/issues/275) is \"NonMatchingChecksumError when loading pubmed dataset\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 275}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 68
+            },
+            "ms": 2199
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#275](https://github.com/huggingface/datasets/issues/275) is \"NonMatchingChecksumError when loading pubmed dataset\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.number = 275 RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 69
+            },
+            "ms": 2140
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#275](https://github.com/huggingface/datasets/issues/275) is \"NonMatchingChecksumError when loading pubmed dataset\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 275}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 68
+            },
+            "ms": 2943
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-036",
+        "template": "issue_author",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Who opened issue #275?",
+        "oracle": "DavideStenner",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#275](https://github.com/huggingface/datasets/issues/275) was opened by the user **DavideStenner**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 275})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 78
+            },
+            "ms": 2149
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#275](https://github.com/huggingface/datasets/issues/275) was opened by the user \"DavideStenner\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 275})-[:AUTHORED_BY]->(author:User) RETURN author.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 77
+            },
+            "ms": 2021
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue [#275](https://github.com/huggingface/datasets/issues/275) was opened by the user **DavideStenner**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 275})-[:AUTHORED_BY]->(u:User) RETURN u.login AS author LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 81
+            },
+            "ms": 2077
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-037",
+        "template": "issue_title",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "What is the title of issue #336?",
+        "oracle": "[Dataset requests] New datasets for Open Question Answering",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of [issue #336](https://github.com/huggingface/datasets/issues/336) is \"[Dataset requests] New datasets for Open Question Answering\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 336}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 69
+            },
+            "ms": 2029
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#336](https://github.com/huggingface/datasets/issues/336) is \"[Dataset requests] New datasets for Open Question Answering\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 336}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 69
+            },
+            "ms": 2049
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#336](https://github.com/huggingface/datasets/issues/336) is \"[Dataset requests] New datasets for Open Question Answering\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 336}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 69
+            },
+            "ms": 2249
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-038",
+        "template": "issue_author",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Who opened issue #336?",
+        "oracle": "thomwolf",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#336](https://github.com/huggingface/datasets/issues/336) was opened by user **thomwolf**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 336})-[:AUTHORED_BY]->(u:User) RETURN u.login AS author LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 77
+            },
+            "ms": 2173
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#336](https://github.com/huggingface/datasets/issues/336) was opened by the user **thomwolf**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 336})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 76
+            },
+            "ms": 2166
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#336](https://github.com/huggingface/datasets/issues/336) was opened by the user with the GitHub login `thomwolf`.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 336})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 80
+            },
+            "ms": 4761
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-039",
+        "template": "issue_author",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Who opened issue #507?",
+        "oracle": "mchari",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue [#507](https://github.com/huggingface/datasets/issues/507) was opened by the user with the login `mchari`.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 507})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 79
+            },
+            "ms": 2265
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue [#507](https://github.com/huggingface/datasets/issues/507) was opened by the user with the login name `mchari`.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 507})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 80
+            },
+            "ms": 2031
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#507](https://github.com/huggingface/datasets/issues/507) was opened by the user `mchari`.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 507})-[:AUTHORED_BY]->(u:User) RETURN u.login AS login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17654,
+              "output": 77
+            },
+            "ms": 2453
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-040",
+        "template": "issue_title",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "What is the title of issue #514?",
+        "oracle": "dataset.shuffle(keep_in_memory=True) is never allowed",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#514](https://github.com/huggingface/datasets/issues/514) is \"dataset.shuffle(keep_in_memory=True) is never allowed\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 514}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 70
+            },
+            "ms": 2187
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#514](https://github.com/huggingface/datasets/issues/514) is \"dataset.shuffle(keep_in_memory=True) is never allowed\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.number = 514 RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 71
+            },
+            "ms": 2398
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#514](https://github.com/huggingface/datasets/issues/514) is \"dataset.shuffle(keep_in_memory=True) is never allowed\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 514}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17655,
+              "output": 70
+            },
+            "ms": 2269
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-041",
+        "template": "mentions_term",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Which issues mention \"memory\" in their title or body? Give their issue numbers.",
+        "oracle": "#514, #1830, #2516",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 514,1830,2516",
+            "answer": "Here are the issue numbers for issues that mention \"memory\" in their title or body:\n\n1. [Issue #514](https://github.com/huggingface/datasets/issues/514)\n2. [Issue #1830](https://github.com/huggingface/datasets/issues/1830)\n3. [Issue #2516](https://github.com/huggingface/datasets/issues/2516)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'memory' OR toLower(i.bodyText) CONTAINS 'memory' RETURN DISTINCT i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17694,
+              "output": 140
+            },
+            "ms": 2455
+          },
+          {
+            "pass": true,
+            "reason": "cited 514,1830,2516",
+            "answer": "The issues that mention \"memory\" in their title or body are:\n\n- [#514](https://github.com/huggingface/datasets/issues/514)\n- [#1830](https://github.com/huggingface/datasets/issues/1830)\n- [#2516](https://github.com/huggingface/datasets/issues/2516)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'memory' OR toLower(i.bodyText) CONTAINS 'memory' RETURN i.number AS issueNumber LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17696,
+              "output": 132
+            },
+            "ms": 2628
+          },
+          {
+            "pass": true,
+            "reason": "cited 514,1830,2516",
+            "answer": "The following issues mention \"memory\" in their title or body:\n\n- [#514](https://github.com/huggingface/datasets/issues/514)\n- [#1830](https://github.com/huggingface/datasets/issues/1830)\n- [#2516](https://github.com/huggingface/datasets/issues/2516)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'memory' OR toLower(i.bodyText) CONTAINS 'memory' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17693,
+              "output": 128
+            },
+            "ms": 2651
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-042",
+        "template": "mentions_term",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Which issues mention \"streaming\" in their title or body? Give their issue numbers.",
+        "oracle": "#2829, #2866",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 2829,2866",
+            "answer": "The following issues mention \"streaming\" in their title or body:\n\n- [#2829](https://github.com/huggingface/datasets/issues/2829)\n- [#2866](https://github.com/huggingface/datasets/issues/2866)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'streaming' OR toLower(i.bodyText) CONTAINS 'streaming' RETURN i.number AS issueNumber LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17695,
+              "output": 115
+            },
+            "ms": 2437
+          },
+          {
+            "pass": true,
+            "reason": "cited 2829,2866",
+            "answer": "The issues that mention \"streaming\" in their title or body are:\n\n- [Issue #2829](https://github.com/huggingface/datasets/issues/2829)\n- [Issue #2866](https://github.com/huggingface/datasets/issues/2866)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'streaming' OR toLower(i.bodyText) CONTAINS 'streaming' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17692,
+              "output": 115
+            },
+            "ms": 2500
+          },
+          {
+            "pass": true,
+            "reason": "cited 2829,2866",
+            "answer": "The issues that mention \"streaming\" in their title or body are [#2829](https://github.com/huggingface/datasets/issues/2829) and [#2866](https://github.com/huggingface/datasets/issues/2866).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'streaming' OR toLower(i.bodyText) CONTAINS 'streaming' RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17692,
+              "output": 111
+            },
+            "ms": 2278
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-043",
+        "template": "mentions_term",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Which issues mention \"shard\" in their title or body? Give their issue numbers.",
+        "oracle": "#709, #2600",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 709,2600",
+            "answer": "The issues that mention \"shard\" in their title or body are [#709](https://github.com/huggingface/datasets/issues/709) and [#2600](https://github.com/huggingface/datasets/issues/2600).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS toLower('shard') OR toLower(i.bodyText) CONTAINS toLower('shard') RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17695,
+              "output": 113
+            },
+            "ms": 2661
+          },
+          {
+            "pass": true,
+            "reason": "cited 709,2600",
+            "answer": "The issues that mention \"shard\" in their title or body are:\n\n- [Issue #709](https://github.com/huggingface/datasets/issues/709)\n- [Issue #2600](https://github.com/huggingface/datasets/issues/2600)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'shard' OR toLower(i.bodyText) CONTAINS 'shard' RETURN i.number AS issueNumber LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17694,
+              "output": 116
+            },
+            "ms": 2626
+          },
+          {
+            "pass": true,
+            "reason": "cited 709,2600",
+            "answer": "The issues that mention \"shard\" in their title or body are:\n\n- [#709](https://github.com/huggingface/datasets/issues/709)\n- [#2600](https://github.com/huggingface/datasets/issues/2600)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'shard' OR toLower(i.bodyText) CONTAINS 'shard' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17691,
+              "output": 111
+            },
+            "ms": 2479
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-044",
+        "template": "mentions_term",
+        "kind": "retrieval",
+        "canary": false,
+        "question": "Which issues mention \"image\" in their title or body? Give their issue numbers.",
+        "oracle": "#673, #796, #2146, #2829",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 673,796,2146,2829",
+            "answer": "The issues that mention \"image\" in their title or body are:\n\n- [#673](https://github.com/huggingface/datasets/issues/673)\n- [#796](https://github.com/huggingface/datasets/issues/796)\n- [#2146](https://github.com/huggingface/datasets/issues/2146)\n- [#2829](https://github.com/huggingface/datasets/issues/2829)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)\nWHERE toLower(i.title) CONTAINS 'image' OR toLower(i.bodyText) CONTAINS 'image'\nRETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17700,
+              "output": 150
+            },
+            "ms": 5312
+          },
+          {
+            "pass": true,
+            "reason": "cited 673,796,2146,2829",
+            "answer": "The issues that mention \"image\" in their title or body are:\n\n- [#673](https://github.com/huggingface/datasets/issues/673)\n- [#796](https://github.com/huggingface/datasets/issues/796)\n- [#2146](https://github.com/huggingface/datasets/issues/2146)\n- [#2829](https://github.com/huggingface/datasets/issues/2829)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'image' OR toLower(i.bodyText) CONTAINS 'image' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17698,
+              "output": 148
+            },
+            "ms": 2904
+          },
+          {
+            "pass": true,
+            "reason": "cited 673,796,2146,2829",
+            "answer": "Here are the issue numbers that mention \"image\" in their title or body:\n\n- [#673](https://github.com/huggingface/datasets/issues/673)\n- [#796](https://github.com/huggingface/datasets/issues/796)\n- [#2146](https://github.com/huggingface/datasets/issues/2146)\n- [#2829](https://github.com/huggingface/datasets/issues/2829)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS \"image\" OR toLower(i.bodyText) CONTAINS \"image\" RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17698,
+              "output": 150
+            },
+            "ms": 2778
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-045",
+        "template": "summarize_issue",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #217. What is the problem and what did people say about it?",
+        "oracle": "Multi-task dataset mixing",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, focusing on multi-task dataset mixing and proposed solutions, without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#217](https://github.com/huggingface/datasets/issues/217) — \"Multi-task dataset mixing\"\n\n**Problem:**\nThe issue revolves around the need for efficiently combining datasets for multi-task learning. Users want to fine-tune models on various tasks using different sampling techniques, such as examples-proportional mixing, equal mixing, and temperature-scaled mixing. There is also interest in pretraining on benchmarks like GLUE before fine-tuning on its specific tasks.\n\n**Key Workflows or Use Cases Mentioned:**\n- Developing a class or function to handle multi-task datasets more efficiently.\n- Mention of a `MultiDataset` class that would maintain a single interface for different datasets.\n\n**Competitor Tools/Services Mentioned:**\n- Models like T5, GPT-3, and approaches like decaNLP and mt-dnn were referenced as various methods of handling multi-task datasets and sampling strategies.\n\n**Workarounds Users Have Found:**\n- Flattening datasets to a common format manually, or using simple functions for basic merging, as a temporary solution.\n\n**Proposed Solutions:**\n- Implementing features like `dataset.add()` to combine datasets of the same format easily.\n- Developing a `MultiDataset` wrapper to enable consistent sampling and accessing multiple datasets.\n- Using `dataset.sample()` to sample according to parameters like `temperature` and `K`.\n- Creating methods to handle common splits in combined datasets for better compatibility and integration.\n\n**Overall Emotional Tone:**\nThe discussion holds a neutral to positive tone, exhibiting enthusiasm for the potential feature. Participants actively engage in addressing challenges, proposing solutions, and sharing insights and constructive criticism.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 217
+                }
+              }
+            ],
+            "usage": {
+              "input": 18042,
+              "output": 357
+            },
+            "ms": 7590
+          },
+          {
+            "pass": true,
+            "reason": "The summary accurately captures the core problem of issue #217, which is about multitask dataset mixing for multitask learning, and does not contradict any reference facts. It mentions the need for functionality to mix datasets, proposed solutions, and the collaborative tone of the discussion.",
+            "answer": "### Summary of GitHub Issue [#217](https://github.com/huggingface/datasets/issues/217) — Multi-task Dataset Mixing\n\n**Stated Problem:**\n- The issue revolves around the need for functionality to effectively mix and manage datasets for multitask learning, which is crucial for top-performing models on the GLUE benchmark.\n\n**Key Workflows or Use Cases Mentioned:**\n- Pretraining on the GLUE benchmark followed by fine-tuning on individual tasks.\n- Specifying task identifiers for each dataset.\n- Combining datasets with different formats into a unified structure for multitask training.\n- Sampling from datasets using various methods such as temperature-scaled mixing, examples-proportional mixing, and equal mixing.\n\n**Proposed Solutions:**\n1. **Dataset Flattening:** Users should format datasets into a unified structure, preferably using T5's text-to-text format for compatibility.\n2. **Dataset Combination Method:** Introduce a function like `dataset.add()` to merge datasets after formatting them uniformly.\n3. **MultitaskDataset Class:** Develop a wrapper class for multiple datasets to enable combined sampling and manage different schemas.\n4. **Flexible Mixing:** Implement temperature-scaled mixing to balance datasets and allow flexibility.\n5. **Common Interface:** Ensure the multitask dataset functions like a regular dataset to facilitate integration.\n\n**Competitor Tools/Services Mentioned:**\n- References to T5 for formatting and mixing techniques.\n- GPT-3 and decaNLP discussed as alternative approaches.\n\n**Workarounds Users Have Found:**\n- Manual flattening of datasets into a common input format before merging.\n- Exploration of mt-dnn's batcher for batching techniques.\n\n**Overall Emotional Tone:**\n- The discussion is generally **positive and collaborative**, with participants eager to refine and implement the proposed ideas. There is enthusiasm for potential features, albeit with caution regarding implementation complexities and a desire for more clarity on certain functionalities.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 217
+                }
+              }
+            ],
+            "usage": {
+              "input": 18119,
+              "output": 405
+            },
+            "ms": 8291
+          },
+          {
+            "pass": true,
+            "reason": "The summary accurately captures the core problem of multi-task dataset mixing, proposed solutions, and the collaborative nature of the discussion, without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#217](https://github.com/huggingface/datasets/issues/217): \"Multi-task dataset mixing\"\n\n#### Key Workflows or Use Cases\n- Users are looking for methods to simplify multi-task training by efficiently loading and sampling from multiple datasets.\n- Interest in pretraining on benchmarks like GLUE before fine-tuning on individual tasks.\n- Desire to incorporate task-specific heads in models and maintain task identifiers within datasets.\n\n#### Proposed Solutions\n- Introduce a method such as `dataset.add()` to combine datasets of the same format.\n- Develop a `MultiDataset` wrapper class to encapsulate multiple datasets and manage their unique schemas.\n- Employ temperature-scaled mixing for flexible dataset mixture, allowing adjustable mixing rates.\n- Suggest a fully integrated `sample()` function incorporating size-proportional and temperature-based sampling techniques.\n\n#### Competitor Tools/Services Mentioned\n- TensorFlow's `tf.data.experimental.sample_from_datasets` was referenced as a similar functionality, but no direct PyTorch equivalent was mentioned.\n\n#### Workarounds\n- Users have shared code snippets demonstrating manual methods of combining datasets or specific classes to allow prototype solutions pending official feature development.\n\n#### Overall Emotional Tone\nThe discussion is positive and collaborative, with users eager to contribute ideas, code, and solutions. While there are moments of confusion about complexity and implementation, the community is engaged and open to refining approaches together.\n\nIn total, there are 22 comments contributing to this discussion.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 217
+                }
+              }
+            ],
+            "usage": {
+              "input": 18009,
+              "output": 315
+            },
+            "ms": 8680
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-046",
+        "template": "summarize_issue",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #620. What is the problem and what did people say about it?",
+        "oracle": "map/filter multiprocessing raises errors and corrupts datasets",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The summary accurately reflects the core problem and discussion of issue #620, without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue #620: \"map/filter multiprocessing raises errors and corrupts datasets\"\n\n#### Problem Description:\nUsers experienced errors when using the `map` and `filter` functions with multiprocessing (via the `num_proc` argument) after upgrading to version 1.0. The issue mainly affected tokenizing the GLUE dataset (\"cola\") and applying mapping functions to custom datasets.\n\n#### Key Workflows or Use Cases:\n- Errors occurred when using multiprocessing in `map` and `filter` operations on datasets.\n- Specific issues included tokenization errors and other mapping function problems in the GLUE dataset.\n\n#### Competitor Tools/Services Mentioned:\n- No specific competitor tools or services were mentioned.\n\n#### Workarounds:\n- Removing the `num_proc` argument allowed the dataset to load correctly.\n- Updating to the latest versions of datasets and `pyarrow` libraries was suggested.\n- Using the `load_from_cache_file=False` option in `.map()` calls avoided cached data issues.\n\n#### Proposed Solutions:\n- Fixes were implemented in pull requests #659 (resolving KeyError) and #688 (addressing hanging issues).\n- Discussions on minimizing use of tokenizers before forking processes were noted as solutions.\n\n#### Emotional Tone:\nThe discussion started with frustration and concern over KeyError and hang issues but shifted to a more positive tone as users reported successful resolutions after applying fixes and updates. Users expressed appreciation for the support and efforts of contributors.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 620
+                }
+              }
+            ],
+            "usage": {
+              "input": 17974,
+              "output": 311
+            },
+            "ms": 7866
+          },
+          {
+            "pass": true,
+            "reason": "The summary accurately captures the core problem of issue #620, which involves errors and dataset corruption due to multiprocessing in map/filter operations. It does not contradict any reference facts and provides a coherent overview of the discussion and solutions proposed.",
+            "answer": "### Summary of GitHub Issue [#620](https://github.com/huggingface/datasets/issues/620): \"map/filter multiprocessing raises errors and corrupts datasets\"\n\n**Stated Problem:**\nAfter upgrading to version 1.0, users encountered errors with data loading scripts using multiprocessing. The combination of `train_test_split` with map/filter operations resulted in empty dictionaries and other issues when `num_proc` was used.\n\n### Key Workflows or Use Cases Mentioned:\n- Tokenization of datasets like 'glue' and 'cola' using mapping functions.\n- Mapping and filtering operations in data processing pipelines utilizing `num_proc`.\n\n### Competitor Tools/Services Mentioned:\n- None explicitly mentioned in the discussion.\n\n### Workarounds Users Have Found:\n- Removing `num_proc` allowed datasets to load successfully.\n- Users updated libraries to fix issues, suggesting changing configurations or upgrading packages as helpful.\n- Disabling `TOKENIZERS_PARALLELISM` was recommended to avoid deadlocks when using tokenizers before forking processes.\n\n### Proposed Solutions:\n- Updating to the latest version of the datasets library resolved some issues, indicating that ongoing development is addressing these problems.\n- Specific errors like `KeyError` and dataset corruption were traced to improper cache file handling, with advice to clear caches and load with cache explicitly set to false.\n- User @lhoestq merged fixes into master to solve hanging issues and empty dictionary outputs.\n\n### Overall Emotional Tone:\nThe discussion was primarily **frustrated** due to upgrade-related issues, compounded by the complexities of Python multiprocessing. However, there was also **relief** and **gratitude** as solutions were discussed and implemented. The community exhibited collaborative troubleshooting, with frustrations easing as fixes were found and shared.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 620
+                }
+              }
+            ],
+            "usage": {
+              "input": 18049,
+              "output": 372
+            },
+            "ms": 8900
+          },
+          {
+            "pass": true,
+            "reason": "The summary accurately reflects the core problem, does not contradict any reference facts, and is not a refusal or error.",
+            "answer": "### Summary of GitHub Issue [#620](https://github.com/huggingface/datasets/issues/620) — \"map/filter multiprocessing raises errors and corrupts datasets\"\n\n**Stated Problem:**\nUsers reported errors with the `train_test_split` method in the datasets library after upgrading to version 1.0, particularly when multiprocessing was enabled. These errors led to empty dictionary returns when slicing or accessing dataset elements.\n\n**Key Workflows or Use Cases Mentioned:**\n- Tokenization of datasets, including use with a GLUE dataset.\n- Multiprocessing within dataset mapping functions, affecting dataset integrity.\n- Custom dataset loaders using JSON format with error handling.\n\n**Workarounds Users Have Found:**\n- Reducing the `num_proc` parameter in mapping functions helped some users resolve the issue.\n- Updating to master versions with fixes improved outcomes and mitigated errors.\n- Using `load_from_cache_file=False` in `.map()` calls to avoid buggy cached datasets.\n\n**Proposed Solutions:**\n- Implementation of library fixes to manage observed behaviors and adjust environment variables for tokenizer parallelism.\n- Recommendations to avoid using tokenizers before multiprocessing to prevent thread safety issues.\n- Development of a new test case to prevent similar issues in the future.\n\n**Overall Emotional Tone:**\nThe discussion's tone ranged from **frustrated** due to persistent errors to **neutral and positive** as users experienced improvements and resolutions. Users expressed gratitude when updates addressed and resolved these persistent issues.\n\n**Comments Count:**\n22 comments.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 620
+                }
+              }
+            ],
+            "usage": {
+              "input": 18055,
+              "output": 322
+            },
+            "ms": 8514
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-047",
+        "template": "summarize_issue",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #878. What is the problem and what did people say about it?",
+        "oracle": "Loading Data From S3 Path in Sagemaker",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, including the problem, user comments, and proposed solutions, without contradicting any reference facts.",
+            "answer": "### Summary of Issue [#878](https://github.com/huggingface/datasets/issues/878) - \"Loading Data From S3 Path in Sagemaker\"\n\n#### Stated Problem:\nThe user is facing a `FileNotFoundError` when trying to load a dataset from S3 into a SageMaker environment using the `load_dataset` function from the `datasets` library. They mention that loading the dataset using Pandas works without any issues and express uncertainty about the `datasets` library's support for S3 paths.\n\n#### Key Workflows or Use Cases Mentioned:\n- Loading datasets from S3 using the `datasets` library for SageMaker.\n- Reading large datasets stored as parquet files in S3.\n\n#### Competitor Tools/Services Mentioned:\n- The Pandas library successfully loads datasets from S3.\n- AWS services, specifically SageMaker, and the `boto3` library for downloading files from S3.\n\n#### Workarounds Users Have Found:\n1. Reading CSV files using Pandas, converting them to dictionaries, and then using `Dataset.from_dict()` from the `datasets` library.\n2. Downloading files locally, although this might not be feasible for all users due to data size or security constraints.\n3. Using the `boto3` library to download S3 data, which might not suit everyone.\n\n#### Proposed Solutions:\n- Utilizing the SageMaker `fit()` method to provide S3 URIs directly during training job setup, letting SageMaker handle data loading from S3.\n- An individual provided a code example for configuring SageMaker to handle S3 data loading effectively.\n\n#### Overall Emotional Tone:\nThe discussion reflects a mix of **neutral** and **frustrated** tones. This stems from confusion over the `datasets` library's S3 capabilities and the challenges with local data handling due to security policies and file sizes. While some users show interest in potential solutions, others emphasize the difficulties encountered.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 878
+                }
+              }
+            ],
+            "usage": {
+              "input": 18084,
+              "output": 411
+            },
+            "ms": 10341
+          },
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, including the problem, discussion points, and proposed solutions, without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#878](https://github.com/huggingface/datasets/issues/878) — \"Loading Data From S3 Path in Sagemaker\"\n\n**Problem Statement:**  \nThe core issue involves a `FileNotFoundError` encountered when trying to load datasets from S3 paths using the `datasets` library in SageMaker. Although using pandas to load data works, it remains uncertain whether the `datasets` library supports direct S3 path access.\n\n---\n\n**Key Workflows/Use Cases:**\n- Loading datasets directly from S3 paths in SageMaker.\n- Handling large datasets (e.g., 50GB) stored in S3.\n- Employing SageMaker's `.fit()` function to train models with S3 datasets.\n\n**Competitor Tools/Services Mentioned:**\n- Pandas (mentioned as successfully loading data from S3).\n- Boto3 (referenced for downloading data from S3).\n\n**Workarounds Users Have Found:**\n- Using pandas to read CSV files, converting them into a dictionary, and then employing `Dataset.from_dict()` to form a dataset.\n- Temporarily downloading files locally, although security concerns make this impractical for some users.\n\n**Proposed Solutions:**\n- Utilizing `boto3` for data retrieval from S3 when direct access using the `datasets` library is unsuccessful.\n- SageMaker's built-in functionality could be exploited by users to automatically manage data downloads from S3 during its training processes, especially for those who cannot save data locally.\n\n**Overall Emotional Tone:**\nThe discussion carries a tone of neutral collaboration combined with mild frustration. Contributors are curious and interested in finding solutions but express concerns about the limitations and security issues in managing large datasets. There is eagerness for feature enhancements, with some users clearly outlining their challenges.\n\n**Total Comments:** 16",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 878
+                }
+              }
+            ],
+            "usage": {
+              "input": 18028,
+              "output": 392
+            },
+            "ms": 8885
+          },
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, including the problem, key workflows, tools mentioned, workarounds, and proposed solutions, without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#878](https://github.com/huggingface/datasets/issues/878) — \"Loading Data From S3 Path in Sagemaker\"\n\n**Problem Statement:**\nThe user reported encountering a `FileNotFoundError` when attempting to load datasets directly from Amazon S3 using the `datasets` library in Amazon SageMaker. The user is able to load the same files successfully with Pandas.\n\n**Key Workflows/Use Cases:**\n- Loading datasets from S3 for training in SageMaker using the `datasets` library.\n- Handling large datasets in formats like CSV and Parquet stored in S3.\n\n**Competitor Tools/Services Mentioned:**\n- **Pandas:** Successfully utilized to load data from S3.\n- **Boto3:** Suggested as a tool for downloading data from S3, though restricted for some users due to security concerns.\n\n**Workarounds Users Found:**\n1. Using Pandas to load data from S3, converting it to a dictionary, and then constructing a `Dataset`.\n2. Downloading files locally before loading them into the `datasets` library.\n3. Using SageMaker's built-in capabilities to reference S3 URIs directly in training tasks.\n\n**Proposed Solutions:**\n- Leverage the `cached_path` function available in `text/csv/json scripts` for better S3 integration.\n- For environments with security restrictions, utilize SageMaker's capabilities to handle S3 data within `.fit()` method to avoid local file downloads.\n\n**Overall Emotional Tone:**\nThe discussion reflects a neutral to slightly frustrated tone. Users express confusion and some frustration with the limitations and specific workflows, especially in environments with strict security policies. Despite this, the conversation remains constructive with collaborative problem-solving and sharing of workarounds.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 878
+                }
+              }
+            ],
+            "usage": {
+              "input": 18023,
+              "output": 382
+            },
+            "ms": 8205
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-048",
+        "template": "summarize_issue",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #887. What is the problem and what did people say about it?",
+        "oracle": "pyarrow.lib.ArrowNotImplementedError: MakeBuilder: cannot construct builder for type extension<arrow.py_extension_type>",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, its core problem, and the discussion around it without contradicting the reference facts.",
+            "answer": "### Summary of GitHub Issue [#887](https://github.com/huggingface/datasets/issues/887) Discussion\n\n**Stated Problem:**\nUsers are encountering an error message: `pyarrow.lib.ArrowNotImplementedError: MakeBuilder: cannot construct builder for type extension<arrow.py_extension_type>` when attempting to create datasets with dynamic-sized sequences of 2D arrays using the `datasets` library.\n\n**Key Workflows or Use Cases Mentioned:**\n- Users are focusing on creating datasets containing sequences of arrays, specifically for applications such as video and pose data representations. These use cases require dynamic sizing in array dimensions.\n\n**Workarounds Users Have Found:**\n- Suggestions include using nested `Sequence` types or modifying classes to implement dynamic arrays. Another approach was to reduce the writer batch size, but this did not work effectively for all cases.\n\n**Proposed Solutions:**\n- The community has proposed the addition of support for dynamic-sized arrays, with a specific example being `Array3D(shape=(None, 137, 2), dtype=\"float32\")`.\n- Some community members have contributed code modifications aimed at allowing dynamic sizing, particularly by altering array processing to accommodate flexibility in the first dimension.\n\n**Overall Emotional Tone:**\n- The tone in the discussion reflects some frustration due to the limitations and error messages related to Arrow's capabilities. Nonetheless, positive interactions occur as users share suggestions and collaborate on potential improvements, showing a willingness to help improve dataset functionalities.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 887
+                }
+              }
+            ],
+            "usage": {
+              "input": 17971,
+              "output": 317
+            },
+            "ms": 7604
+          },
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, its context, and the discussion around it without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#887](https://github.com/huggingface/datasets/issues/887) Discussion\n\n**Issue Context:**\nThe issue centers around an `ArrowNotImplementedError` encountered when trying to construct a builder for dynamic dimensional arrays in the dataset configuration. The user is dealing with a dataset that requires arrays shaped as `(None, 137, 2)` to handle dynamic dimensions.\n\n---\n\n**Key Workflows or Use Cases:**\n- The user wants to represent sequences of poses or videos using dynamic arrays. This is particularly useful in machine learning scenarios where input sizes vary.\n\n**Workarounds Users Have Found:**\n- Use of nested `Sequence` types was recommended as a temporary solution.\n- Reducing the writer batch size was suggested to address resource constraints with large datasets.\n\n**Proposed Solutions:**\n- There is a feature request to support `Array3D(shape=(None, 137, 2), dtype=\"float32\")` to manage dynamic sizes.\n- Discussions included possible modifications to the `ArrayExtensionArray` class to support such dynamic sizes, and a code snippet for this modification was shared.\n- A suggestion to open a pull request (PR) was made, with an offer of assistance to integrate these changes smoothly into the existing framework.\n\n**Overall Emotional Tone:**\nThe discussion is generally neutral to positive, characterized by a collaborative spirit in addressing the problem. Participants express some frustration with current limitations but are optimistic about potential improvements and are engaged in cooperative troubleshooting.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 887
+                }
+              }
+            ],
+            "usage": {
+              "input": 17995,
+              "output": 322
+            },
+            "ms": 7290
+          },
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, its core problem, and the discussion around it without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#887](https://github.com/huggingface/datasets/issues/887)\n\n#### Issue Overview\nThe issue revolves around encountering a `pyarrow.lib.ArrowNotImplementedError` while trying to create a dynamic-sized array structure within a new dataset using `datasets.Features`. Users want to define an array of shape `(None, 137, 2)`, but current Arrow limitations prevent using `ArrayXD` as a subtype under `Sequence`.\n\n#### Key Workflows/Use Cases\nThe main use case involves creating datasets with dynamic-sized arrays, such as representing videos, poses, or other sequential data structures.\n\n#### Proposed Solutions\n- Allowing dimensions of dynamic sizes by using `Array3D(shape=(None, 137, 2), dtype=\"float32\")`.\n- Using a nested `Sequence` type as a workaround, though it has its limitations.\n- Code modifications were shared to support dynamic sizes within the first dimension of arrays, focusing on practicality and efficiency.\n\n#### Workarounds\n- Users have reduced the writer batch size to manage memory issues; however, this did not effectively solve the problem for everyone.\n- Some users have resorted to creating simple Python lists instead of nested sequences.\n\n#### Emotional Tone\nThe discussion reflects a mix of frustration and eagerness to find a solution. While users express challenges related to memory and Arrow's limitations, they maintain a collaborative and hopeful attitude towards potential implementations and feature requests for dynamic-sized arrays.\n\n#### Competitor Tools/Services\nThere are no explicit mentions of competitor tools or services in the discussion as the focus is on the current limitations of the `datasets` library and Arrow.\n\nOverall, the conversation indicates a sense of community and support, with users offering solutions and recognizing the complexity of the problem.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 887
+                }
+              }
+            ],
+            "usage": {
+              "input": 18072,
+              "output": 378
+            },
+            "ms": 8708
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-049",
+        "template": "summarize_issue",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #2820. What is the problem and what did people say about it?",
+        "oracle": "Downloading “reddit” dataset keeps timing out.",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, aligns with the core problem, and does not contradict any reference facts.",
+            "answer": "### Summary of Issue [#2820](https://github.com/huggingface/datasets/issues/2820): \"Downloading 'reddit' dataset keeps timing out.\"\n\n**Problem Overview:**\nUsers are experiencing timeout errors while trying to download the Reddit dataset, causing them to repeatedly attempt the download process.\n\n**Key Workflows or Use Cases:**\n- Users are downloading the Reddit dataset using the `load_dataset` function from the `datasets` library.\n\n**Workarounds Found:**\n- Deleting specific directories related to failed downloads allows the download manager to retry the download.\n- Installing the latest version of the `datasets` library from the source, which has an updated timeout setting, is suggested as a workaround.\n\n**Proposed Solutions:**\n- Increasing the default timeout from 10 seconds to 100 seconds in a newer version of the library to help alleviate the issue.\n- Users can delete directories related to failed downloads to retry successfully.\n\n**Overall Emotional Tone:**\nThe discussion starts with frustration due to timeout errors but shifts to a more positive tone as workarounds and solutions, such as the increased timeout, lead to successful downloads. Users express satisfaction with resolving the issue, despite encountering an unexpected increase in dataset size.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 2820
+                }
+              }
+            ],
+            "usage": {
+              "input": 17954,
+              "output": 265
+            },
+            "ms": 6613
+          },
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, matching the core problem and details from the reference without contradiction.",
+            "answer": "### Summary of GitHub Issue [#2820](https://github.com/huggingface/datasets/issues/2820) — \"Downloading “reddit” dataset keeps timing out\"\n\n**Problem:**\nUsers are experiencing issues with downloading the reddit dataset due to timeouts.\n\n**Key Workflows or Use Cases Mentioned:**\n- Users are attempting to download the reddit dataset using the `load_dataset` function from the datasets library.\n\n**Workarounds Users Have Found:**\n- Users were advised to delete files associated with failed downloads and attempt to remove specific directories related to cache errors to retry the download.\n\n**Proposed Solutions:**\n- A change was implemented to increase the timeout from 10 seconds to 100 seconds, which was suggested to help prevent read timeout errors during downloads. Users were encouraged to try installing the latest version from the source to test this change.\n\n**Overall Emotional Tone:**\n- The tone of the discussion ranges from neutral to slightly frustrated due to the challenges with timeouts and errors. However, there was relief and positivity when proposed solutions worked, especially when the increased timeout allowed for a successful download, despite the file size being larger than expected.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 2820
+                }
+              }
+            ],
+            "usage": {
+              "input": 17915,
+              "output": 254
+            },
+            "ms": 6062
+          },
+          {
+            "pass": true,
+            "reason": "The answer accurately summarizes the issue, including the problem, proposed solutions, and user experiences, without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#2820](https://github.com/huggingface/datasets/issues/2820) - \"Downloading 'reddit' dataset keeps timing out\"\n\n#### Problem Overview\nUsers are experiencing timeouts when trying to download the \"reddit\" dataset. The issue is characterized by repeated failures that require multiple attempts to download the dataset completely.\n\n#### Key Workflows/Use Cases\n- Users are attempting to download the \"reddit\" dataset using the `load_dataset` function from the `datasets` library.\n\n#### Proposed Solutions\n- A suggestion was made to install the latest development version of the `datasets` library, where the timeout setting has been increased from 10 seconds to 100 seconds, potentially resolving the issues.\n\n#### Workarounds Found\n- To resolve some errors, users were advised to delete corrupted files and folders associated with failed downloads. Specifically, if an `OSError` occurs, deleting the parent directory related to the error can allow successful re-downloads.\n- After adjusting the timeout, a user confirmed their download was successful, although the file size was larger than expected.\n\n#### Overall Emotional Tone\nThe emotional tone ranges from frustration due to the initial download issues, to relief and satisfaction following successful downloads after implementing the suggested adjustments. A collaborative spirit is evident as users share suggestions and solutions to tackle the timeout errors.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 2820
+                }
+              }
+            ],
+            "usage": {
+              "input": 17962,
+              "output": 290
+            },
+            "ms": 7216
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "lewtun-holdout-050",
+        "template": "summarize_issue",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #1830. What is the problem and what did people say about it?",
+        "oracle": "using map on loaded Tokenizer 10x - 100x slower than default Tokenizer?",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The summary accurately captures the core problem and discussion of issue #1830 without contradicting any reference facts.",
+            "answer": "### Summary of GitHub Issue [#1830](https://github.com/huggingface/datasets/issues/1830)\n\n#### Problem Statement\nThe issue discusses a significant slowdown (10x - 100x) when using a saved and loaded `GPT2Tokenizer` compared to the default `GPT2TokenizerFast`. The user observed considerable differences in runtime when applying the dataset map function, particularly after adding tokens and saving the tokenizer to disk.\n\n#### Key Workflows or Use Cases Mentioned\n- Adding custom tokens to a `GPT2Tokenizer` and saving it for later use.\n- Applying the map function on a dataset using the custom saved tokenizer versus the default one.\n- Evaluating performance based on different tokenizers and saving formats.\n\n#### Competitor Tools/Services Mentioned\n- The `ByteLevelBPETokenizer` from the Tokenizers library is referenced, indicating that the user previously trained a tokenizer using this tool.\n\n#### Workarounds Users Have Found\n- Disabling the caching mechanism in the `datasets` library to determine if it contributes to slow performance.\n- Running code without caching to test run time differences.\n\n#### Proposed Solutions\n- Testing tokenizer performance outside of the `datasets` library to evaluate speed differences.\n- Increasing the input size passed to the map function to better distinguish the overhead from hashing and dynamic tokenization costs.\n- Posting issues on the `transformers` repository for potential bugs related to tokenization speed and behavior.\n\n#### Overall Emotional Tone\nThe overall tone of the discussion is neutral to frustrated. Users are attempting to diagnose performance issues and are engaged in collaborative troubleshooting, expressing gratitude for insights, while also noting significant concerns about the tokenizer's performance. There is a sense of determination to find a solution and an understanding that the issues may not directly relate to the datasets library.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 1830
+                }
+              }
+            ],
+            "usage": {
+              "input": 18015,
+              "output": 382
+            },
+            "ms": 7511
+          },
+          {
+            "pass": true,
+            "reason": "The summary accurately captures the core problem of issue #1830, which is the slowdown when using a saved GPT2Tokenizer compared to a default one. It does not contradict any reference facts and provides a usable overview of the issue.",
+            "answer": "### Summary of GitHub Issue [#1830](https://github.com/huggingface/datasets/issues/1830)\n\n**Problem Statement:**\nThe issue discusses a significant slowdown (10x - 100x) when using a saved GPT2Tokenizer compared to a default one. This slowdown occurs after the tokenizer is customized with unique words, saved, and then loaded. The `map` function's processing time increased drastically when applied to the dataset.\n\n---\n\n**Key Workflows or Use Cases:**\n- Comparison between tokenizing datasets using custom-trained tokenizers and default tokenizers.\n- Examining the impact of caching mechanisms in the Datasets library on tokenization processing times.\n\n**Competitor Tools/Services Mentioned:**\n- Usage of `ByteLevelBPETokenizer` from the Tokenizers library to train custom tokenizers.\n\n**Workarounds Found:**\n- Disabling the caching mechanism by using `datasets.set_caching_enabled(False)` to check its impact on performance.\n- Testing different methods of saving tokenizers, including legacy formats, to observe differences in loading times.\n\n**Proposed Solutions:**\n- Investigating whether the slowdown is related to the tokenizer itself by measuring performance independently from the Datasets library.\n- Experimenting with larger input sizes to see if the map function overhead relative to tokenization time affects performance.\n\n**Overall Emotional Tone:**\nThe discussion is mostly neutral with a hint of frustration as users face difficulties identifying the source of the slowdown. There is a shared appreciation for insights and confirmed findings, alongside challenges in effectively addressing the performance discrepancies.\n\n---\n\nOverall, the issue highlights concerns about the performance of custom-loaded tokenizers versus default ones, the role of caching in the Datasets library, and user challenges in optimizing tokenization workflows.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 1830
+                }
+              }
+            ],
+            "usage": {
+              "input": 18042,
+              "output": 373
+            },
+            "ms": 8140
+          },
+          {
+            "pass": true,
+            "reason": "The summary accurately reflects the core issue, does not contradict any reference facts, and is not a refusal or error.",
+            "answer": "**Summary of GitHub Issue [#1830](https://github.com/huggingface/datasets/issues/1830): Using Map on Loaded Tokenizer 10x - 100x Slower than Default Tokenizer**\n\n**Stated Problem:**  \nA user reported significant slowdowns (up to 100x) when using a custom `GPT2Tokenizer` loaded from disk compared to a default pre-trained tokenizer. The slowdown was particularly evident when applying the tokenizer to a dataset using the `.map` function. The user speculated that the issue might be linked to how the tokenizer was saved and loaded.\n\n**Key Workflows or Use Cases Mentioned:**\n- Tokenizing datasets using a custom-trained tokenizer vs. a pre-trained tokenizer.\n- The use of the `.map` function from the `datasets` library to apply tokenization on text data.\n\n**Competitor Tools/Services Mentioned:**\n- The user mentioned the `ByteLevelBPETokenizer` from the Tokenizers library as a training tool for custom tokenizers.\n\n**Workarounds Users Have Found:**\n- Disabling the caching mechanism of the datasets library (`datasets.set_caching_enabled(False)`) as a potential way to explore the performance impact of the tokenizer used.\n\n**Proposed Solutions:**\n- Suggestions to compare the speed of the tokenizers outside of the `datasets` library to isolate the problem.\n- The idea of testing with varying data sizes to analyze the fixed cost (hashing) versus dynamic cost (actual tokenization).\n\n**Overall Emotional Tone:**\nThe tone of the discussion was neutral to mildly frustrated. Users expressed a mix of appreciation for the feedback, encountered performance frustrations, and sought clarity on appropriate solutions. Some expressed confusion about the behavior of the tokenizers and the caching mechanism, while others contributed insights and experiments to help understand the issues.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 1830
+                }
+              }
+            ],
+            "usage": {
+              "input": 18029,
+              "output": 390
+            },
+            "ms": 7839
+          }
+        ],
+        "passRate": 1
+      }
+    ],
+    "openai": {
+      "requests": 319,
+      "byModel": {
+        "gpt-4o-2024-08-06": {
+          "requests": 301,
+          "promptTokens": 2665175,
+          "completionTokens": 17184,
+          "cachedInputTokens": 2529024,
+          "unmetered": 0
+        },
+        "gpt-4o-mini-2024-07-18": {
+          "requests": 18,
+          "promptTokens": 63747,
+          "completionTokens": 6239,
+          "cachedInputTokens": 36096,
+          "unmetered": 0
+        }
+      },
+      "byEndpoint": {
+        "/chat/completions": 319
+      },
+      "byHost": {
+        "api.openai.com": 319
+      },
+      "unpricedModels": [],
+      "cachedInputTokens": 2565120,
+      "cacheHitRate": 0.9399755654430577,
+      "unmetered": 0,
+      "usageSource": "wire",
+      "reportedTokens": {
+        "input": 2665175,
+        "output": 17184,
+        "cached": 0
+      },
+      "costUsd": 3.6840957500000004
+    },
+    "neo4j": {
+      "queries": 151,
+      "sessions": 151,
+      "transactions": 0,
+      "samples": [
+        "MATCH (i:Issue) RETURN count(i) AS issueCount",
+        "MATCH (i:Issue) RETURN count(i) AS totalIssues",
+        "MATCH (i:Issue) RETURN COUNT(i) AS issueCount",
+        "MATCH (c:Comment) RETURN count(c) AS total_comments",
+        "MATCH (:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN count(c) A",
+        "MATCH (c:Comment) RETURN count(c) as totalComments",
+        "MATCH (i:Issue) WHERE i.state = 'OPEN' RETURN count(i) AS op",
+        "MATCH (i:Issue {state: 'OPEN'}) RETURN count(i) AS openIssue",
+        "MATCH (i:Issue) WHERE i.state = 'OPEN' RETURN count(i) AS op",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS ",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS ",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS ",
+        "MATCH (l:Label) RETURN count(distinct l.name) as labelCount",
+        "MATCH (l:Label) RETURN COUNT(DISTINCT l.name) AS distinctLab",
+        "MATCH (l:Label) RETURN count(DISTINCT l.name) AS labelCount",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTIN",
+        "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTIN",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN count(DISTIN",
+        "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RET",
+        "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RET",
+        "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RET",
+        "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN u.login as u",
+        "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN u.login AS u",
+        "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN u.login AS a",
+        "MATCH (i:Issue) RETURN i.number ORDER BY i.createdAt DESC LI",
+        "MATCH (i:Issue) RETURN i.number ORDER BY i.createdAt DESC LI",
+        "MATCH (i:Issue) RETURN i.number ORDER BY i.createdAt DESC LI",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-03' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-03' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-03' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-11' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt >= '2020-11-01' AND i.crea",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-09' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-11' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt >= '2020-09-01' AND i.crea",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2020-09' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH \"2021-08\" RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2021-08' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt >= '2021-08-01' AND i.crea",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User {login: 'stas00'}) R",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'st",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = \"lh",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'lh",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'st",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'ti",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'ti",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'ss",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'ss",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User {login:'sshleifer'})",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'le",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'le",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE u.login = 'le",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number =",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number =",
+        "MATCH (i:Issue {number: 211})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 217})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 217})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 217})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 514})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number =",
+        "MATCH (i:Issue {number: 514})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 575})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 575})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 575})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 590})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 590})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 590})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 211}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 211}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 211}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 211})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 211})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 217}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 217}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 211})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue { number: 217 }) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 217})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 217})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 217})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 275}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue) WHERE i.number = 275 RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 275})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 275})-[:AUTHORED_BY]->(author:User) ",
+        "MATCH (i:Issue {number: 275}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 275})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 336}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 336}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 336})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 336}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 336})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 507})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 507})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 336})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 507})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 514}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue) WHERE i.number = 514 RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 514}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'memory' OR ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'memory' OR ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'memory' OR ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'streaming' ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'streaming' ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'streaming' ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS toLower('sha",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'shard' OR t",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'shard' OR t",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'image' OR t",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS \"image\" OR t",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'image' OR t",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN"
+      ]
+    },
+    "judgeCostUsd": 0.0982
+  },
+  "score": {
+    "overall": 1,
+    "deterministic": 1,
+    "semantic": 1,
+    "byKind": {
+      "structural": 1,
+      "retrieval": 1,
+      "semantic": 1
+    },
+    "solvedAllAttempts": 50,
+    "solvedAnyAttempt": 50,
+    "totalTasks": 50,
+    "canaryPass": true,
+    "toolUseRate": 1,
+    "agentErrorRate": 0
+  },
+  "cost": {
+    "ingestUsd": 0.03450475,
+    "qaUsd": 3.6840957500000004,
+    "judgeUsd": 0.0982,
+    "sutTotalUsd": 3.7186005000000004
+  },
+  "finishedAt": "2026-11-03T06:36:35.513Z"
+}

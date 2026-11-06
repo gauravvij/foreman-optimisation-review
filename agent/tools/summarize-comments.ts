@@ -82,8 +82,7 @@ export function fitComments(
   // thread overshoots the cap by exactly the marker's length. Reserve the
   // widest marker this thread could produce (every comment omitted).
   const markerFor = (n: number) =>
-    `[... ${n} comment${n === 1 ? '' : 's'} omitted to stay within the ` +
-    `prompt budget; the newest comments are kept in full ...]`;
+    `[... ${n} comment${n === 1 ? '' : 's'} omitted to stay within the prompt budget; the newest comments are kept in full ...]`;
   const reserve = markerFor(comments.length).length + 4;
   const available = Math.max(budget - reserve, 0);
 
@@ -111,7 +110,9 @@ export function fitComments(
   // even when it alone exceeds the tail budget — clipped, not dropped.
   if (tail.length === 0 && parts.length > head.length) {
     const newest = parts[parts.length - 1];
-    tail.push(newest.length > tailBudget ? `${newest.slice(0, Math.max(tailBudget - 1, 0))}…` : newest);
+    tail.push(
+      newest.length > tailBudget ? `${newest.slice(0, Math.max(tailBudget - 1, 0))}…` : newest,
+    );
   }
 
   const omitted = comments.length - head.length - tail.length;
@@ -206,14 +207,11 @@ export const summarizeCommentsTool = createTool({
     }
 
     const anchor = issueTitle
-      ? `The issue this discussion belongs to is #${input.issueNumber} — "${issueTitle}".\n` +
-        (issueBody
-          ? `Its body states the problem as:\n${issueBody.slice(0, ISSUE_BODY_ANCHOR_CHARS)}\n\n`
-          : '') +
-        `Frame the summary around that stated problem. The comments are what people said ` +
-        `about it. A comment that drifts onto a different dataset, version, or side question ` +
-        `is a detail of the discussion, not the subject of the issue — report it as such ` +
-        `rather than restating the issue's problem in those terms.\n\n`
+      ? `The issue this discussion belongs to is #${input.issueNumber} — "${issueTitle}".\n${
+          issueBody
+            ? `Its body states the problem as:\n${issueBody.slice(0, ISSUE_BODY_ANCHOR_CHARS)}\n\n`
+            : ''
+        }Frame the summary around that stated problem. The comments are what people said about it. A comment that drifts onto a different dataset, version, or side question is a detail of the discussion, not the subject of the issue — report it as such rather than restating the issue's problem in those terms.\n\n`
       : '';
 
     const summaryPrompt = input.userQuery
@@ -241,8 +239,7 @@ export const summarizeCommentsTool = createTool({
     });
 
     console.log(
-      `  [summarizeComments] summarised ${comments.length} comments` +
-        (truncated ? ` (truncated: ${omitted} omitted, limit ${limit})` : ''),
+      `  [summarizeComments] summarised ${comments.length} comments${truncated ? ` (truncated: ${omitted} omitted, limit ${limit})` : ''}`,
     );
 
     return {

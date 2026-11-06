@@ -19,6 +19,7 @@ import { createAnswerRelevancyScorer } from '@mastra/evals/scorers/prebuilt';
 import { Neo4jContainer, type StartedNeo4jContainer } from '@testcontainers/neo4j';
 import neo4j, { type Driver } from 'neo4j-driver';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { buildInstructions } from '../../agent/instructions';
 import { queryNeo4jTool } from '../../agent/tools/query-neo4j';
 import { summarizeCommentsTool } from '../../agent/tools/summarize-comments';
 import { gatewayModel } from '../../src/services/models';
@@ -99,16 +100,15 @@ beforeAll(async () => {
   driver = neo4j.driver(boltUri, neo4j.auth.basic(username, password));
   await seedDatabase(driver, FIXTURE_PATH);
 
-  const instructionsRaw = readFileSync(
-    join(import.meta.dirname, '..', '..', 'agent', 'index.ts'),
-    'utf-8',
-  );
-  const match = instructionsRaw.match(/const INSTRUCTIONS = `([\s\S]*?)`.trim\(\)/);
-  const instructions = match?.[1]?.trim() ?? 'You are a GitHub issue analyzer agent.';
-
+  // The production prompt, built the way agent/index.ts builds it. This used to
+  // regex a template literal out of index.ts; once the prompt moved to
+  // buildInstructions the regex matched nothing and every eval silently ran a
+  // one-line stand-in prompt.
   agent = new Agent({
     name: 'foreman-test',
-    instructions,
+    instructions: buildInstructions(process.env.GITHUB_OWNER, process.env.GITHUB_REPO),
+    // Read-only tools only: the rest of the production set writes to GitHub
+    // (comments, labels, board columns), which an eval must never do.
     model: gatewayModel('agent'),
     tools: {
       queryNeo4j: queryNeo4jTool,

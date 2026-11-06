@@ -3,17 +3,21 @@ import { join } from 'node:path';
 import { encode } from 'gpt-tokenizer/encoding/o200k_base';
 import { describe, expect, it } from 'vitest';
 import { buildInstructions } from '../instructions';
-import { recordAssessmentTool } from '../tools/record-assessment';
-import { applyBoardSyncTool, previewBoardSyncTool } from '../tools/sync-board-fields';
-import { applyIssueTypeSyncTool } from '../tools/issue-types';
-import { commentOnPullRequestTool, pullRequestStatsTool, readPullRequestsTool } from '../tools/pull-requests';
-import { createIssueTool } from '../tools/create-issue';
-import { reconcileIssueStateTool } from '../tools/reconcile-issue-state';
 import { recordCategoryRuleTool } from '../tools/category-rules';
+import { createIssueTool } from '../tools/create-issue';
 import { recordGuidanceTool } from '../tools/guidance';
-import { readAttachmentTool } from '../tools/read-attachment';
+import { applyIssueTypeSyncTool } from '../tools/issue-types';
 import { prioritizeIssuesTool } from '../tools/prioritize-issues';
+import {
+  commentOnPullRequestTool,
+  pullRequestStatsTool,
+  readPullRequestsTool,
+} from '../tools/pull-requests';
+import { readAttachmentTool } from '../tools/read-attachment';
+import { reconcileIssueStateTool } from '../tools/reconcile-issue-state';
+import { recordAssessmentTool } from '../tools/record-assessment';
 import { refreshPullRequestsTool } from '../tools/refresh-pull-requests';
+import { applyBoardSyncTool } from '../tools/sync-board-fields';
 import { updateIssueTool } from '../tools/update-issue';
 
 /**
@@ -294,7 +298,9 @@ describe('rules moved into their owning tool description', () => {
   }
 
   it('tells the agent to read a write tool description before calling it', () => {
-    expect(buildInstructions(...CONFIGURED)).toContain("tool's own description, next to the tool it governs");
+    expect(buildInstructions(...CONFIGURED)).toContain(
+      "tool's own description, next to the tool it governs",
+    );
   });
 });
 

@@ -244,10 +244,9 @@ describe('ingestAnalysisResults solutions and workarounds', () => {
       },
     ]);
 
-    expect(
-      classification().n,
-      'the issue is still classified, which the old throw prevented',
-    ).toBe(1776);
+    expect(classification().n, 'the issue is still classified, which the old throw prevented').toBe(
+      1776,
+    );
   });
 
   it('drops blank keywords instead of merging an empty name', async () => {
@@ -350,5 +349,3 @@ describe('ingestAnalysisResults competitors', () => {
     expect(write!.query).toContain('MERGE (i)-[:BELONGS_TO_CATEGORY]->(cat)');
   });
 });
-
-

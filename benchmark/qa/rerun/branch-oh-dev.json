@@ -1,0 +1,4015 @@
+{
+  "job": "foreman-oh-dev-optimised",
+  "target": "/home/azureuser/githubIssue/foreman",
+  "split": "oh-dev",
+  "startedAt": "2026-11-05T14:20:13.653Z",
+  "valid": true,
+  "invalidReason": null,
+  "config": {
+    "target": "/home/azureuser/githubIssue/foreman",
+    "job": "foreman-oh-dev-optimised",
+    "split": "oh-dev",
+    "stage": "all",
+    "attempts": 3,
+    "latencyMs": 120,
+    "qaConcurrency": 3,
+    "limitTasks": 0,
+    "taskIds": [],
+    "scoreDespiteIntegrity": true,
+    "keepGraph": false,
+    "reasoningModel": "gpt-4o-2024-08-06",
+    "fastModel": "gpt-4o-mini",
+    "judgeModel": "anthropic/claude-haiku-5.5",
+    "model": "gpt-4o-2024-08-06",
+    "judgeEndpoint": "https://openrouter.ai/api",
+    "corpusIssues": 60,
+    "tasks": 50,
+    "gateway": "https://api.openai.com"
+  },
+  "sut": {
+    "hash": "6883fbc3d64d73bb",
+    "files": 87,
+    "head": "258000ce0d2cf6b565dc9b71f50c4d36809e3db2",
+    "dirty": true
+  },
+  "preflight": [
+    {
+      "name": "target_present",
+      "pass": true,
+      "detail": "/home/azureuser/githubIssue/foreman"
+    },
+    {
+      "name": "target_deps",
+      "pass": true,
+      "detail": "node_modules present"
+    },
+    {
+      "name": "openhands_files_pinned",
+      "pass": true,
+      "detail": "six runner inputs match OPENHANDS.sha256"
+    },
+    {
+      "name": "corpus_present",
+      "pass": true,
+      "detail": "60 issues (meta.count=60, split=oh-dev)"
+    },
+    {
+      "name": "tasks_present",
+      "pass": true,
+      "detail": "50 tasks"
+    },
+    {
+      "name": "canaries_present",
+      "pass": true,
+      "detail": "2 canary task(s)"
+    },
+    {
+      "name": "openai_key_set",
+      "pass": true,
+      "detail": "set"
+    },
+    {
+      "name": "gateway_models_priced",
+      "pass": true,
+      "detail": "gpt-4o-2024-08-06=priced, gpt-4o-mini=priced"
+    }
+  ],
+  "ingest": {
+    "durationMs": 228165,
+    "pipeline": {
+      "issuesFetched": 60,
+      "issuesIngested": 60,
+      "issuesAnalyzed": 60,
+      "issuesSkipped": 0,
+      "pullRequestsFetched": 0,
+      "pullRequestsIngested": 0,
+      "errors": [],
+      "durationMs": 228162,
+      "incremental": false
+    },
+    "github": {
+      "requests": 121,
+      "listingRequests": 1,
+      "issueRequests": 120,
+      "maxConcurrent": 1,
+      "busyMs": 14651
+    },
+    "neo4j": {
+      "queries": 345,
+      "sessions": 8,
+      "transactions": 1,
+      "samples": [
+        "CREATE CONSTRAINT issue_id_unique IF NOT EXISTS FOR (n:Issue",
+        "CREATE CONSTRAINT issue_number_unique IF NOT EXISTS FOR (n:I",
+        "CREATE CONSTRAINT user_login_unique IF NOT EXISTS FOR (n:Use",
+        "CREATE CONSTRAINT comment_id_unique IF NOT EXISTS FOR (n:Com",
+        "CREATE CONSTRAINT label_name_unique IF NOT EXISTS FOR (n:Lab",
+        "CREATE CONSTRAINT pull_request_id_unique IF NOT EXISTS FOR (",
+        "CREATE CONSTRAINT meta_key_unique IF NOT EXISTS FOR (n:Meta)",
+        "CREATE CONSTRAINT subcategory_name_unique IF NOT EXISTS FOR ",
+        "CREATE CONSTRAINT solution_text_unique IF NOT EXISTS FOR (n:",
+        "CREATE CONSTRAINT workaround_text_unique IF NOT EXISTS FOR (",
+        "CREATE INDEX issue_state_lookup IF NOT EXISTS FOR (n:Issue) ",
+        "CREATE INDEX issue_updated_at_lookup IF NOT EXISTS FOR (n:Is",
+        "UNWIND $issues AS iss MERGE (i:Issue {issueId: iss.issueId})",
+        "UNWIND $users AS user MERGE (u:User {login: user.login}) SET",
+        "UNWIND $links AS link MATCH (i:Issue {issueId: link.issueId}",
+        "UNWIND $issueIds AS issueId MATCH (i:Issue {issueId: issueId",
+        "UNWIND $labels AS label MERGE (l:Label {name: label.name}) S",
+        "UNWIND $links AS link MATCH (i:Issue {issueId: link.issueId}",
+        "UNWIND $reactions AS reaction CALL { WITH reaction WITH reac",
+        "UNWIND $issueIds AS issueId MATCH (i:Issue {issueId: issueId",
+        "UNWIND $comments AS c MERGE (comment:Comment {commentId: c.i",
+        "UNWIND $items AS item MATCH (c:Comment {commentId: item.id})",
+        "UNWIND $commentIds AS cid MATCH (c:Comment {commentId: cid})",
+        "MATCH (s:Subcategory) RETURN s.name AS name, s.definition AS",
+        "MATCH (i:Issue) OPTIONAL MATCH (i)-[:HAS_LABEL]->(l:Label) R",
+        "MATCH (s:Subcategory) DETACH DELETE s",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MERGE (s:Subcategory {name: $name}) SET s.definition = $defi",
+        "MATCH (g:Guidance) RETURN g.id AS id, g.text AS text, g.reco",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $competitors AS comp MER",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (w:Workaround {workaround",
+        "MATCH (i:Issue {number: $n}) UNWIND $competitors AS comp MER",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) MERGE (s:Solution {solutionText",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i",
+        "MATCH (i:Issue {number: $n}) UNWIND $categories AS name MERG",
+        "MATCH (i:Issue {number: $n}) SET i.category = $category, i.s",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTI",
+        "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i"
+      ]
+    },
+    "openai": {
+      "requests": 61,
+      "byModel": {
+        "gpt-4o-2024-08-06": {
+          "requests": 1,
+          "promptTokens": 1778,
+          "completionTokens": 210,
+          "cachedInputTokens": 0,
+          "unmetered": 0
+        },
+        "gpt-4o-mini-2024-07-18": {
+          "requests": 60,
+          "promptTokens": 166555,
+          "completionTokens": 10875,
+          "cachedInputTokens": 0,
+          "unmetered": 0
+        }
+      },
+      "byEndpoint": {
+        "/chat/completions": 61
+      },
+      "byHost": {
+        "api.openai.com": 61
+      },
+      "unpricedModels": [],
+      "cachedInputTokens": 0,
+      "cacheHitRate": 0,
+      "costUsd": 0.038053250000000004
+    }
+  },
+  "integrity": [
+    {
+      "name": "issue_count",
+      "pass": true,
+      "expected": "60",
+      "actual": "60",
+      "info": false
+    },
+    {
+      "name": "comment_count",
+      "pass": true,
+      "expected": "237",
+      "actual": "237",
+      "info": false
+    },
+    {
+      "name": "user_count",
+      "pass": true,
+      "expected": "73",
+      "actual": "73",
+      "info": false
+    },
+    {
+      "name": "label_count",
+      "pass": true,
+      "expected": "24",
+      "actual": "24",
+      "info": false
+    },
+    {
+      "name": "no_duplicate_issue_number",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "no_duplicate_issue_id",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "no_duplicate_comment_id",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "issue_author_edges",
+      "pass": true,
+      "expected": "60",
+      "actual": "60",
+      "info": false
+    },
+    {
+      "name": "issue_comment_edges",
+      "pass": true,
+      "expected": "237",
+      "actual": "237",
+      "info": false
+    },
+    {
+      "name": "issue_label_edges",
+      "pass": true,
+      "expected": "128",
+      "actual": "128",
+      "info": false
+    },
+    {
+      "name": "no_orphan_comments",
+      "pass": true,
+      "expected": "0",
+      "actual": "0",
+      "info": false
+    },
+    {
+      "name": "issue_numbers_match",
+      "pass": true,
+      "expected": "60 exact numbers",
+      "actual": "60 present"
+    },
+    {
+      "name": "per_issue_comment_counts",
+      "pass": true,
+      "expected": "every issue has its corpus comment count",
+      "actual": "all match"
+    },
+    {
+      "name": "issue_fields_match",
+      "pass": true,
+      "expected": "60 exact rows",
+      "actual": "all match"
+    },
+    {
+      "name": "issue_labels_match",
+      "pass": true,
+      "expected": "128 exact rows",
+      "actual": "all match"
+    },
+    {
+      "name": "comment_fields_match",
+      "pass": true,
+      "expected": "237 exact rows",
+      "actual": "all match"
+    },
+    {
+      "name": "issue_reactions_match",
+      "pass": true,
+      "expected": "12 exact rows",
+      "actual": "all match"
+    },
+    {
+      "name": "comment_reactions_match",
+      "pass": true,
+      "expected": "56 exact rows",
+      "actual": "all match"
+    },
+    {
+      "name": "reaction_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "68",
+      "info": true
+    },
+    {
+      "name": "constraints_defined",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "10",
+      "info": true
+    },
+    {
+      "name": "indexes_defined",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "12",
+      "info": true
+    },
+    {
+      "name": "solution_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "48",
+      "info": true
+    },
+    {
+      "name": "workaround_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "16",
+      "info": true
+    },
+    {
+      "name": "category_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "63",
+      "info": true
+    },
+    {
+      "name": "competitor_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "5",
+      "info": true
+    },
+    {
+      "name": "keyword_nodes",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "219",
+      "info": true
+    },
+    {
+      "name": "issues_with_category",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "58",
+      "info": true
+    },
+    {
+      "name": "issues_with_priority",
+      "pass": true,
+      "expected": "(informational)",
+      "actual": "60",
+      "info": true
+    }
+  ],
+  "integrityFailures": [],
+  "qa": {
+    "tasks": [
+      {
+        "id": "oh-dev-001",
+        "template": "canary",
+        "kind": "structural",
+        "canary": true,
+        "question": "How many issues are in the knowledge graph in total?",
+        "oracle": "60",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 60",
+            "answer": "There are a total of 60 issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN COUNT(i) as totalIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 43
+            },
+            "ms": 3059
+          },
+          {
+            "pass": true,
+            "reason": "found 60",
+            "answer": "There are a total of 60 issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN COUNT(i) AS totalIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 43
+            },
+            "ms": 3043
+          },
+          {
+            "pass": true,
+            "reason": "found 60",
+            "answer": "There are a total of 60 issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN count(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 43
+            },
+            "ms": 3014
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-002",
+        "template": "canary",
+        "kind": "structural",
+        "canary": true,
+        "question": "How many comments are stored across all issues in total?",
+        "oracle": "237",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 237",
+            "answer": "There are a total of 237 comments stored across all issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (c:Comment) RETURN COUNT(c) as totalComments"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 43
+            },
+            "ms": 2269
+          },
+          {
+            "pass": true,
+            "reason": "found 237",
+            "answer": "There are a total of 237 comments stored across all issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (c:Comment) RETURN count(c) AS totalComments"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 43
+            },
+            "ms": 1956
+          },
+          {
+            "pass": true,
+            "reason": "found 237",
+            "answer": "There are a total of 237 comments stored across all issues.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (c:Comment) RETURN count(c) as totalComments"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 43
+            },
+            "ms": 2271
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-003",
+        "template": "enum_state",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues are currently open?",
+        "oracle": "24",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 24",
+            "answer": "There are currently 24 open issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'OPEN' RETURN COUNT(i) AS openIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17640,
+              "output": 48
+            },
+            "ms": 2512
+          },
+          {
+            "pass": true,
+            "reason": "found 24",
+            "answer": "There are currently 24 open issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {state: 'OPEN'}) RETURN count(i) AS openIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17638,
+              "output": 46
+            },
+            "ms": 2272
+          },
+          {
+            "pass": true,
+            "reason": "found 24",
+            "answer": "There are currently 24 issues open in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {state: 'OPEN'}) RETURN count(i) AS openIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17638,
+              "output": 46
+            },
+            "ms": 2323
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-004",
+        "template": "enum_state",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues are closed?",
+        "oracle": "36",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 closed issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS closedIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17639,
+              "output": 48
+            },
+            "ms": 2561
+          },
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 closed issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS closedIssuesCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 49
+            },
+            "ms": 4244
+          },
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 closed issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS closedIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17639,
+              "output": 48
+            },
+            "ms": 4265
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-005",
+        "template": "enum_state",
+        "kind": "structural",
+        "canary": false,
+        "question": "Is issue #139 open or closed?",
+        "oracle": "CLOSED",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) is currently closed.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139}) RETURN i.state AS state LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 57
+            },
+            "ms": 3633
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) is closed.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139}) RETURN i.state AS state LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 56
+            },
+            "ms": 2714
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) is closed.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139}) RETURN i.state AS state LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17641,
+              "output": 56
+            },
+            "ms": 2694
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-006",
+        "template": "enum_state",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many OPEN issues carry the label \"bug\"?",
+        "oracle": "8",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 8",
+            "answer": "There are 8 open issues that carry the label \"bug\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND toLower(l.name) = 'bug' RETURN COUNT(i) AS openBugIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17667,
+              "output": 70
+            },
+            "ms": 2737
+          },
+          {
+            "pass": true,
+            "reason": "found 8",
+            "answer": "There are 8 open issues labeled as \"bug\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND toLower(l.name) = 'bug' RETURN COUNT(i) AS openBugIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17667,
+              "output": 68
+            },
+            "ms": 3221
+          },
+          {
+            "pass": true,
+            "reason": "found 8",
+            "answer": "There are 8 open issues carrying the label \"Bug\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND toLower(l.name) = toLower('bug') RETURN COUNT(i) AS bugCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17667,
+              "output": 70
+            },
+            "ms": 2481
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-007",
+        "template": "enum_state",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the issue numbers of every OPEN issue labelled \"bug\".",
+        "oracle": "#15694, #16331, #16949, #17128, #17577, #18062, #18715, #18883",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 15694,16331,16949,17128,17577,18062,18715,18883",
+            "answer": "The issue numbers of open issues labelled \"bug\" are:\n\n- [#15694](https://github.com/OpenHands/OpenHands/issues/15694)\n- [#16331](https://github.com/OpenHands/OpenHands/issues/16331)\n- [#16949](https://github.com/OpenHands/OpenHands/issues/16949)\n- [#17128](https://github.com/OpenHands/OpenHands/issues/17128)\n- [#17577](https://github.com/OpenHands/OpenHands/issues/17577)\n- [#18062](https://github.com/OpenHands/OpenHands/issues/18062)\n- [#18715](https://github.com/OpenHands/OpenHands/issues/18715)\n- [#18883](https://github.com/OpenHands/OpenHands/issues/18883)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'bug' AND i.state = 'OPEN' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17711,
+              "output": 219
+            },
+            "ms": 3966
+          },
+          {
+            "pass": true,
+            "reason": "cited 15694,16331,16949,17128,17577,18062,18715,18883",
+            "answer": "Here are the issue numbers of every OPEN issue labelled \"bug\":\n\n1. [Issue #15694](https://github.com/OpenHands/OpenHands/issues/15694)\n2. [Issue #16331](https://github.com/OpenHands/OpenHands/issues/16331)\n3. [Issue #16949](https://github.com/OpenHands/OpenHands/issues/16949)\n4. [Issue #17128](https://github.com/OpenHands/OpenHands/issues/17128)\n5. [Issue #17577](https://github.com/OpenHands/OpenHands/issues/17577)\n6. [Issue #18062](https://github.com/OpenHands/OpenHands/issues/18062)\n7. [Issue #18715](https://github.com/OpenHands/OpenHands/issues/18715)\n8. [Issue #18883](https://github.com/OpenHands/OpenHands/issues/18883)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND toLower(l.name) = 'bug' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17711,
+              "output": 236
+            },
+            "ms": 4254
+          },
+          {
+            "pass": true,
+            "reason": "cited 15694,16331,16949,17128,17577,18062,18715,18883",
+            "answer": "Here are the issue numbers of every open issue labelled \"bug\":\n\n- [16331](https://github.com/OpenHands/OpenHands/issues/16331)\n- [15694](https://github.com/OpenHands/OpenHands/issues/15694)\n- [16949](https://github.com/OpenHands/OpenHands/issues/16949)\n- [17577](https://github.com/OpenHands/OpenHands/issues/17577)\n- [18062](https://github.com/OpenHands/OpenHands/issues/18062)\n- [17128](https://github.com/OpenHands/OpenHands/issues/17128)\n- [18883](https://github.com/OpenHands/OpenHands/issues/18883)\n- [18715](https://github.com/OpenHands/OpenHands/issues/18715)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE l.name = \"bug\" AND i.state = \"OPEN\" RETURN i.number AS issueNumber LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17711,
+              "output": 212
+            },
+            "ms": 3366
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-008",
+        "template": "enum_state",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many OPEN issues carry the label \"ready-for-dev\"?",
+        "oracle": "12",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 12",
+            "answer": "There are 12 open issues that carry the label \"ready-for-dev\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND toLower(l.name) = 'ready-for-dev' RETURN COUNT(i) AS openReadyForDevIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17677,
+              "output": 76
+            },
+            "ms": 2431
+          },
+          {
+            "pass": true,
+            "reason": "found 12",
+            "answer": "There are 12 open issues that carry the label \"ready-for-dev\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND TOLOWER(l.name) = 'ready-for-dev' RETURN COUNT(i) as open_issues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17674,
+              "output": 75
+            },
+            "ms": 2783
+          },
+          {
+            "pass": true,
+            "reason": "found 12",
+            "answer": "There are 12 open issues that carry the label \"ready-for-dev\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND toLower(l.name) = 'ready-for-dev' RETURN COUNT(i) as openIssuesReadyForDev"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17677,
+              "output": 76
+            },
+            "ms": 2901
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-009",
+        "template": "enum_state",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the issue numbers of every OPEN issue labelled \"enhancement\".",
+        "oracle": "#14525, #15529, #17241, #17287, #18102, #18659, #19020",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 14525,15529,17241,17287,18102,18659,19020",
+            "answer": "The issue numbers of open issues labeled \"enhancement\" are:\n\n- [#14525](https://github.com/OpenHands/OpenHands/issues/14525)\n- [#15529](https://github.com/OpenHands/OpenHands/issues/15529)\n- [#17241](https://github.com/OpenHands/OpenHands/issues/17241)\n- [#17287](https://github.com/OpenHands/OpenHands/issues/17287)\n- [#18102](https://github.com/OpenHands/OpenHands/issues/18102)\n- [#18659](https://github.com/OpenHands/OpenHands/issues/18659)\n- [#19020](https://github.com/OpenHands/OpenHands/issues/19020)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPEN' AND toLower(l.name) = 'enhancement' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17708,
+              "output": 202
+            },
+            "ms": 4728
+          },
+          {
+            "pass": true,
+            "reason": "cited 14525,15529,17241,17287,18102,18659,19020",
+            "answer": "The open issues labeled \"enhancement\" are listed below:\n\n- [#14525](https://github.com/OpenHands/OpenHands/issues/14525)\n- [#15529](https://github.com/OpenHands/OpenHands/issues/15529)\n- [#17241](https://github.com/OpenHands/OpenHands/issues/17241)\n- [#17287](https://github.com/OpenHands/OpenHands/issues/17287)\n- [#18102](https://github.com/OpenHands/OpenHands/issues/18102)\n- [#18659](https://github.com/OpenHands/OpenHands/issues/18659)\n- [#19020](https://github.com/OpenHands/OpenHands/issues/19020)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label)\nWHERE toLower(l.name) = 'enhancement' AND i.state = 'OPEN'\nRETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17710,
+              "output": 203
+            },
+            "ms": 6351
+          },
+          {
+            "pass": true,
+            "reason": "cited 14525,15529,17241,17287,18102,18659,19020",
+            "answer": "Here are the issue numbers of every OPEN issue labelled \"enhancement\":\n\n- [#14525](https://github.com/OpenHands/OpenHands/issues/14525)\n- [#15529](https://github.com/OpenHands/OpenHands/issues/15529)\n- [#17241](https://github.com/OpenHands/OpenHands/issues/17241)\n- [#17287](https://github.com/OpenHands/OpenHands/issues/17287)\n- [#18102](https://github.com/OpenHands/OpenHands/issues/18102)\n- [#18659](https://github.com/OpenHands/OpenHands/issues/18659)\n- [#19020](https://github.com/OpenHands/OpenHands/issues/19020)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'enhancement' AND i.state = 'OPEN' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17708,
+              "output": 203
+            },
+            "ms": 5000
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-010",
+        "template": "label",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many distinct labels exist in the knowledge graph?",
+        "oracle": "24",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 24",
+            "answer": "There are 24 distinct labels in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (l:Label) RETURN count(distinct l.name) AS labelCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17642,
+              "output": 44
+            },
+            "ms": 2420
+          },
+          {
+            "pass": true,
+            "reason": "found 24",
+            "answer": "There are 24 distinct labels in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (l:Label) RETURN count(DISTINCT l.name) AS labelCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17643,
+              "output": 45
+            },
+            "ms": 2058
+          },
+          {
+            "pass": true,
+            "reason": "found 24",
+            "answer": "There are 24 distinct labels in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (l:Label) RETURN COUNT(DISTINCT l.name) AS labelCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17643,
+              "output": 45
+            },
+            "ms": 2097
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-011",
+        "template": "label",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues carry the label \"bug\"?",
+        "oracle": "27",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 27",
+            "answer": "There are 27 issues that carry the label \"bug\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'bug' RETURN COUNT(i) as bugCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 61
+            },
+            "ms": 2112
+          },
+          {
+            "pass": true,
+            "reason": "found 27",
+            "answer": "There are 27 issues that carry the label \"bug\" in the OpenHands/OpenHands repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'bug' RETURN COUNT(i) as bugCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 69
+            },
+            "ms": 2156
+          },
+          {
+            "pass": true,
+            "reason": "found 27",
+            "answer": "There are 27 issues that carry the label \"bug\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'bug' RETURN COUNT(i) as bugIssueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 62
+            },
+            "ms": 2158
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-012",
+        "template": "label",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues carry the label \"ready-for-dev\"?",
+        "oracle": "25",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 25",
+            "answer": "There are 25 issues that carry the label \"ready-for-dev\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'ready-for-dev' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17662,
+              "output": 65
+            },
+            "ms": 1999
+          },
+          {
+            "pass": true,
+            "reason": "found 25",
+            "answer": "There are 25 issues that carry the label \"ready-for-dev\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'ready-for-dev' RETURN count(i) as count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 64
+            },
+            "ms": 2308
+          },
+          {
+            "pass": true,
+            "reason": "found 25",
+            "answer": "There are 25 issues that carry the label \"ready-for-dev\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'ready-for-dev' RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17662,
+              "output": 65
+            },
+            "ms": 2431
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-013",
+        "template": "label",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the issue numbers of every issue labelled \"priority:low\".",
+        "oracle": "#17786, #17816, #18062, #18495, #18659, #18794, #18989, #19082",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 17786,17816,18062,18495,18659,18794,18989,19082",
+            "answer": "Here are the issue numbers of every issue labelled \"priority:low\":\n\n- [#17816](https://github.com/OpenHands/OpenHands/issues/17816)\n- [#17786](https://github.com/OpenHands/OpenHands/issues/17786)\n- [#19082](https://github.com/OpenHands/OpenHands/issues/19082)\n- [#18062](https://github.com/OpenHands/OpenHands/issues/18062)\n- [#18989](https://github.com/OpenHands/OpenHands/issues/18989)\n- [#18794](https://github.com/OpenHands/OpenHands/issues/18794)\n- [#18659](https://github.com/OpenHands/OpenHands/issues/18659)\n- [#18495](https://github.com/OpenHands/OpenHands/issues/18495)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'priority:low' RETURN i.number AS issueNumber LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17711,
+              "output": 219
+            },
+            "ms": 3225
+          },
+          {
+            "pass": true,
+            "reason": "cited 17786,17816,18062,18495,18659,18794,18989,19082",
+            "answer": "The issue numbers labelled \"priority:low\" are:\n\n- [#17816](https://github.com/OpenHands/OpenHands/issues/17816)\n- [#17786](https://github.com/OpenHands/OpenHands/issues/17786)\n- [#19082](https://github.com/OpenHands/OpenHands/issues/19082)\n- [#18062](https://github.com/OpenHands/OpenHands/issues/18062)\n- [#18989](https://github.com/OpenHands/OpenHands/issues/18989)\n- [#18794](https://github.com/OpenHands/OpenHands/issues/18794)\n- [#18659](https://github.com/OpenHands/OpenHands/issues/18659)\n- [#18495](https://github.com/OpenHands/OpenHands/issues/18495)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('priority:low') RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17710,
+              "output": 215
+            },
+            "ms": 3088
+          },
+          {
+            "pass": true,
+            "reason": "cited 17786,17816,18062,18495,18659,18794,18989,19082",
+            "answer": "The issue numbers of every issue labelled \"priority:low\" are:\n\n- [#17816](https://github.com/OpenHands/OpenHands/issues/17816)\n- [#17786](https://github.com/OpenHands/OpenHands/issues/17786)\n- [#19082](https://github.com/OpenHands/OpenHands/issues/19082)\n- [#18062](https://github.com/OpenHands/OpenHands/issues/18062)\n- [#18989](https://github.com/OpenHands/OpenHands/issues/18989)\n- [#18794](https://github.com/OpenHands/OpenHands/issues/18794)\n- [#18659](https://github.com/OpenHands/OpenHands/issues/18659)\n- [#18495](https://github.com/OpenHands/OpenHands/issues/18495)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'priority:low' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17708,
+              "output": 216
+            },
+            "ms": 2940
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-014",
+        "template": "label",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues are tagged \"ui/ux\"?",
+        "oracle": "4 (stored as \"UI/UX\")",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 4",
+            "answer": "There are 4 issues tagged with \"ui/ux\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'ui/ux' RETURN count(i) AS count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 62
+            },
+            "ms": 2175
+          },
+          {
+            "pass": true,
+            "reason": "found 4",
+            "answer": "There are 4 issues tagged with \"UI/UX\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'ui/ux' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 63
+            },
+            "ms": 1832
+          },
+          {
+            "pass": true,
+            "reason": "found 4",
+            "answer": "There are 4 issues tagged with \"ui/ux\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = \"ui/ux\" RETURN count(i) as count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 62
+            },
+            "ms": 2114
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-015",
+        "template": "author",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many distinct users have authored issues in the knowledge graph?",
+        "oracle": "39",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 distinct users who have authored issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) RETURN COUNT(DISTINCT i.authorLogin) AS distinctUsers"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 50
+            },
+            "ms": 2044
+          },
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 distinct users who have authored issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTINCT u.login) AS distinctUsers"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 60
+            },
+            "ms": 2174
+          },
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 distinct users who have authored issues in the knowledge graph.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN count(DISTINCT u.login) AS distinctUserCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 61
+            },
+            "ms": 2372
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-016",
+        "template": "author",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues were opened by the user \"amanape\"? Give their issue numbers.",
+        "oracle": "#4541, #5557, #12143",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 4541,5557,12143",
+            "answer": "The issues opened by the user \"amanape\" have the following issue numbers:\n\n- [#4541](https://github.com/OpenHands/OpenHands/issues/4541)\n- [#5557](https://github.com/OpenHands/OpenHands/issues/5557)\n- [#12143](https://github.com/OpenHands/OpenHands/issues/12143)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = 'amanape' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17685,
+              "output": 124
+            },
+            "ms": 2562
+          },
+          {
+            "pass": true,
+            "reason": "cited 4541,5557,12143",
+            "answer": "The issues opened by the user \"amanape\" are [#4541](https://github.com/OpenHands/OpenHands/issues/4541), [#5557](https://github.com/OpenHands/OpenHands/issues/5557), and [#12143](https://github.com/OpenHands/OpenHands/issues/12143).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = 'amanape' RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17685,
+              "output": 117
+            },
+            "ms": 2511
+          },
+          {
+            "pass": true,
+            "reason": "cited 4541,5557,12143",
+            "answer": "The issues opened by the user \"amanape\" are:\n\n- [Issue #4541](https://github.com/OpenHands/OpenHands/issues/4541)\n- [Issue #5557](https://github.com/OpenHands/OpenHands/issues/5557)\n- [Issue #12143](https://github.com/OpenHands/OpenHands/issues/12143)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = toLower('amanape') RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17687,
+              "output": 125
+            },
+            "ms": 2608
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-017",
+        "template": "author",
+        "kind": "structural",
+        "canary": false,
+        "question": "Who opened issue #139?",
+        "oracle": "yimothysu",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) was opened by the user `yimothysu`.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139})-[:AUTHORED_BY]->(u:User) RETURN u.login LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17651,
+              "output": 75
+            },
+            "ms": 2127
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The author of issue [#139](https://github.com/OpenHands/OpenHands/issues/139) is the user with the GitHub login \"yimothysu\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139})-[:AUTHORED_BY]->(u:User) RETURN u.login AS author LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 83
+            },
+            "ms": 3752
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) was opened by the user with the GitHub login **yimothysu**.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139})-[:AUTHORED_BY]->(u:User) RETURN u.login AS author LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 83
+            },
+            "ms": 2393
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-018",
+        "template": "author",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many distinct users have commented on issue #139?",
+        "oracle": "4",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 4",
+            "answer": "Four distinct users have commented on [issue #139](https://github.com/OpenHands/OpenHands/issues/139). Their usernames are:\n\n- Sparkier\n- yimothysu\n- Umpire2018\n- rbren",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment)-[:AUTHORED_BY]->(u:User) RETURN DISTINCT u.login"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17689,
+              "output": 100
+            },
+            "ms": 2790
+          },
+          {
+            "pass": true,
+            "reason": "found 4",
+            "answer": "There have been 4 distinct users who have commented on issue [#139](https://github.com/OpenHands/OpenHands/issues/139).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)<-[:AUTHORED_BY]-(u:User) WHERE i.number = 139 RETURN COUNT(DISTINCT u.login) AS commenterCount"
+                }
+              },
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)-[:AUTHORED_BY]->(u:User) WHERE i.number = 139 RETURN COUNT(DISTINCT u.login) AS commenterCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 26862,
+              "output": 148
+            },
+            "ms": 4678
+          },
+          {
+            "pass": true,
+            "reason": "found 4",
+            "answer": "Four distinct users have commented on [issue #139](https://github.com/OpenHands/OpenHands/issues/139).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTINCT u.login) AS distinctCommenters"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17673,
+              "output": 84
+            },
+            "ms": 2356
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-019",
+        "template": "date_range",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created in 2026-10?",
+        "oracle": "18",
+        "attempts": [
+          {
+            "pass": false,
+            "reason": "expected 18, not present in answer",
+            "answer": "I can't provide information on issues created in October 2026 as that date is beyond the range of my accessible data. My knowledge extends up to October 2023. If you have any other questions or need information about issues within that timeframe, feel free to ask!",
+            "toolCalls": [],
+            "usage": {
+              "input": 8795,
+              "output": 55
+            },
+            "ms": 1281
+          },
+          {
+            "pass": false,
+            "reason": "expected 18, not present in answer",
+            "answer": "I cannot assist with future queries. If you have any other questions or need information related to past or current data, feel free to ask!",
+            "toolCalls": [],
+            "usage": {
+              "input": 8795,
+              "output": 29
+            },
+            "ms": 1155
+          },
+          {
+            "pass": false,
+            "reason": "expected 18, not present in answer",
+            "answer": "I can only provide information up to October 2023, and cannot access data from 2026. Therefore, I can't provide the number of issues created in October 2026.",
+            "toolCalls": [],
+            "usage": {
+              "input": 8795,
+              "output": 38
+            },
+            "ms": 1281
+          }
+        ],
+        "passRate": 0
+      },
+      {
+        "id": "oh-dev-020",
+        "template": "date_range",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created before 2025-06-02?",
+        "oracle": "16",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 16",
+            "answer": "There are 16 issues that were created before June 2, 2025.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE date(i.createdAt) < date('2025-06-02') RETURN COUNT(i) AS count"
+                }
+              },
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE datetime(i.createdAt) < datetime('2025-06-02T00:00:00Z') RETURN COUNT(i) AS count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 26645,
+              "output": 113
+            },
+            "ms": 8418
+          },
+          {
+            "pass": true,
+            "reason": "found 16",
+            "answer": "A total of 16 issues were created before June 2, 2025.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt < \"2025-06-02\" RETURN COUNT(i) as count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 59
+            },
+            "ms": 2423
+          },
+          {
+            "pass": true,
+            "reason": "found 16",
+            "answer": "There were 16 issues created before June 2, 2025.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt < '2025-06-02' RETURN count(i) AS count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 57
+            },
+            "ms": 2411
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-021",
+        "template": "date_range",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created after 2025-06-02?",
+        "oracle": "44",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 44",
+            "answer": "A total of 44 issues were created after June 2, 2025.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt > '2025-06-02' RETURN count(i) AS total"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 59
+            },
+            "ms": 5138
+          },
+          {
+            "pass": true,
+            "reason": "found 44",
+            "answer": "44 issues were created after June 2, 2025.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt > '2025-06-02' RETURN COUNT(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 56
+            },
+            "ms": 5840
+          },
+          {
+            "pass": true,
+            "reason": "found 44",
+            "answer": "There are 44 issues that were created after June 2, 2025.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt > '2025-06-02' RETURN COUNT(i) AS number"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17658,
+              "output": 59
+            },
+            "ms": 2044
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-022",
+        "template": "date_range",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created after 2026-08-06?",
+        "oracle": "28",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 28",
+            "answer": "There were 28 issues created after 2026-08-06.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)\nWHERE datetime(i.createdAt) > datetime('2026-08-06T00:00:00Z')\nRETURN count(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17673,
+              "output": 71
+            },
+            "ms": 2169
+          },
+          {
+            "pass": true,
+            "reason": "found 28",
+            "answer": "There were 28 issues created after 2026-08-06 in the OpenHands repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt > '2026-08-06' RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17660,
+              "output": 63
+            },
+            "ms": 2904
+          },
+          {
+            "pass": true,
+            "reason": "found 28",
+            "answer": "It seems there was an error parsing the date format in the query. Let me attempt a different approach.There have been 28 issues created after August 6, 2026.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE date(i.createdAt) > date('2026-08-06') RETURN count(i) AS issueCount"
+                }
+              },
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE datetime(i.createdAt) > datetime('2026-08-06T00:00:00Z') RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 26674,
+              "output": 136
+            },
+            "ms": 5202
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-023",
+        "template": "date_range",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created between 2025-06-02 and 2026-10-13?",
+        "oracle": "30",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "It seems there was an issue with parsing date formats within the database query. I'll adjust the query to address this and try again.There were 30 issues created between June 2, 2025, and October 13, 2026.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)\nWHERE date(i.createdAt) >= date('2025-06-02') AND date(i.createdAt) <= date('2026-10-13')\nRETURN count(i) as issueCount"
+                }
+              },
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)\nWHERE datetime(i.createdAt) >= datetime('2025-06-02T00:00:00Z') AND datetime(i.createdAt) <= datetime('2026-10-13T23:59:59Z')\nRETURN count(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 26767,
+              "output": 194
+            },
+            "ms": 4567
+          },
+          {
+            "pass": true,
+            "reason": "found 30",
+            "answer": "There were 30 issues created between June 2, 2025, and October 13, 2026.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)\nWHERE i.createdAt >= '2025-06-02' AND i.createdAt <= '2026-10-13'\nRETURN COUNT(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17691,
+              "output": 82
+            },
+            "ms": 1927
+          },
+          {
+            "pass": false,
+            "reason": "expected 30, not present in answer",
+            "answer": "It seems there was an error when trying to parse the dates because the dates are formatted with timestamps including timezone information. I will correct the logic to handle this and try again.\n\nLet me find out using the correct approach.It appears there was an issue with using the `date` field wrongly, I should be correctly extracting the date from the timestamp. Let me fix that and try one more time.16 issues were created between June 2, 2025, and October 13, 2026.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE date(i.createdAt) >= date('2025-06-02') AND date(i.createdAt) <= date('2026-10-13') RETURN COUNT(i) as issueCount"
+                }
+              },
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE datetime(i.createdAt).date >= date('2025-06-02') AND datetime(i.createdAt).date <= date('2026-10-13') RETURN COUNT(i) as issueCount"
+                }
+              },
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE datetime(i.createdAt).year >= 2025 AND datetime(i.createdAt).year <= 2026 AND datetime(i.createdAt).month >= 6 AND datetime(i.createdAt).month <= 10 AND datetime(i.createdAt).day >= 2 AND datetime(i.createdAt).day <= 13 RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 35970,
+              "output": 320
+            },
+            "ms": 6760
+          }
+        ],
+        "passRate": 0.6666666666666666
+      },
+      {
+        "id": "oh-dev-024",
+        "template": "aggregation",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues have no comments at all?",
+        "oracle": "17",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 17",
+            "answer": "There are 17 issues that have no comments at all.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RETURN COUNT(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17649,
+              "output": 54
+            },
+            "ms": 3217
+          },
+          {
+            "pass": true,
+            "reason": "found 17",
+            "answer": "There are 17 issues that have no comments at all.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RETURN COUNT(i) AS count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17647,
+              "output": 53
+            },
+            "ms": 2691
+          },
+          {
+            "pass": true,
+            "reason": "found 17",
+            "answer": "There are 17 issues with no comments at all.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RETURN COUNT(i) as count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17647,
+              "output": 52
+            },
+            "ms": 2001
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-025",
+        "template": "aggregation",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issue has the most comments? Give its issue number.",
+        "oracle": "#7358 (33 comments)",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 7358",
+            "answer": "The issue with the most comments is issue number [7358](https://github.com/OpenHands/OpenHands/issues/7358).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN i.number AS issueNumber, COUNT(c) AS commentCount ORDER BY commentCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17672,
+              "output": 79
+            },
+            "ms": 2242
+          },
+          {
+            "pass": true,
+            "reason": "cited 7358",
+            "answer": "The issue with the most comments is [#7358](https://github.com/OpenHands/OpenHands/issues/7358), which has 33 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN i.number, COUNT(c) as commentCount ORDER BY commentCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17669,
+              "output": 81
+            },
+            "ms": 2202
+          },
+          {
+            "pass": true,
+            "reason": "cited 7358",
+            "answer": "The issue with the most comments is issue number [7358](https://github.com/OpenHands/OpenHands/issues/7358), which has 33 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WITH i, COUNT(c) AS commentCount RETURN i.number, commentCount ORDER BY commentCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17674,
+              "output": 87
+            },
+            "ms": 2106
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-026",
+        "template": "aggregation",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issue has received the most reactions? Give its issue number.",
+        "oracle": "#7358 (5 reactions)",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 7358",
+            "answer": "The issue that has received the most reactions is [#7358](https://github.com/OpenHands/OpenHands/issues/7358).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.number as issueNumber, COUNT(r) as reactionCount ORDER BY reactionCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17675,
+              "output": 81
+            },
+            "ms": 3724
+          },
+          {
+            "pass": true,
+            "reason": "cited 7358",
+            "answer": "The issue that has received the most reactions is [#7358](https://github.com/OpenHands/OpenHands/issues/7358).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.number AS issueNumber, COUNT(r) AS reactionCount ORDER BY reactionCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17675,
+              "output": 81
+            },
+            "ms": 4291
+          },
+          {
+            "pass": true,
+            "reason": "cited 7358",
+            "answer": "The issue with the most reactions is [issue #7358](https://github.com/OpenHands/OpenHands/issues/7358).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.number AS issueNumber, COUNT(r) AS reactionCount ORDER BY reactionCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17675,
+              "output": 80
+            },
+            "ms": 4201
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-027",
+        "template": "aggregation",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues have at least 3 comments?",
+        "oracle": "27",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 27",
+            "answer": "There are 27 issues that have at least 3 comments in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)\nWITH i, COUNT(c) AS commentCount\nWHERE commentCount >= 3\nRETURN COUNT(i) AS issuesWithAtLeastThreeComments"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17674,
+              "output": 77
+            },
+            "ms": 2900
+          },
+          {
+            "pass": true,
+            "reason": "found 27",
+            "answer": "There are 27 issues that have at least 3 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WITH i, COUNT(c) AS commentCount WHERE commentCount >= 3 RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17663,
+              "output": 67
+            },
+            "ms": 2277
+          },
+          {
+            "pass": true,
+            "reason": "found 27",
+            "answer": "There are 27 issues with at least 3 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WITH i, COUNT(c) AS commentCount WHERE commentCount >= 3 RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17663,
+              "output": 66
+            },
+            "ms": 3410
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-028",
+        "template": "aggregation",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many comments does issue #139 have?",
+        "oracle": "14",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 14",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) has 14 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment) RETURN count(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 67
+            },
+            "ms": 2234
+          },
+          {
+            "pass": true,
+            "reason": "found 14",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) has 14 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment) RETURN COUNT(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 67
+            },
+            "ms": 2066
+          },
+          {
+            "pass": true,
+            "reason": "found 14",
+            "answer": "Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) has 14 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number = 139 RETURN count(c) AS commentCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 67
+            },
+            "ms": 2509
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-029",
+        "template": "text_search",
+        "kind": "structural",
+        "canary": false,
+        "question": "What is the title of issue #4490?",
+        "oracle": "[Bug]: Development guide instructions not working",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#4490](https://github.com/OpenHands/OpenHands/issues/4490) is \"[Bug]: Development guide instructions not working\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 4490}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17651,
+              "output": 67
+            },
+            "ms": 2524
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#4490](https://github.com/OpenHands/OpenHands/issues/4490) is \"[Bug]: Development guide instructions not working\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 4490}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17651,
+              "output": 67
+            },
+            "ms": 2726
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#4490](https://github.com/OpenHands/OpenHands/issues/4490) is \"[Bug]: Development guide instructions not working\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 4490}) RETURN i.title AS title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 69
+            },
+            "ms": 2384
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-030",
+        "template": "text_search",
+        "kind": "structural",
+        "canary": false,
+        "question": "What is the title of issue #4541?",
+        "oracle": "Move assets to dedicated folders",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#4541](https://github.com/OpenHands/OpenHands/issues/4541) is \"Move assets to dedicated folders\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 4541}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 65
+            },
+            "ms": 1988
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#4541](https://github.com/OpenHands/OpenHands/issues/4541) is \"Move assets to dedicated folders\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 4541}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 65
+            },
+            "ms": 2196
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The title of issue [#4541](https://github.com/OpenHands/OpenHands/issues/4541) is \"Move assets to dedicated folders\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {number: 4541}) RETURN i.title LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 65
+            },
+            "ms": 2081
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-031",
+        "template": "text_search",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues mention \"adding\" in their title or body? Give their issue numbers.",
+        "oracle": "#7358, #10698, #15973, #18495, #18883, #19077",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited 7358,10698,15973,18495,18883,19077",
+            "answer": "The issues that mention \"adding\" in their title or body are:\n\n- [#7358](https://github.com/OpenHands/OpenHands/issues/7358)\n- [#10698](https://github.com/OpenHands/OpenHands/issues/10698)\n- [#15973](https://github.com/OpenHands/OpenHands/issues/15973)\n- [#18495](https://github.com/OpenHands/OpenHands/issues/18495)\n- [#18883](https://github.com/OpenHands/OpenHands/issues/18883)\n- [#19077](https://github.com/OpenHands/OpenHands/issues/19077)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'adding' OR toLower(i.bodyText) CONTAINS 'adding' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17708,
+              "output": 182
+            },
+            "ms": 4366
+          },
+          {
+            "pass": true,
+            "reason": "cited 7358,10698,15973,18495,18883,19077",
+            "answer": "The issues that mention \"adding\" in their title or body are:\n\n- [#7358](https://github.com/OpenHands/OpenHands/issues/7358)\n- [#10698](https://github.com/OpenHands/OpenHands/issues/10698)\n- [#15973](https://github.com/OpenHands/OpenHands/issues/15973)\n- [#18495](https://github.com/OpenHands/OpenHands/issues/18495)\n- [#18883](https://github.com/OpenHands/OpenHands/issues/18883)\n- [#19077](https://github.com/OpenHands/OpenHands/issues/19077)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'adding' OR toLower(i.bodyText) CONTAINS 'adding' RETURN i.number LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17708,
+              "output": 182
+            },
+            "ms": 5240
+          },
+          {
+            "pass": true,
+            "reason": "cited 7358,10698,15973,18495,18883,19077",
+            "answer": "The issues that mention \"adding\" in their title or body are:\n\n- [#7358](https://github.com/OpenHands/OpenHands/issues/7358)\n- [#10698](https://github.com/OpenHands/OpenHands/issues/10698)\n- [#15973](https://github.com/OpenHands/OpenHands/issues/15973)\n- [#18495](https://github.com/OpenHands/OpenHands/issues/18495)\n- [#18883](https://github.com/OpenHands/OpenHands/issues/18883)\n- [#19077](https://github.com/OpenHands/OpenHands/issues/19077)",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'adding' OR toLower(i.bodyText) CONTAINS 'adding' RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17708,
+              "output": 182
+            },
+            "ms": 5766
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-032",
+        "template": "multi_hop",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which users have commented on issues labelled \"priority:low\"? Give their usernames.",
+        "oracle": "all-hands-bot, dafyy321-pixel, smolpaws, yjg-djb",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The users who have commented on issues labeled \"priority:low\" are:\n\n- yjg-djb\n- all-hands-bot\n- dafyy321-pixel\n- smolpaws",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label), (i)-[:HAS_COMMENT]->(c:Comment), (c)-[:AUTHORED_BY]->(u:User) WHERE toLower(l.name) = 'priority:low' RETURN DISTINCT u.login AS username LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17725,
+              "output": 119
+            },
+            "ms": 3220
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The following users have commented on issues labelled \"priority:low\":\n\n- yjg-djb\n- all-hands-bot\n- dafyy321-pixel\n- smolpaws",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label), (i)-[:HAS_COMMENT]->(c:Comment)-[:AUTHORED_BY]->(u:User) WHERE toLower(l.name) = 'priority:low' RETURN DISTINCT u.login LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17724,
+              "output": 112
+            },
+            "ms": 2789
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The following users have commented on issues labelled \"priority:low\":\n\n- yjg-djb\n- all-hands-bot\n- dafyy321-pixel\n- smolpaws",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label), (i)-[:HAS_COMMENT]->(c:Comment), (c)-[:AUTHORED_BY]->(u:User)\nWHERE toLower(l.name) = 'priority:low'\nRETURN DISTINCT u.login AS username\nLIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17728,
+              "output": 120
+            },
+            "ms": 2401
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-033",
+        "template": "multi_hop",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which other labels appear on issues that also carry the label \"good first issue\"?",
+        "oracle": "bug, enhancement, feature-map:not-reproduced (not: Stale, agent-canvas, awaiting release, browser, changes tab, feature-map:mapped, feature-map:out-of-scope, frontend, lint-fix, openhands, oss-ohe-parity, priority:high, priority:low, priority:medium, priority:normal, ready-for-dev, settings, testing)",
+        "attempts": [
+          {
+            "pass": false,
+            "reason": "missing: bug, enhancement, feature-map:not-reproduced",
+            "answer": "No issues with the label \"Good First Issue\" have any other labels associated with them in the current dataset.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label)\nWHERE l.name = \"Good First Issue\"\nWITH i\nMATCH (i)-[:HAS_LABEL]->(other:Label)\nWHERE toLower(other.name) <> \"good first issue\"\nRETURN other.name AS label, COUNT(i) AS count\nORDER BY count DESC, label\nLIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17710,
+              "output": 117
+            },
+            "ms": 2869
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issues that carry the label \"good first issue\" also appear with the following other labels:\n\n1. enhancement\n2. feature-map:not-reproduced\n3. bug",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = \"good first issue\" \nMATCH (i)-[:HAS_LABEL]->(other:Label) WHERE other.name <> l.name\nRETURN distinct other.name LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17710,
+              "output": 107
+            },
+            "ms": 2729
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "Issues that carry the label \"good first issue\" also have these labels:\n\n1. **enhancement** — appears on 1 issue\n2. **feature-map:not-reproduced** — appears on 1 issue\n3. **bug** — appears on 1 issue",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (label1:Label)<-[:HAS_LABEL]-(issue:Issue)-[:HAS_LABEL]->(label2:Label)\nWHERE toLower(label1.name) = 'good first issue' AND label1 <> label2\nRETURN DISTINCT label2.name AS label, count(issue) AS count\nORDER BY count DESC\nLIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17733,
+              "output": 143
+            },
+            "ms": 3316
+          }
+        ],
+        "passRate": 0.6666666666666666
+      },
+      {
+        "id": "oh-dev-034",
+        "template": "multi_hop",
+        "kind": "structural",
+        "canary": false,
+        "question": "Who opened the issue that has the most comments?",
+        "oracle": "openhands-agent (#7358)",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue with the most comments is [#7358](https://github.com/OpenHands/OpenHands/issues/7358), and it was opened by the user `openhands-agent`. This issue has 33 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)\nRETURN i.number AS issueNumber, i.authorLogin AS author, COUNT(c) AS commentCount\nORDER BY commentCount DESC\nLIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17683,
+              "output": 106
+            },
+            "ms": 3171
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue with the most comments is [#7358](https://github.com/OpenHands/OpenHands/issues/7358), and it was opened by the user \"openhands-agent\" with a total of 33 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)\nRETURN i.number AS issueNumber, COUNT(c) AS commentCount, i.authorLogin AS author\nORDER BY commentCount DESC\nLIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17683,
+              "output": 107
+            },
+            "ms": 2671
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue with the most comments is [#7358](https://github.com/OpenHands/OpenHands/issues/7358) titled \"[Feature]: Support reading in cursorrules.md files\", and it was opened by the user \"openhands-agent\". It currently has 33 comments.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)\nRETURN i.number AS issueNumber, i.title AS title, i.authorLogin AS author, COUNT(c) AS commentCount\nORDER BY commentCount DESC\nLIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17702,
+              "output": 124
+            },
+            "ms": 4245
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-035",
+        "template": "multi_hop",
+        "kind": "structural",
+        "canary": false,
+        "question": "Who opened the issue with the most reactions?",
+        "oracle": "openhands-agent (#7358)",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue with the most reactions (5 reactions) was opened by the user with the login **openhands-agent**. The issue number is [#7358](https://github.com/OpenHands/OpenHands/issues/7358).",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_REACTION]->(:Reaction)\nRETURN i.issueId AS issueId, i.number AS number, i.authorLogin AS authorLogin, count(*) AS reactionCount\nORDER BY reactionCount DESC\nLIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17701,
+              "output": 113
+            },
+            "ms": 3592
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue with the most reactions is [#7358](https://github.com/OpenHands/OpenHands/issues/7358), titled \"[Feature]: Support reading in cursorrules.md files.\" It was opened by the user \"openhands-agent\" and has 5 reactions.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.number AS issueNumber, i.title AS title, i.authorLogin AS author, COUNT(r) AS reactionCount ORDER BY reactionCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17698,
+              "output": 120
+            },
+            "ms": 2419
+          },
+          {
+            "pass": true,
+            "reason": "all required strings present",
+            "answer": "The issue with the most reactions is issue [#7358](https://github.com/OpenHands/OpenHands/issues/7358), which was opened by the user \"openhands-agent\" and has 5 reactions.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.number AS issueNumber, i.authorLogin AS author, COUNT(r) AS reactionCount ORDER BY reactionCount DESC LIMIT 1"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17679,
+              "output": 103
+            },
+            "ms": 2821
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-036",
+        "template": "true_zero",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues carry the label \"API: argument checking\"?",
+        "oracle": "0 (no such label in this repo)",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "stated absence",
+            "answer": "There are no issues currently carrying the label \"API: argument checking\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE LOWER(l.name) = 'api: argument checking' RETURN count(i) as count"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17662,
+              "output": 64
+            },
+            "ms": 2299
+          },
+          {
+            "pass": true,
+            "reason": "stated absence",
+            "answer": "There are currently no issues that carry the label \"API: argument checking.\"",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (:Label {name: 'API: argument checking'})<-[:HAS_LABEL]-(i:Issue) RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17659,
+              "output": 61
+            },
+            "ms": 2195
+          },
+          {
+            "pass": true,
+            "reason": "stated absence",
+            "answer": "There are no issues carrying the label \"API: argument checking\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('API: argument checking') RETURN COUNT(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17667,
+              "output": 67
+            },
+            "ms": 2265
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-037",
+        "template": "true_zero",
+        "kind": "structural",
+        "canary": false,
+        "question": "List the issue numbers of every issue labelled \"API: argument checking\".",
+        "oracle": "none",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues currently labeled \"API: argument checking\" in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'api: argument checking' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17662,
+              "output": 67
+            },
+            "ms": 1986
+          },
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues labeled \"API: argument checking\" in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = toLower('API: argument checking') RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17664,
+              "output": 68
+            },
+            "ms": 2067
+          },
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues labelled \"API: argument checking\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name) = 'api: argument checking' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17662,
+              "output": 62
+            },
+            "ms": 2012
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-038",
+        "template": "true_zero",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues mention \"CPython\" in their title or body? Give their issue numbers.",
+        "oracle": "none",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues mentioning \"CPython\" in their title or body within the current data.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS toLower('cpython') OR toLower(i.bodyText) CONTAINS toLower('cpython') RETURN i.number AS issueNumber LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17682,
+              "output": 82
+            },
+            "ms": 2236
+          },
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues that mention \"CPython\" in their title or body.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'cpython' OR toLower(i.bodyText) CONTAINS 'cpython' RETURN i.number LIMIT 50"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17675,
+              "output": 72
+            },
+            "ms": 2143
+          },
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "No issues in the OpenHands/OpenHands repository mention \"CPython\" in their title or body.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'cpython' OR toLower(i.bodyText) CONTAINS 'cpython' RETURN i.number AS issueNumber LIMIT 10"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17678,
+              "output": 79
+            },
+            "ms": 2179
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-039",
+        "template": "true_zero",
+        "kind": "structural",
+        "canary": false,
+        "question": "Which issues were opened by the user \"08walkersj\"? Give their issue numbers.",
+        "oracle": "none",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues authored by the user \"08walkersj\" in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = toLower('08walkersj') RETURN i.number LIMIT 25"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17674,
+              "output": 73
+            },
+            "ms": 2623
+          },
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues authored by the user \"08walkersj\" in the \"OpenHands/OpenHands\" repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = '08walkersj' RETURN i.number LIMIT 100"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17672,
+              "output": 77
+            },
+            "ms": 2643
+          },
+          {
+            "pass": true,
+            "reason": "cited ",
+            "answer": "There are no issues in the repository authored by the user \"08walkersj\".",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.login) = toLower('08walkersj') RETURN i.number LIMIT 50"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17674,
+              "output": 72
+            },
+            "ms": 1946
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-040",
+        "template": "true_zero",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many issues were created in 2024-04?",
+        "oracle": "0",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "stated absence",
+            "answer": "No issues were created in April 2024.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2024-04' RETURN count(i) AS issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 53
+            },
+            "ms": 3081
+          },
+          {
+            "pass": true,
+            "reason": "stated absence",
+            "answer": "No issues were created in April 2024.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2024-04' RETURN COUNT(i)"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 50
+            },
+            "ms": 1933
+          },
+          {
+            "pass": true,
+            "reason": "stated absence",
+            "answer": "No issues were created in April 2024.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2024-04' RETURN count(i) as issueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17656,
+              "output": 53
+            },
+            "ms": 2073
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-041",
+        "template": "paraphrase",
+        "kind": "structural",
+        "canary": false,
+        "question": "What is the number of issues in a closed state?",
+        "oracle": "36",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 issues in a closed state.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS closedIssueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17651,
+              "output": 49
+            },
+            "ms": 2074
+          },
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 issues in a closed state.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS closedIssueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17651,
+              "output": 49
+            },
+            "ms": 2296
+          },
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 issues in a closed state in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {state: 'CLOSED'}) RETURN count(i) AS closedIssueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17649,
+              "output": 50
+            },
+            "ms": 1795
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-042",
+        "template": "paraphrase",
+        "kind": "structural",
+        "canary": false,
+        "question": "Count the issues in this repository that have been closed.",
+        "oracle": "36",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 issues in this repository that have been closed.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue {state: 'CLOSED'}) RETURN count(i) as closedIssues"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17647,
+              "output": 49
+            },
+            "ms": 1918
+          },
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "The repository has 36 issues that have been closed.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS closedCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17649,
+              "output": 49
+            },
+            "ms": 1950
+          },
+          {
+            "pass": true,
+            "reason": "found 36",
+            "answer": "There are 36 issues in the OpenHands/OpenHands repository that have been closed.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS closedIssueCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17651,
+              "output": 56
+            },
+            "ms": 1987
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-043",
+        "template": "paraphrase",
+        "kind": "structural",
+        "canary": false,
+        "question": "How many different people opened issues?",
+        "oracle": "39",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "A total of 39 different people have opened issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN count(DISTINCT u.login) as issueAuthorsCount"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17650,
+              "output": 60
+            },
+            "ms": 2293
+          },
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 different people who have opened issues in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTINCT u.login) AS uniqueAuthors"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 59
+            },
+            "ms": 2229
+          },
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 different people who have opened issues in the OpenHands/OpenHands repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTINCT u.login) AS uniqueAuthors"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17648,
+              "output": 63
+            },
+            "ms": 2538
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-044",
+        "template": "paraphrase",
+        "kind": "structural",
+        "canary": false,
+        "question": "What is the number of unique issue authors?",
+        "oracle": "39",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 unique issue authors in the OpenHands/OpenHands repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTINCT u.login) AS uniqueAuthors"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 61
+            },
+            "ms": 2200
+          },
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 unique issue authors in the repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTINCT u.login) AS uniqueAuthors"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17653,
+              "output": 57
+            },
+            "ms": 2812
+          },
+          {
+            "pass": true,
+            "reason": "found 39",
+            "answer": "There are 39 unique issue authors in the OpenHands/OpenHands repository.",
+            "toolCalls": [
+              {
+                "tool": "queryNeo4j",
+                "input": {
+                  "cypher": "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTINCT u) AS uniqueAuthors"
+                }
+              }
+            ],
+            "usage": {
+              "input": 17652,
+              "output": 60
+            },
+            "ms": 2281
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-045",
+        "template": "semantic",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #7358. What is the problem and what did people say about it?",
+        "oracle": "[Feature]: Support reading in cursorrules.md files",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer summarizes the same issue (support for reading cursorrules files in OpenHands, with the manual-chat-addition problem and the repo.md-based alternative) and does not contradict the reference's title, state, author, or comment count, since it omits those facts rather than misstating them. It is a substantive summary, not a refusal or error.",
+            "answer": "### Summary of GitHub Issue [#7358](https://github.com/OpenHands/OpenHands/issues/7358): Support Reading in cursorrules.md Files\n\n**Stated Problem:** The issue involves a request for supporting `.cursorrules.md` files to enhance functionality, as these files are currently not supported, necessitating manual addition to chats.\n\n---\n\n#### Key Workflows or Use Cases Mentioned\n- Enhanced integration with `.cursorrules.md` for a more seamless user experience.\n- Automatic loading of rules from both legacy and modern `.cursorrules` and `.cursor/rules` files.\n\n#### Competitor Tools/Services Mentioned\n- Cursor and its related formats, especially `.mdc` and rules in cursor microagents.\n- Other formats like `.windsurfrules` and `.roo` are also mentioned as used interchangeably.\n\n#### Workarounds Users Have Found\n- Manual addition of rules to chats is currently used, which is considered suboptimal.\n- Integration with repo markdown files (`repo.md`) is seen as a temporary workaround.\n\n#### Proposed Solutions\n- Two main options are proposed:\n  1. Support for `.cursorrules.md` akin to existing `repo.md` files, allowing symlinks or concatenation.\n  2. Adoption of the new cursor rule format under `.cursor/rules`, incorporating features like project/global level rules.\n- Initial backward compatibility might be implemented by linking `.cursorrules` with `repo.md`, with plans for gradual enhancement.\n\n#### Overall Emotional Tone\nThe discussion maintains a neutral to positive tone, fostering a collaborative environment. Participants show willingness to contribute, clarify options, and support each other's work. There is a sense of urgency and concern over complexity but also optimism for methodical progress.\n\n---\n\n### Additional Context\n- The complexity of fully supporting `.mdc` file referencing is acknowledged, with newer cursor rules to be integrated thoughtfully.\n- Progress tracking through GitHub issues and Slack is considered acceptable, with recent changes in handling markdown files seen as potential simplifiers for future implementations.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 7358
+                }
+              }
+            ],
+            "usage": {
+              "input": 18087,
+              "output": 438
+            },
+            "ms": 13856
+          },
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue (support for cursorrules files in OpenHands, including the manual-adding workaround and the option1/option2 discussion) and does not contradict the reference facts; it omits title, state, author, and comment count, but completeness is not graded. It is not a refusal or error.",
+            "answer": "### Summary of GitHub Issue #7358 Discussion\n\n**Problem:** \nThe main issue discussed in this thread is the need to support both legacy `.cursorrules.md` files and newer `.cursor/rules` formats. Users want to enhance functionality while maintaining backward compatibility.\n\n**Key Workflows or Use Cases:**\n- Supporting both legacy and new rule formats to ensure compatibility and improve functionality.\n- Integrating features from other tools to allow seamless triggering and management of rules.\n- Emphasizing backward compatibility to accommodate existing user cases.\n\n**Competitor Tools Mentioned:**\n- Cursor: Frequently referenced for rule format handling and potential deprecation of `.cursorrules.md`.\n- Windsurf and RooCode: Mentioned as similar tools with integration interest.\n\n**User Workarounds:**\n- Manually adding rules to chats, which users find suboptimal.\n- Discussions about maintaining legacy support while implementing new functionalities gradually.\n\n**Proposed Solutions:**\n- Symlink method or concatenating `.cursorrules.md` with `repo.md` for compatibility.\n- Design proposals for implementing both rule formats to ensure a smooth transition.\n- Supporting different rule types and scopes with a potential UI for management.\n\n**Overall Emotional Tone:**\nThe discussion is mostly **positive** and **collaborative**, with users eager to contribute and clarify strategies. There is some **frustration** due to the complexity of transitioning from older formats, but users are committed to finding effective solutions and maintaining communication.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 7358
+                }
+              }
+            ],
+            "usage": {
+              "input": 18059,
+              "output": 319
+            },
+            "ms": 12755
+          },
+          {
+            "pass": true,
+            "reason": "The answer summarizes the same issue (support for .cursorrules files in OpenHands, backward compatibility, repo.md-like handling, and the .cursor/rules/.mdc alternative) and does not contradict the reference facts; it does not state title, state, author, or comment count incorrectly, and it is not a refusal or error.",
+            "answer": "### Summary of GitHub Issue [#7358](https://github.com/OpenHands/OpenHands/issues/7358) Discussion\n\n**Stated Problem:**\nThe issue revolves around the need for supporting `.cursorrules.md` files to enhance integration and functionality, as these files are not currently supported.\n\n### Key Points:\n\n- **Use Cases:**\n  - **Direct Integration:** Users want to utilize `.cursorrules.md` similarly to `repo.md` for efficient rule management.\n  - **Backward Compatibility:** There's a need to support legacy `.cursorrules` files to aid users transitioning from systems like Cursor.\n\n- **Alternatives:**\n  - **Manual Addition:** Users currently manage by adding rules manually to chats, which is seen as inefficient.\n  - **Other Formats:** Consideration of alternative formats like `.mdc` associated with new cursor rules.\n\n- **Proposed Solutions:**\n  1. **Integrate `.cursorrules.md`:** Allow this format to work alongside existing `repo.md` for rule management.\n  2. **Implement New System:** Develop a new system based on the latest Cursor rule patterns with enhancements.\n  3. **Phased Implementation:** Start with backward compatibility and expand to modern capabilities.\n\n- **Competitors Mentioned:**\n  - **Cursor:** The request is inspired by features available in Cursor, particularly around `.mdc` files.\n  - **Windsurf and RooCode:** Other tools referenced for rule format compatibility.\n\n- **Workarounds:**\n  - Users have been manually adding rules or using existing repo files.\n\n### Emotional Tone:\n- Primarily **Positive and Collaborative:** Contributors are engaged and excited, providing supportive feedback, though some initial confusion and delays were noted.\n- Some **Frustration:** Complexity in legacy support and managing different rule types led to moments of uncertainty, but these were constructively addressed.\n\nThe discussion is focused on balancing legacy support with modernization, emphasizing collaborative problem-solving among contributors. Overall, it showcases a cooperative effort to address the issue coherently.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 7358
+                }
+              }
+            ],
+            "usage": {
+              "input": 18095,
+              "output": 438
+            },
+            "ms": 14644
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-046",
+        "template": "semantic",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #139. What is the problem and what did people say about it?",
+        "oracle": "Implement Planner UI",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer is about issue #139, the Planner UI request, and its core problem matches the reference. It does not contradict the reference's title, state, author, or comment count, since it omits them rather than misstating them. Its details on the GET /plan endpoint, add_task/modify_task events, PlannerAgent initialization, and the one-to-many/meta-agent discussion are consistent with the comments.",
+            "answer": "### Summary of GitHub Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) — \"Implement Planner UI\"\n\n**Core Problem:**\nThe issue focuses on the need to develop a functional Planner UI for the OpenDevin tool, enabling users to view and manage planned activities effectively.\n\n**Key Workflows and Use Cases:**\n- The implementation of a one-to-many relationship is suggested, where several agents may be used during a session, integrating coding and planning functionalities.\n- A proposal for a “meta-agent” concept is discussed, which could allow the use of multiple agents under one framework to enhance planning capabilities.\n\n**Proposed Solutions:**\n- Introduction of a new API endpoint (`GET /plan`) is recommended for retrieving the complete plan when tasks are added or modified.\n- Utilization of websocket events (`add_task` and `modify_task`) to update the UI accordingly is suggested.\n- Participants emphasize the importance of properly initializing the PlannerAgent to track plan events effectively, with specific instructions on how to set it up.\n\n**Workarounds:**\n- There's a need for clarity in the initialization process of the PlannerAgent to ensure users can log task-related events, addressing a communication gap around agent functionality.\n\n**Competitor Tools/Services:**\n- Although no direct competitors are mentioned, references to frameworks like PyTorch's nn.Module indicate an understanding of advanced modular design.\n\n**Overall Emotional Tone:**\nThe discussion maintains a generally neutral tone. Users show curiosity and a willingness to collaborate but also express some initial confusion and frustration concerning the functionality and setup of the PlannerAgent.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 139
+                }
+              }
+            ],
+            "usage": {
+              "input": 17987,
+              "output": 338
+            },
+            "ms": 11492
+          },
+          {
+            "pass": true,
+            "reason": "The answer covers the same issue (#139, Planner UI for OpenDevin, displaying planned steps via Markdown to the frontend), and does not contradict the reference title, state, author, or comment count. It mentions the GET /plan endpoint, meta-agent discussion, and PlannerAgent troubleshooting, all consistent with the comments.",
+            "answer": "### Issue Summary: Implement Planner UI (#139)\n\n#### Problem\nThe discussion revolves around implementing a functional Planner UI for OpenDevin. The goal is to enable users to view planned tasks through a Markdown file interface, which is sent to the frontend.\n\n#### Key Workflows or Use Cases\n- **Multi-agent Functionality**: A proposal includes allowing a single controller to manage both coding operations and planning by integrating a \"meta-agent\" to streamline processes.\n\n#### Proposed Solutions\n- **New API Endpoint**: A suggestion was made to introduce an API endpoint (GET /plan) to retrieve the full plan when task-related events occur.\n- **Meta-agent Implementation**: The idea of using a \"meta-agent\" similar to PyTorch's nn.Module was discussed to manage multiple child agents.\n\n#### Workarounds\n- Users experimented with socket messages and logging events to analyze and troubleshoot the current implementation of the PlannerAgent.\n\n#### Competitor Tools/Services\nNo specific competitor tools or services were mentioned in the comments.\n\n#### Overall Emotional Tone\nThe tone of the discussion is generally neutral, characterized by collaboration among users to troubleshoot and improve the planner's functionality. There's enthusiasm towards enhancing the UI, though some initial confusion about the implementation processes is evident.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 139
+                }
+              }
+            ],
+            "usage": {
+              "input": 17904,
+              "output": 267
+            },
+            "ms": 9837
+          },
+          {
+            "pass": true,
+            "reason": "The answer covers the same issue #139 'Implement Planner UI', describes the planner UI request for viewing plans as Markdown, and discusses the same comments (multi-agent/meta-agent, GET /plan endpoint, add_task/modify_task websocket events, PlannerAgent initialization). It does not state title, state, author, or comment count that contradict the reference, and is not a refusal or error.",
+            "answer": "### Summary of GitHub Issue [#139](https://github.com/OpenHands/OpenHands/issues/139) - \"Implement Planner UI\"\n\nThe discussion centers on the implementation of a Planner UI to facilitate functional planning within OpenDevin by allowing users to view planned events via a Markdown file.\n\n#### Key Workflows or Use Cases Mentioned\n- There is a consideration for multi-agent support where a single controller can manage multiple agents simultaneously, such as one for coding and another for planning.\n- A proposal for using a \"meta-agent\" to manage interactions between various agents.\n\n#### Proposed Solutions\n- Implementing a new API endpoint, like `GET /plan`, for retrieving the complete plan during certain events (e.g., task additions or modifications).\n- Discussions on clarifying the initialization process of agents, particularly the PlannerAgent, to aid developers in correct integration.\n\n#### Workarounds Users Have Found\n- Developers should monitor WebSocket events such as `add_task` and `modify_task` for updates related to the planner's operation.\n- Users like Sparkier have attempted to debug their integration with the PlannerAgent by validating their setup in the web console initially.\n\n#### Competitor Tools/Services Mentioned\n- No competitors were explicitly referenced in the comments.\n\n#### Overall Emotional Tone\n- The overall tone is **neutral**, reflecting collaborative problem-solving efforts. The discussion shows developers are willing to assist each other and share pointers for implementation, indicating a constructive and engaged community atmosphere.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 139
+                }
+              }
+            ],
+            "usage": {
+              "input": 17955,
+              "output": 312
+            },
+            "ms": 9830
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-047",
+        "template": "semantic",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #4490. What is the problem and what did people say about it?",
+        "oracle": "[Bug]: Development guide instructions not working",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer covers the same issue (development guide instructions failing, requests going to localhost:3001 instead of 3000 with proxying not working), and states 13 comments, consistent with the reference. It does not state title, state, or author explicitly, but nothing it says contradicts the reference. Its claims about workarounds, the Makefile fix, and branch #4591 match the comments.",
+            "answer": "**Summary of GitHub Issue [#4490](https://github.com/OpenHands/OpenHands/issues/4490) — \"Bug: Development guide instructions not working\"**\n\n**Problem Context:**  \nThe issue is about difficulties encountered when following the development guide, particularly with backend requests being directed to the wrong port.\n\n**Key Workflows or Use Cases:**\n1. Users experienced errors when trying to connect to the application at `http://localhost:3001`, facing startup issues and proxying configuration problems.\n2. Users explored starting frontend and backend services independently, addressing some Docker and React errors.\n\n**Competitor Tools/Services Mentioned:**\n- None were mentioned.\n\n**Workarounds Users Found:**\n1. Deleting existing OpenHands Docker images and rebuilding the application (`make build` and `make run`).\n2. Modifying the Makefile to correct path references, resolving some backend startup issues.\n3. Restarting the application multiple times and performing hard reloads to clear the cache.\n4. Running the frontend in development mode and starting the backend independently worked for some users facing issues.\n\n**Proposed Solutions:**\n1. Suggestions were made to change configurations, including checking the proxy settings in the Vite configuration file.\n2. Checking out a specific branch (#4591) resolved the proxying issue for some users.\n\n**Overall Emotional Tone:**  \nThe discussion showed a mix of frustration and optimism. Users expressed confusion and frustration with the encountered issues but also felt relief and positivity when workarounds and proposed solutions were successful.\n\n**Comments:** 13 total comments were made on this issue.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 4490
+                }
+              }
+            ],
+            "usage": {
+              "input": 17991,
+              "output": 342
+            },
+            "ms": 8282
+          },
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue (development guide instructions failing, requests going to localhost:3001 instead of 3000, proxy not working) and does not contradict the reference title, state, author, or comment count. It is a usable summary covering the workarounds, the suggested branch #4591, and the incognito/cache suggestions discussed in the comments.",
+            "answer": "### Summary of GitHub Issue #4490 Comments\n\n#### Key Workflows or Use Cases Mentioned\n- The comments refer to following a development guide to run the OpenHands application using `make run` and accessing it via `localhost:3001`.\n- Users also mention troubleshooting steps for starting the frontend and backend separately with commands like `cd frontend && npm run dev` and `make start-backend`.\n\n#### Workarounds Users Have Found\n- Users attempted several workarounds to fix issues, including:\n  - Deleting all OpenHands Docker images and rebuilding with `make build` and `make run`.\n  - Clearing the browser cache using CMD + Shift + R.\n  - Starting the backend with a corrected path in the Makefile for proper Docker execution.\n  - Restarting the application multiple times and reloading the page to resolve temporary issues.\n  - Running the frontend and backend independently to bypass proxy issues.\n\n#### Proposed Solutions\n- A suggestion to use incognito mode to rule out caching issues.\n- Recommendation to check out a specific branch (#4591) that might address the issues.\n- Continuous user engagement to share specific fixes and errors during troubleshooting.\n\n#### Overall Emotional Tone\nThe tone of the discussion is largely **frustrated** and **neutral**. Users express challenges and setbacks in getting the application to function properly, but there are moments of relief when finding workarounds or solutions. It reflects a collaborative effort to resolve difficulties rather than dissatisfaction with the tool itself.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 4490
+                }
+              }
+            ],
+            "usage": {
+              "input": 17995,
+              "output": 319
+            },
+            "ms": 8393
+          },
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue (#4490, development guide instructions not working, requests going to localhost:3001 instead of 3000 with make run), and does not contradict the reference title, state, author, or comment count. It is a usable summary of the discussion including workarounds like cache clearing, branch #4591, and the later note that the issue was solved on main.",
+            "answer": "### GitHub Issue Summary for [#4490](https://github.com/OpenHands/OpenHands/issues/4490) — \"[Bug]: Development guide instructions not working\"\n\n**Key Workflows or Use Cases Mentioned:**\n- Users were trying to follow the development guide to get the application running on specified localhost ports (3000 and 3001).\n- The setup steps involved building and running the application using Docker and Make commands.\n\n**Workarounds Users Have Found:**\n1. Clearing browser cache using CMD + Shift + R.\n2. Starting the frontend and backend servers independently instead of using the `make run` command.\n3. Modifying the Makefile to use a relative path for the workspace (changing from $(shell pwd)/workspace to ./workspace).\n4. Restarting the application multiple times to resolve various errors.\n5. Changing model providers to fix issues with model selection and functionality.\n\n**Proposed Solutions:**\n- Ensure Docker images are deleted before rebuilding.\n- Investigate caching issues that might be affecting request routing.\n- Check out a specific branch (#4591) which resolved the issue for a user.\n- Suggest testing in Incognito mode to rule out cache-related problems.\n- Encourage reporting new issues if related problems occur after recent fixes.\n\n**Overall Emotional Tone:**\nThe discussion reflects a mix of frustration and determination. Users expressed difficulties and confusion, but they also shared collaborative efforts and constructive steps towards resolving the problem, demonstrating a productive and problem-solving mindset.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 4490
+                }
+              }
+            ],
+            "usage": {
+              "input": 17984,
+              "output": 316
+            },
+            "ms": 10279
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-048",
+        "template": "semantic",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #6037. What is the problem and what did people say about it?",
+        "oracle": "[Bug]: [Resolver] crashes on `main`",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer covers the same discussion as #6037: running the resolver on main versus a stable version, the installation/Requirements.txt problem, and the draft PR. It does not contradict the reference title, state, author, or the 13-comment count. It omits the explicit AttributeError crash, but completeness is not graded.",
+            "answer": "### Summary of GitHub Issue [#6037](https://github.com/OpenHands/OpenHands/issues/6037) - \"[Bug]: [Resolver] crashes on `main`\"\n\n#### Key Workflows or Use Cases:\n- Users are discussing workflows involving running the resolver on different versions, specifically the latest stable version versus `main`.\n- There are behaviors triggered by specific tags or labels in the workflows, such as using `fix-me` for stable and `fix-me-experimental` for `main`.\n\n#### Competitor Tools/Services Mentioned:\n- Although no direct competitors were mentioned, comments suggest awareness of similar functionalities in other repositories.\n\n#### Workarounds Users Have Found:\n- Some users stabilized the resolver by specifying a particular version tag instead of pointing directly to `main`.\n- An installation issue was identified involving how dependencies were appended in a workflow file, linked to changes in handling `Requirements.txt`.\n\n#### Proposed Solutions:\n- It was recommended to change workflow configurations to target stable versions instead of tracking `main`.\n- A draft Pull Request (#6284) has been initiated as a potential fix for the issues discussed.\n\n#### Overall Emotional Tone:\n- The tone ranges from neutral to mildly frustrated, occasionally light-hearted with the use of emojis. Users are engaged and express concerns about the instability with changes in `main`, despite being proactive in investigations and discussions.\n\nThe discussion involved 13 comments with users actively proposing, discussing, and seeking solutions to the reported issue.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 6037
+                }
+              }
+            ],
+            "usage": {
+              "input": 17973,
+              "output": 311
+            },
+            "ms": 8339
+          },
+          {
+            "pass": true,
+            "reason": "The answer is about the same issue (#6037, resolver crashing on main), describes the same core problem tied to main/fix-me-experimental and installation/workflow issues, and does not contradict the reference facts (title, state, author, comment count are not stated incorrectly). It is not a refusal or error. Minor embellishments like 'competitor tools' and tone commentary are not contradictions.",
+            "answer": "### Summary of GitHub Issue [#6037](https://github.com/OpenHands/OpenHands/issues/6037): \"[Bug]: [Resolver] crashes on `main`\"\n\n#### Problem\nThe issue discusses a bug where the resolver crashes when running on the development version (`main`). This crash is linked to incorrect installation paths and dependency management in the project's configuration files.\n\n#### Key Workflows or Use Cases\n- The resolver operates in two modes based on triggers:\n  - Latest stable version when tagged with `fix-me`.\n  - Development version (`main`) when tagged with `fix-me-experimental`.\n- Users considered switching to specific stable versions to enhance stability.\n\n#### Competitor Tools/Services Mentioned\n- References to other repositories capable of running on a target branch or `main` were made, showing that the resolver has similar functionality.\n\n#### Workarounds\n- Users suggested specifying a stable version instead of `main` in configurations to avoid the instability.\n- There was an identified issue with incorrect appending of dependencies in `Requirements.txt`, which caused installation failures.\n\n#### Proposed Solutions\n- A fix is in progress, and users were directed to review draft PR #6284 for further developments.\n- Clarification on executing the correct version — stable versus development — was discussed to assist users.\n\n#### Overall Emotional Tone\nThe discussion maintained a generally neutral tone, with mild frustration expressed over installation and configuration clarity. However, the atmosphere was collaborative and problem-solving, with instances of light-hearted exchanges.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 6037
+                }
+              }
+            ],
+            "usage": {
+              "input": 17957,
+              "output": 319
+            },
+            "ms": 8799
+          },
+          {
+            "pass": true,
+            "reason": "The summary describes the same issue (resolver crash on main with AttributeError/NoneType), mentions the fix-me-experimental label, the version confusion, the Requirements.txt installation finding, the suggestion to pin a version instead of main, and the draft PR; it contradicts no reference facts (comment count 13 is correctly stated). It is a usable summary, not a refusal.",
+            "answer": "### GitHub Issue #6037 Summary\n\n**Problem Description:**\nThe issue involves a bug in the resolver on the `main` branch of OpenHands, which crashes and throws an `AttributeError` related to a `NoneType` object during execution.\n\n**Key Workflows/Use Cases:**\n- The resolver operates in two modes based on labels: stable mode (`fix-me`) and experimental mode (`fix-me-experimental`).\n- There is discussion about confusion over which version is being used when triggering workflows in different scenarios.\n\n**Workarounds Users Have Found:**\n- A user mentioned an installation issue related to dependencies in the `Requirements.txt` file. They suggested ensuring that dependencies are correctly appended to prevent installation failures.\n\n**Proposed Solutions:**\n- A suggestion was made to use a fixed version instead of pointing to `main` to avoid instability.\n- The team has initiated fixes and generated a draft pull request (#6284) to address the issue.\n\n**Overall Emotional Tone:**\nThe tone of the discussion is neutral to mildly frustrated. Users express confusion over the resolver's functionality and stability while also sharing insights and solutions. There are light-hearted moments, indicating a positive approach to the technical challenges.\n\n**Comment Count:** 13 comments \n\nThis summary provides a concise overview of the problem, proposed solutions, and the emotional tone of the discussion.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 6037
+                }
+              }
+            ],
+            "usage": {
+              "input": 17950,
+              "output": 292
+            },
+            "ms": 7458
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-049",
+        "template": "semantic",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #10698. What is the problem and what did people say about it?",
+        "oracle": "feat: use lazy imports for the cli to speed up the ui",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue: slow CLI startup (--help) in OpenHands and the lazy-import approach (PEP 690 / set_lazy_imports, replaced by moving imports into functions). It does not contradict the reference facts (title, state, author, comment count are not mentioned, so nothing is contradicted). Minor inaccuracies like describing the discussion as mentioning competitor tools are emphasis issues, not contradictions of the reference.",
+            "answer": "### Summary of GitHub Issue #10698 Discussion\n\n**Problem Identified:**  \nThe discussion focuses on the need to optimize the startup time of the OpenHands CLI tool, especially when using the `--help` command. The goal is to make the tool more efficient by reducing the load time.\n\n**Workflows or Use Cases Mentioned:**  \n- Optimizing the startup time of the CLI tool is the primary focus.\n\n**Competitor Tools/Services Mentioned:**  \n- References were made to language models like Claude Sonnet 3.7 LLM and gpt5-mini, mainly in the context of their cost-effectiveness and performance.\n\n**Workarounds Suggested:**  \n- Since `importlib.set_lazy_imports()` is not available in the current Python version (3.12.11), it was suggested to delay imports by placing them inside functions as a workaround to enhance CLI loading speed.\n\n**Proposed Solutions:**  \n- Initially, the proposal was to use lazy imports based on PEP 690.\n- Upon realizing that PEP 690 features are unavailable, the focus shifted to optimizing imports using more traditional methods.\n\n**Overall Emotional Tone:**  \nThe discussion tone is positive and collaborative, with contributors showing enthusiasm for the project, offering support, and engaging actively in the conversation. There is a sense of anticipation for the implementation and improvements of these features.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 10698
+                }
+              }
+            ],
+            "usage": {
+              "input": 17910,
+              "output": 294
+            },
+            "ms": 14641
+          },
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue (slow openhands --help due to CLI imports, proposed PEP 690 lazy imports), states 13 comments consistent with the reference, and does not contradict title, state, or author. Some framing is loose (calling models 'competitor tools'), but no reference facts are contradicted and it is a usable summary.",
+            "answer": "The discussion on [issue #10698](https://github.com/OpenHands/OpenHands/issues/10698) focuses on the problem of slow CLI response times when executing the `openhands --help` command, which currently takes around 20 seconds. The proposed solution involves implementing lazy imports using PEP 690 and the function `importlib.set_lazy_imports()` to speed up the execution.\n\n### Key Points from the Discussion:\n\n- **Workflows and Use Cases:** Contributors discussed their motivations for addressing the CLI performance issue and shared their experiences using OpenHands for various tasks, including contributions and development processes.\n\n- **Competitor Tools/Services Mentioned:** AI models such as `gpt5-mini` and `Claude Sonnet 3.7 LLM` were mentioned as part of discussions, indirectly referencing potential competitor tools.\n\n- **Workarounds:** A contributor suggested using the conventional method of moving imports inside functions to optimize CLI startup times as a workaround, due to the rejection of `set_lazy_imports` in PEP 690.\n\n- **Proposed Solutions:** There was a suggestion to use traditional import deferral methods instead of `set_lazy_imports`. Future features were mentioned, such as the option to select custom models for the cloud version of OpenHands.\n\n- **Overall Emotional Tone:** The discussion was positive and collaborative, with contributors expressing support for each other and displaying enthusiasm for contributing to the project. There was a strong sense of community, and contributors actively sought clarity and updates.\n\nThe discussion involved 13 comments.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 10698
+                }
+              }
+            ],
+            "usage": {
+              "input": 18014,
+              "output": 327
+            },
+            "ms": 14274
+          },
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue (using lazy imports to speed up the CLI, e.g. for openhands --help), mentions the move-imports-into-functions workaround that matches the discussion, and correctly states 13 comments. It does not contradict the reference title, state, or author, and is not a refusal. Some vagueness and generic filler, but it is about the correct issue.",
+            "answer": "### Summary of GitHub Issue #10698 Comments\n\n**Problem Overview:**\nThe focus of the issue is on improving the CLI startup time by using lazy imports to optimize performance, particularly for commands like `openhands --help`.\n\n**Key Discussions:**\n- Contributors are exploring lazy imports and performance enhancements for certain commands.\n- The OpenHands tool running with Claude Sonnet 3.7 LLM and positive results using \"gpt5-mini\" for cost efficiency are mentioned for context.\n\n**Proposed Workarounds and Solutions:**\n- Since `set_lazy_imports` is not a viable solution, moving imports inside functions to defer loading until necessary is suggested.\n- Contributors are sharing methods and specific prompts to improve resource management effectively.\n\n**Overall Emotional Tone:**\nThe tone is positive and collaborative, with contributors showing enthusiasm and support for each other's efforts. There is a sense of community with shared tips for improvement and model selection.\n\n**Comment Count:**\nThe issue has received 13 comments.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 10698
+                }
+              }
+            ],
+            "usage": {
+              "input": 17917,
+              "output": 219
+            },
+            "ms": 12762
+          }
+        ],
+        "passRate": 1
+      },
+      {
+        "id": "oh-dev-050",
+        "template": "semantic",
+        "kind": "semantic",
+        "canary": false,
+        "question": "Summarize the discussion on issue #15529. What is the problem and what did people say about it?",
+        "oracle": "Add Agent Canvas update prompt and optional autoupdate path",
+        "attempts": [
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue: Agent Canvas lacking update-available notification/prompting, with discussion about surfacing updates in CLI and UI (settings, sidebar, tile). It does not contradict the reference facts (no title, state, author, or comment count is stated incorrectly). It is a usable summary, though it omits the autoupdate opt-in aspect and install-method details, which is allowed.",
+            "answer": "### Summary of Issue #15529 Discussion\n\n**Problem Identified:**\nUsers are seeking a way for the system to check for updates automatically and notify them when updates are available. This would enhance user experience and eliminate the need for unnecessary changes elsewhere, such as in the front-end.\n\n**Key Workflows or Use Cases:**\n- Users want the system to prompt them for updates upon execution, which would simplify operations and improve usability.\n- There is a discussion around ensuring that update information is visible and accessible without needing significant interface changes, like altering settings or requiring login access.\n\n**Proposed Solutions:**\n- Implement a command-line feature that automatically checks for updates at session start and notifies users if updates are available.\n- Add notifications in the user interface, such as sidebars, to indicate the update status, ensuring users are informed without needing to delve into settings.\n- Develop designs that highlight update availability effectively without disrupting users.\n\n**Overall Emotional Tone:**\nThe tone is neutral to slightly positive. Contributors are focused on constructive solutions and expressing a clear desire to improve the notification of updates, indicating they are motivated by enhancement rather than frustration.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 15529
+                }
+              }
+            ],
+            "usage": {
+              "input": 17931,
+              "output": 247
+            },
+            "ms": 8685
+          },
+          {
+            "pass": true,
+            "reason": "The answer addresses the same issue (Agent Canvas update notification/prompt, users unaware of newer versions), and does not contradict the reference facts; it omits title, state, author, and comment count but completeness is not graded. Its proposed solutions and discussion points (command-line update check prompt, admin UI, sidebar visibility, settings page) align with the comments. The 'Users must perform manual checks' framing is a reasonable paraphrase of the problem described, not a contradiction.",
+            "answer": "### Summary of Comments on GitHub Issue [#15529](https://github.com/OpenHands/OpenHands/issues/15529)\n\n**Problem:**\nThe main issue discussed is the lack of visibility and accessibility regarding updates for a tool or application. Users currently have to manually check for updates, and there is a need for a more automated or easily accessible update notification system.\n\n**Key Workflows or Use Cases:**\n- Users running commands to check for and install updates.\n- Administrators and users accessing a settings interface to manage updates.\n\n**Workarounds Found:**\n- Users must perform manual checks for updates since no automatic notification or checking system is in place.\n\n**Proposed Solutions:**\n- Implement a command prompt that checks for updates during execution and notifies users.\n- Introduce an admin UI feature to display update availability.\n- Enhance visibility of update-related information, possibly by placing it in the sidebar or a more visible UI section.\n- Consider allowing updates through a settings page, though there is concern about this approach's necessity.\n\n**Overall Emotional Tone:**\nThe discussion tone was neutral to positive, with contributors collaboratively discussing improvement ideas. There were occasional frustrations regarding the user interface design decisions and the need for improved visibility of updates.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 15529
+                }
+              }
+            ],
+            "usage": {
+              "input": 17918,
+              "output": 267
+            },
+            "ms": 7974
+          },
+          {
+            "pass": false,
+            "reason": "The answer is about the right topic (update notification for Agent Canvas) and the comment count of 13 matches, but it misstates the issue's problem framing: it says users must log into settings to learn of updates, which is only part of the issue, and it omits the issue's core request for an opt-in autoupdate path and install-method-specific update instructions. It also invents details such as 'a command to check for updates when starting' that are only loosely reflected in comment [1], and the claim 'no competitor tools' is unsupported. The summary is vague about the title and the actual scope, so it does not clearly match the reference issue's core problem.",
+            "answer": "### Issue #15529 Discussion Summary\n\n**Problem:**\nThe discussion revolves around improving the process by which users are notified of updates in the application. Currently, users need to log in to their settings to become aware of update availability, which is not very effective.\n\n**User Concerns:**\n- Users need better notifications for updates.\n- Current reliance on settings login for updates is suboptimal.\n\n**Proposed Solutions:**\n1. Implement a command to check for updates when starting the Agent Canvas and prompt the user if an update is available.\n2. Provide a visual indication of update availability within the admin UI or settings page.\n3. Redesign the UI to make update status always visible, potentially in a sidebar.\n\n**Discussion Tone:**\nThe conversation was constructive and positive, focusing on collaboration to improve the notification mechanism. There is a shared sense of urgency regarding the need for better update visibility, although the discontent is mainly directed at the application's current state rather than towards the participants.\n\n**Comment Count:** 13\n\nNo specific competitor tools or services were mentioned in the discussion.",
+            "toolCalls": [
+              {
+                "tool": "summarizeComments",
+                "input": {
+                  "issueNumber": 15529
+                }
+              }
+            ],
+            "usage": {
+              "input": 17901,
+              "output": 236
+            },
+            "ms": 7281
+          }
+        ],
+        "passRate": 0.6666666666666666
+      }
+    ],
+    "openai": {
+      "requests": 321,
+      "byModel": {
+        "gpt-4o-2024-08-06": {
+          "requests": 303,
+          "promptTokens": 2683601,
+          "completionTokens": 16937,
+          "cachedInputTokens": 2556416,
+          "unmetered": 0
+        },
+        "gpt-4o-mini-2024-07-18": {
+          "requests": 18,
+          "promptTokens": 33660,
+          "completionTokens": 5509,
+          "cachedInputTokens": 21760,
+          "unmetered": 0
+        }
+      },
+      "byEndpoint": {
+        "/chat/completions": 321
+      },
+      "byHost": {
+        "api.openai.com": 321
+      },
+      "unpricedModels": [],
+      "cachedInputTokens": 2578176,
+      "cacheHitRate": 0.9488142655416613,
+      "unmetered": 0,
+      "usageSource": "wire",
+      "reportedTokens": {
+        "input": 2683601,
+        "output": 16937,
+        "cached": 0
+      },
+      "costUsd": 3.6895749
+    },
+    "neo4j": {
+      "queries": 153,
+      "sessions": 153,
+      "transactions": 0,
+      "samples": [
+        "MATCH (i:Issue) RETURN COUNT(i) as totalIssues",
+        "MATCH (i:Issue) RETURN COUNT(i) AS totalIssues",
+        "MATCH (i:Issue) RETURN count(i) as issueCount",
+        "MATCH (c:Comment) RETURN count(c) AS totalComments",
+        "MATCH (c:Comment) RETURN count(c) as totalComments",
+        "MATCH (c:Comment) RETURN COUNT(c) as totalComments",
+        "MATCH (i:Issue {state: 'OPEN'}) RETURN count(i) AS openIssue",
+        "MATCH (i:Issue) WHERE i.state = 'OPEN' RETURN COUNT(i) AS op",
+        "MATCH (i:Issue {state: 'OPEN'}) RETURN count(i) AS openIssue",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS ",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS ",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS ",
+        "MATCH (i:Issue {number: 139}) RETURN i.state AS state LIMIT ",
+        "MATCH (i:Issue {number: 139}) RETURN i.state AS state LIMIT ",
+        "MATCH (i:Issue {number: 139}) RETURN i.state AS state LIMIT ",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE l.name = \"bug\"",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE i.state = 'OPE",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (l:Label) RETURN count(distinct l.name) AS labelCount",
+        "MATCH (l:Label) RETURN count(DISTINCT l.name) AS labelCount",
+        "MATCH (l:Label) RETURN COUNT(DISTINCT l.name) AS labelCount",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue) RETURN COUNT(DISTINCT i.authorLogin) AS dist",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTIN",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN count(DISTIN",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue {number: 139})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 139})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 139})-[:AUTHORED_BY]->(u:User) RETUR",
+        "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment)-[:",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)<-[:AUTHORED_BY]-",
+        "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment)-[:",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment)-[:AUTHORED_BY]->",
+        "MATCH (i:Issue) WHERE date(i.createdAt) < date('2025-06-02')",
+        "MATCH (i:Issue) WHERE i.createdAt < \"2025-06-02\" RETURN COUN",
+        "MATCH (i:Issue) WHERE datetime(i.createdAt) < datetime('2025",
+        "MATCH (i:Issue) WHERE i.createdAt < '2025-06-02' RETURN coun",
+        "MATCH (i:Issue) WHERE i.createdAt > '2025-06-02' RETURN coun",
+        "MATCH (i:Issue) WHERE i.createdAt > '2025-06-02' RETURN COUN",
+        "MATCH (i:Issue) WHERE i.createdAt > '2025-06-02' RETURN COUN",
+        "MATCH (i:Issue) WHERE datetime(i.createdAt) > datetime('2026",
+        "MATCH (i:Issue) WHERE i.createdAt > '2026-08-06' RETURN COUN",
+        "MATCH (i:Issue) WHERE date(i.createdAt) > date('2026-08-06')",
+        "MATCH (i:Issue) WHERE date(i.createdAt) >= date('2025-06-02'",
+        "MATCH (i:Issue) WHERE i.createdAt >= '2025-06-02' AND i.crea",
+        "MATCH (i:Issue) WHERE datetime(i.createdAt) >= datetime('202",
+        "MATCH (i:Issue) WHERE datetime(i.createdAt) > datetime('2026",
+        "MATCH (i:Issue) WHERE date(i.createdAt) >= date('2025-06-02'",
+        "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RET",
+        "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RET",
+        "MATCH (i:Issue) WHERE datetime(i.createdAt).date >= date('20",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN i.number ",
+        "MATCH (i:Issue) WHERE NOT (i)-[:HAS_COMMENT]->(:Comment) RET",
+        "MATCH (i:Issue) WHERE datetime(i.createdAt).year >= 2025 AND",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN i.number,",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WITH i, COUNT(c)",
+        "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.numbe",
+        "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.numbe",
+        "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.numbe",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WITH i, COUNT(c)",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WITH i, COUNT(c)",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WITH i, COUNT(c)",
+        "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 139})-[:HAS_COMMENT]->(c:Comment) RE",
+        "MATCH (i:Issue {number: 4490}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) WHERE i.number =",
+        "MATCH (i:Issue {number: 4490}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 4541}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 4490}) RETURN i.title AS title LIMIT",
+        "MATCH (i:Issue {number: 4541}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue {number: 4541}) RETURN i.title LIMIT 1",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'adding' OR ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'adding' OR ",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'adding' OR ",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label), (i)-[:HAS_COMMENT]-",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label), (i)-[:HAS_COMMENT]-",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label), (i)-[:HAS_COMMENT]-",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE l.name = \"Good",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (label1:Label)<-[:HAS_LABEL]-(issue:Issue)-[:HAS_LABEL",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN i.number ",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN i.number ",
+        "MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN i.number ",
+        "MATCH (i:Issue)-[:HAS_REACTION]->(:Reaction) RETURN i.issueI",
+        "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.numbe",
+        "MATCH (i:Issue)-[:HAS_REACTION]->(r:Reaction) RETURN i.numbe",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE LOWER(l.name) ",
+        "MATCH (:Label {name: 'API: argument checking'})<-[:HAS_LABEL",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue)-[:HAS_LABEL]->(l:Label) WHERE toLower(l.name",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS toLower('cpy",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'cpython' OR",
+        "MATCH (i:Issue) WHERE toLower(i.title) CONTAINS 'cpython' OR",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) WHERE toLower(u.log",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2024-04' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2024-04' RETU",
+        "MATCH (i:Issue) WHERE i.createdAt STARTS WITH '2024-04' RETU",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN COUNT(i) AS ",
+        "MATCH (i:Issue {state: 'CLOSED'}) RETURN count(i) AS closedI",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS ",
+        "MATCH (i:Issue {state: 'CLOSED'}) RETURN count(i) as closedI",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS ",
+        "MATCH (i:Issue) WHERE i.state = 'CLOSED' RETURN count(i) AS ",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN count(DISTIN",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTIN",
+        "MATCH (i:Issue)-[:AUTHORED_BY]->(u:User) RETURN COUNT(DISTIN",
+        "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTIN",
+        "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTIN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (u:User)<-[:AUTHORED_BY]-(i:Issue) RETURN COUNT(DISTIN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN",
+        "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_COMMEN"
+      ]
+    },
+    "judgeCostUsd": 0.007361100000000001
+  },
+  "score": {
+    "overall": 0.96,
+    "deterministic": 0.9621212121212122,
+    "semantic": 0.9444444444444445,
+    "byKind": {
+      "structural": 0.9621212121212122,
+      "retrieval": 0,
+      "semantic": 0.9444444444444445
+    },
+    "solvedAllAttempts": 46,
+    "solvedAnyAttempt": 49,
+    "totalTasks": 50,
+    "canaryPass": true,
+    "toolUseRate": 0.98,
+    "agentErrorRate": 0
+  },
+  "cost": {
+    "ingestUsd": 0.038053250000000004,
+    "qaUsd": 3.6895749,
+    "judgeUsd": 0.007361100000000001,
+    "sutTotalUsd": 3.72762815
+  },
+  "finishedAt": "2026-11-05T14:27:46.922Z"
+}

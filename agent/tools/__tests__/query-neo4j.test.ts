@@ -118,8 +118,7 @@ describe('queryNeo4jTool', () => {
  */
 describe('queryNeo4jTool — the schema guard changes nothing but warnings', () => {
   const CLEAN = 'MATCH (i:Issue)-[:HAS_COMMENT]->(c:Comment) RETURN c.commentId LIMIT 5';
-  const REVERSED =
-    'MATCH (c:Comment)<-[:AUTHORED_BY]-(u:User) RETURN u.login LIMIT 5';
+  const REVERSED = 'MATCH (c:Comment)<-[:AUTHORED_BY]-(u:User) RETURN u.login LIMIT 5';
 
   it('runs the query exactly as written, with or without a warning', async () => {
     mockSession.run.mockResolvedValue({ records: [] });

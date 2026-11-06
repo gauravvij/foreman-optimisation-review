@@ -257,7 +257,7 @@ describe('analysis ingestion when the model omits a comment source', () => {
       // The classification that follows the records must also have landed: the
       // old throw aborted the issue before this write.
       const cls = await session.run(
-        `MATCH (i:Issue {number: $n}) RETURN i.category AS c, i.priorityScore AS p`,
+        'MATCH (i:Issue {number: $n}) RETURN i.category AS c, i.priorityScore AS p',
         { n: ISSUE },
       );
       expect(cls.records[0].get('c'), 'the issue is classified').toBe('backend');

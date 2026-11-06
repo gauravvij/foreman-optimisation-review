@@ -177,7 +177,8 @@ describe('summarizeCommentsTool', () => {
       records: [
         fakeRecord({
           issueTitle: 'map and filter not working properly in multiprocessing',
-          issueBody: 'When mapping is used on a dataset with more than one process, filter misbehaves.',
+          issueBody:
+            'When mapping is used on a dataset with more than one process, filter misbehaves.',
           text: 'Minimum reproducible example using copenlu/answerable_tydiqa',
           date: '2022-10-13',
           author: 'loubnabnl',
@@ -195,9 +196,7 @@ describe('summarizeCommentsTool', () => {
     expect(prompt, 'the issue title must anchor the summary').toContain(
       'map and filter not working properly in multiprocessing',
     );
-    expect(prompt, 'the issue body must anchor the summary').toContain(
-      'filter misbehaves',
-    );
+    expect(prompt, 'the issue body must anchor the summary').toContain('filter misbehaves');
     expect(prompt, 'the model must be told the comments are detail, not the subject').toMatch(
       /not the subject of the issue/,
     );
@@ -323,10 +322,7 @@ describe('summarizeCommentsTool', () => {
       choices: [{ message: { content: 'A long discussion.' } }],
     });
 
-    const result = (await summarizeCommentsTool.execute!(
-      { issueNumber: 1 },
-      ctx,
-    )) as SummaryResult;
+    const result = (await summarizeCommentsTool.execute!({ issueNumber: 1 }, ctx)) as SummaryResult;
 
     const prompt = mockOpenAICreate.mock.calls[0][0].messages[1].content as string;
     expect(prompt.length, 'prompt must stay within the 40k cap').toBeLessThanOrEqual(40_000);
@@ -360,10 +356,7 @@ describe('summarizeCommentsTool', () => {
       choices: [{ message: { content: 'Short summary.' } }],
     });
 
-    const result = (await summarizeCommentsTool.execute!(
-      { issueNumber: 1 },
-      ctx,
-    )) as SummaryResult;
+    const result = (await summarizeCommentsTool.execute!({ issueNumber: 1 }, ctx)) as SummaryResult;
 
     expect(result.truncated).toBeUndefined();
   });
@@ -384,10 +377,7 @@ describe('summarizeCommentsTool', () => {
       choices: [{ message: { content: 'ok' } }],
     });
 
-    const result = (await summarizeCommentsTool.execute!(
-      { issueNumber: 1 },
-      ctx,
-    )) as SummaryResult;
+    const result = (await summarizeCommentsTool.execute!({ issueNumber: 1 }, ctx)) as SummaryResult;
 
     const prompt = mockOpenAICreate.mock.calls[0][0].messages[1].content as string;
     expect(prompt.length).toBeLessThanOrEqual(2000);

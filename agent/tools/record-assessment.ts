@@ -15,8 +15,8 @@ export const recordAssessmentTool = createTool({
     'only replying. You have no memory between conversations; the graph is the ' +
     'only place a decision survives. Record what the user said, not what you ' +
     'concluded.\n' +
-    '- An Assessment is a person\'s decision and outranks priorityScore, which is ' +
-    'the model\'s. When both exist and disagree, lead with the Assessment and ' +
+    "- An Assessment is a person's decision and outranks priorityScore, which is " +
+    "the model's. When both exist and disagree, lead with the Assessment and " +
     'say the score differs.\n' +
     '- There are three ways to persist a correction, and they are not ' +
     'interchangeable. A judgment naming particular issues is an Assessment. A ' +

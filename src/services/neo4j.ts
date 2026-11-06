@@ -256,18 +256,32 @@ async function insertReactions(
   if (valid.length === 0) return 0;
 
   const result = await session.run(
-    `UNWIND $reactions AS reaction
-     MERGE (r:Reaction {content: reaction.content, issueId: $issueId, userLogin: reaction.userLogin})
-     ON CREATE SET r.commentId = $commentId
-     RETURN count(r) AS reactionCount`,
+    REACTION_MERGE,
     {
-      reactions: valid.map((r) => ({ content: r.content, userLogin: r.user!.login })),
-      issueId,
-      commentId,
+      reactions: valid.map((r) => ({ content: r.content, issueId, userLogin: r.user!.login, commentId })),
     },
   );
   return (result.records[0].get('reactionCount') as Integer).toNumber();
 }
+
+// A reaction on two comments by the same user must remain two comment reactions.
+const REACTION_MERGE = `UNWIND $reactions AS reaction
+  CALL {
+    WITH reaction
+    WITH reaction WHERE reaction.commentId IS NULL
+    OPTIONAL MATCH (existing:Reaction {content: reaction.content, issueId: reaction.issueId, userLogin: reaction.userLogin})
+    WHERE existing.commentId IS NULL
+    WITH reaction, count(existing) AS matches
+    FOREACH (_ IN CASE WHEN matches = 0 THEN [1] ELSE [] END |
+      CREATE (:Reaction {content: reaction.content, issueId: reaction.issueId, userLogin: reaction.userLogin}))
+    RETURN 1 AS done
+    UNION
+    WITH reaction
+    WITH reaction WHERE reaction.commentId IS NOT NULL
+    MERGE (:Reaction {content: reaction.content, issueId: reaction.issueId, userLogin: reaction.userLogin, commentId: reaction.commentId})
+    RETURN 1 AS done
+  }
+  RETURN count(done) AS reactionCount`;
 
 // ---------------------------------------------------------------------------
 // Issue ingestion
@@ -516,9 +530,7 @@ export async function getIssueUpdatedAt(issueNumber: number): Promise<string | n
  * Issues absent from the graph are simply missing from the returned map; the
  * caller treats a missing entry as "never seen before" and analyses it.
  */
-export async function getIssueUpdatedAtBatch(
-  issueNumbers: number[],
-): Promise<Map<number, string>> {
+export async function getIssueUpdatedAtBatch(issueNumbers: number[]): Promise<Map<number, string>> {
   const previous = new Map<number, string>();
   if (issueNumbers.length === 0) return previous;
 
@@ -744,9 +756,8 @@ interface BatchStatement {
  *     the per-issue path calls insertUsers in — and duplicates are left in
  *     place. MERGE processes rows in order, so the last write wins, which is
  *     exactly what consecutive insertUsers calls did.
- *   - Reactions keep their (content, issueId, userLogin) merge key, and
- *     commentId is still set only ON CREATE. Issue-level reactions are listed
- *     before comment reactions so the same row wins that key first, as before.
+ *   - Comment reactions include commentId in their merge key so the same user
+ *     can react to two different comments without losing the second reaction.
  *   - ASSIGNED_TO is cleared for every issue in the batch unconditionally,
  *     because the per-issue path clears it unconditionally (that is what makes
  *     an unassignment take effect).
@@ -920,9 +931,7 @@ export function planIssueBatch(issuesData: IssueData[]): BatchStatement[] {
 
   if (reactions.length > 0) {
     statements.push({
-      query: `UNWIND $reactions AS reaction
-     MERGE (r:Reaction {content: reaction.content, issueId: reaction.issueId, userLogin: reaction.userLogin})
-     ON CREATE SET r.commentId = reaction.commentId`,
+      query: REACTION_MERGE,
       params: { reactions },
     });
   }

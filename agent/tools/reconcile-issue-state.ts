@@ -86,10 +86,11 @@ export const reconcileIssueStateTool = createTool({
         r.ghosts.length === 0
           ? ''
           : input.apply
-            ? ` Removed ${r.deleted} issue(s) GitHub no longer has: ${r.ghosts.join(', ')}.` +
-              (r.ghostsKept.length > 0
-                ? ` Kept ${r.ghostsKept.join(', ')} because a recorded assessment would be lost with them.`
-                : '')
+            ? ` Removed ${r.deleted} issue(s) GitHub no longer has: ${r.ghosts.join(', ')}.${
+                r.ghostsKept.length > 0
+                  ? ` Kept ${r.ghostsKept.join(', ')} because a recorded assessment would be lost with them.`
+                  : ''
+              }`
             : ` ${r.ghosts.length} issue(s) do not exist on GitHub: ${r.ghosts.join(', ')}. Re-run with apply to remove them.`;
 
       const unresolvedNote =

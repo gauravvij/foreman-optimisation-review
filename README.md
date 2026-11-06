@@ -350,6 +350,8 @@ is re-fetched and marked `CLOSED` in the graph.
 | `GITHUB_TOKEN` | Yes | GitHub API access for fetching issues |
 | `MODEL_REASONING` | No | Overrides the reasoning tier (default `claude-sonnet-4-6`) |
 | `MODEL_FAST` | No | Overrides the cheap tier (default `claude-haiku-4-5`) |
+| `MODEL_JUDGE` | No | Eval suite only. The model that scores answers. Unset, it is the cheap tier, the same model that writes foreman's summaries |
+| `JUDGE_GATEWAY_URL`, `JUDGE_GATEWAY_API_KEY` | No | Eval suite only. Send the judge to another OpenAI-compatible endpoint, such as `https://openrouter.ai/api`. The key is required, so the gateway key is never sent elsewhere |
 
 ### Models
 
@@ -593,6 +595,16 @@ Spins up a Neo4j testcontainer, seeds it with the fixture data, then runs the ag
 ```bash
 bun run test:evals
 ```
+
+To score with a judge that is not the model under test, for example Haiku 5.5 on OpenRouter:
+
+```bash
+MODEL_JUDGE=anthropic/claude-haiku-5.5 JUDGE_GATEWAY_URL=https://openrouter.ai/api \
+JUDGE_GATEWAY_API_KEY=<openrouter key> bun run test:evals
+```
+
+The eval agent uses the production prompt (`buildInstructions`) and only the two read-only tools,
+because the other tools write to GitHub.
 
 **Scorers used:**
 - **Answer relevancy** — does the response actually address the question?

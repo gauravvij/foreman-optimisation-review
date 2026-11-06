@@ -140,8 +140,7 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   if (schema.ran) {
     if (schema.failures.length > 0) {
       console.warn(
-        `  Schema bootstrap: ${schema.failures.length} statement(s) failed — ` +
-          'graph is usable but not fully constrained',
+        `  Schema bootstrap: ${schema.failures.length} statement(s) failed — graph is usable but not fully constrained`,
       );
       for (const f of schema.failures) errors.push(`schema: ${f.statement}`);
     } else {

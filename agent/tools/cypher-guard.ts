@@ -290,17 +290,12 @@ function checkEdge(edge: PatternEdge): string | null {
   const written = `${formatNode(edge.from)}-[:${rel}]->${formatNode(edge.to)}`;
 
   if (defs.length === 0) {
-    return (
-      `Cypher traversal ${written} uses relationship type ${rel}, which the schema ` +
-      'does not define. Check the relationship name before trusting the result.'
-    );
+    return `Cypher traversal ${written} uses relationship type ${rel}, which the schema does not define. Check the relationship name before trusting the result.`;
   }
 
   const schemaForms = formatSchemaEdges(defs, rel);
   const impossible = () =>
-    `Cypher traversal ${written} is impossible: the schema defines ${rel} only as ` +
-    `${schemaForms}. Nothing in the graph satisfies ${written}, so it returns zero ` +
-    'rows, which looks exactly like the data being absent.';
+    `Cypher traversal ${written} is impossible: the schema defines ${rel} only as ${schemaForms}. Nothing in the graph satisfies ${written}, so it returns zero rows, which looks exactly like the data being absent.`;
 
   // Normalise the arrow: an incoming arrow (A)<-[:R]-(B) asserts the traversal
   // B-[:R]->A, which is the orientation the schema must contain. An undirected
@@ -319,9 +314,7 @@ function checkEdge(edge: PatternEdge): string | null {
   const to = assertedTo.label;
   const asserted = `${formatNode(assertedFrom)}-[:${rel}]->${formatNode(assertedTo)}`;
   const reversed = () =>
-    `Cypher traversal ${written} runs against the arrow: it asserts ${asserted}, but the ` +
-    `schema has ${schemaForms}. A reversed arrow is not a syntax error — it silently ` +
-    'returns zero rows, which looks exactly like the data being absent.';
+    `Cypher traversal ${written} runs against the arrow: it asserts ${asserted}, but the schema has ${schemaForms}. A reversed arrow is not a syntax error — it silently returns zero rows, which looks exactly like the data being absent.`;
 
   if (edge.direction === 'undirected') {
     // Either orientation is legitimate; only warn if neither is possible.

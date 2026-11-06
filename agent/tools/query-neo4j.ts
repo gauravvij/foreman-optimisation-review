@@ -48,7 +48,9 @@ export const queryNeo4jTool = createTool({
       console.log(`  [queryNeo4j] returned ${rows.length} rows`);
       // The warning travels with the result so the model sees it even when the
       // rows are empty — the one case the row count cannot distinguish.
-      return warnings.length > 0 ? { rows, count: rows.length, warnings } : { rows, count: rows.length };
+      return warnings.length > 0
+        ? { rows, count: rows.length, warnings }
+        : { rows, count: rows.length };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`  [queryNeo4j] error: ${msg}`);
