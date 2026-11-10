@@ -1,8 +1,8 @@
 {
- "about": "Record of the independent check of the benchmark and of every proof file in this folder. The benchmark (question sets, scoring program, ingestion profiler) was built by NEO. These checks were performed with Claude Code, Anthropic's AI coding agent, using Claude Opus 5.5, on 2026-11-04.",
+ "about": "Record of the independent check of the benchmark and of every proof file in this folder. The benchmark (question sets, scoring program, ingestion profiler) was built by NEO. These checks were performed with Claude Code, Anthropic's AI coding agent, using Claude Opus 5.5, on 2026-11-04. The OpenHands checks (openhands_reports), the refreshed code_checks and the database re-run on the final code (database_contents) were added on 2026-11-10.",
  "terms": {
-  "question_set": "A fixed list of questions about a fixed collection of 60 GitHub issues.",
-  "attempt": "One try at answering one question. Every question was asked 3 times, so each question has 3 attempts, each marked right or wrong on its own."
+  "question_set": "A fixed list of questions about a fixed collection of GitHub issues: 60 for the three sets below and OpenHands Dev 50, 600 for OpenHands 600.",
+  "attempt": "One try at answering one question. In the three sets below every question was asked 3 times, so each question has 3 attempts, each marked right or wrong on its own. OpenHands 600 asks each question once."
  },
  "question_sets": {
   "SymPy Core 50": {
@@ -144,10 +144,10 @@
      "tested_code": "uncommitted copy (no commit to compare)"
     },
     "foreman-fresh-v7/report.json": {
-     "tested_code": "earlier branch commit 14166da"
+     "tested_code": "an earlier commit (14166da) from before the branch history was tidied; that commit is not in this branch"
     },
     "foreman-fresh-v8/report.json": {
-     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+     "tested_code": "the code of commit 258000c (fingerprint dfabe9557c84d2ce); it was run on 29f7c1b, an earlier commit with the same code from before the history was tidied, which is not in this branch"
     },
     "rerun/baseline-lewtun-holdout.json": {
      "tested_code": "original, commit 3cd3dde"
@@ -159,16 +159,16 @@
      "tested_code": "original, commit 3cd3dde"
     },
     "rerun/branch-lewtun-holdout.json": {
-     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+     "tested_code": "branch, commit 258000c (the 12 code changes)"
     },
     "rerun/branch-neutral-example-sympy2-dev.json": {
-     "tested_code": "final branch code (all changes in this pull request; only the two new test files are excluded, and they never run inside the assistant)"
+     "tested_code": "the branch with the group E tidy-ups made by 3 November (fingerprint 4e92f26a44597e9a). It differs from the final code only in the reaction fix, the eval suite's judge option and comments; the assistant does not use the judge option"
     },
     "rerun/branch-sympy2-dev-81.json": {
-     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+     "tested_code": "branch, commit 258000c (the 12 code changes)"
     },
     "rerun/branch-sympy2-dev.json": {
-     "tested_code": "branch, commit 258000c (12 code changes; same code as 29f7c1b)"
+     "tested_code": "branch, commit 258000c (the 12 code changes)"
     }
    }
   },
@@ -178,12 +178,34 @@
   },
   "database_contents": {
    "result": "pass",
-   "detail": "Re-run on the final branch code: identical database contents to the original at 5, 20 and 60 issues and with richer model output, and every behaviour change in section 6 reproduced. See profile/repeat-runs.json, database_comparison."
+   "detail": "Identical database contents to the original at 5, 20 and 60 issues and with richer model output, and behaviour changes 1 to 4 of OPTIMISATION.md section 6 reproduced (item 7 is covered by test/integration/cypher.test.ts). See profile/repeat-runs.json, database_comparison. On 2026-11-10 the 5, 20 and 60 issue runs were repeated on the final code, after the reaction fix: every item and every link matched the original's (22 items and 16 links, 109 and 95, 388 and 357), with 51, 212 and 620 requests on the original against 41, 89 and 209 on the branch."
   },
   "code_checks": {
    "result": "pass",
-   "detail": "On the final branch code: type check passes; 614 of 614 automated tests pass (36 files); style check reports 26 problems in the whole project against 29 before the changes, none introduced by this branch; the benchmark's own scoring and data-integrity self-tests pass 90 of 90.",
-   "note": "An older test file from the first project (verification_bench/grade-v2.test.ts) has 5 out-of-date checks that expect a scoring bug which has since been fixed; both scoring programs give the correct result on those answers. It is not used by anything in this folder."
+   "detail": "On the final branch code: type check passes; 620 of 620 unit tests pass (37 files) and 13 of 13 integration tests pass against a real Neo4j; style check reports 26 problems in the whole project against 29 before the changes, none introduced by this branch; the benchmark's own scoring and data-integrity self-tests all pass."
+  },
+  "openhands_reports": {
+   "result": "pass",
+   "detail": "The four OpenHands reports (qa/rerun/*-oh-dev.json and *-oh-600.json) contain exactly the questions and expected answers of the pinned question files (50 of 50 and 150 of 150), are marked valid, and pass their sanity questions. Every one-answer attempt was marked again with the scoring program and got the same verdict (132 of 132 per Dev 50 report, 140 of 140 per OpenHands 600 report). Every stored score equals the score recomputed from its attempts. Code fingerprints: original 98bff512a1c301a8 = commit 3cd3dde; branch 6883fbc3d64d73bb = commit 10d6ea3.",
+   "per_report": {
+    "baseline-oh-dev": {
+     "attempts_right": "124/150",
+     "one_answer": "115/132"
+    },
+    "branch-oh-dev": {
+     "attempts_right": "144/150",
+     "one_answer": "127/132"
+    },
+    "baseline-oh-600": {
+     "attempts_right": "126/150",
+     "one_answer": "118/140"
+    },
+    "branch-oh-600": {
+     "attempts_right": "144/150",
+     "one_answer": "134/140"
+    }
+   },
+   "note": "These runs used gpt-4o-2024-08-06 to answer and claude-haiku-5.5 to judge the summaries, unlike the 12 reports above, which used gpt-4o for both. The original's 'comment_reactions_match' check fails in both baseline reports (section 6, item 7 of OPTIMISATION.md)."
   }
  }
 }

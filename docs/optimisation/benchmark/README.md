@@ -7,8 +7,9 @@ results are weak. This file only says which report supports which claim and how 
 The benchmark harness is **not** part of this PR. Only its outputs are, so every figure can be
 checked without leaving the branch.
 
-A new, independent pair of question sets built from OpenHands/OpenHands issues is described in
-[`OPENHANDS.md`](OPENHANDS.md). It is built and checked, but foreman has not been scored on it yet.
+Three newer question sets built from OpenHands/OpenHands issues are described in
+[`OPENHANDS.md`](OPENHANDS.md). Two of them, OpenHands Dev 50 and OpenHands 600, have been
+scored (OPTIMISATION.md section 7). The third, OpenHands Holdout 50, is sealed and has not been run.
 
 ## What each report shows
 
@@ -21,7 +22,7 @@ server (60 real `huggingface/datasets` issues) and a mock model.
 |---|---|
 | `repeat-runs.json` | **The figures quoted in OPTIMISATION.md sections 5.1 to 5.4 and 6.** Sections: `database_work_counts` (requests and connections, identical in every repeat), `timing` (5 runs per setup, medians and per-step times), `branch_first_run_on_new_database`, `fetch_with_120ms_added_per_request_60_issues`, and `database_comparison` (fingerprints of the database contents, and the behaviour-change tests). |
 | `profile-foreman-baseline-{5,20,60}.json` | Single baseline runs at 5, 20 and 60 issues. Source of the statement and session counts. |
-| `profile-foreman-optimised-{5,20,60}.json` | Single runs of this branch at the same sizes. |
+| `profile-foreman-optimised-{5,20,60}.json` | Single runs of the branch at the same sizes, recorded on an earlier commit (`758a06d`) from before the history was tidied and before the reaction fix; that commit is not in this branch. Their request and connection counts equal `repeat-runs.json`, and the final code gives the same counts (209 requests and 9 connections at 60 issues). |
 | `profile-foreman-baseline-60-lat-c1.json` | Baseline with 120 ms added per request. |
 | `profile-foreman-h8-lat-c4-60.json` | Parallel fetch with 120 ms added. **Recorded on an earlier, uncommitted version of the branch**, so it still shows a read-back the final code removes. Use `repeat-runs.json` instead. |
 
@@ -37,10 +38,12 @@ comparison (every node, relationship and property, fingerprinted) is under `data
 ### `qa/`: scored agent runs
 
 Produced by a harness that asks the agent questions with known answers and marks each answer.
-Two terms: a **question set** is a fixed list of questions about 60 GitHub issues, and an
-**attempt** is one try at one question. Every question is asked 3 times, so each question has
-3 attempts. The agent model is `gpt-4o` and so is the judge for summary
-questions, so these are **not** results for the models foreman uses in production.
+Two terms: a **question set** is a fixed list of questions about a fixed set of GitHub issues
+(60, or 600 for OpenHands 600), and an **attempt** is one try at one question. Every question is
+asked 3 times, so each question has 3 attempts; OpenHands 600 and `v8` ask each question once.
+The agent model is `gpt-4o`, so these are **not** results for the models foreman uses in
+production. The judge for summary questions is `gpt-4o` too, except in the OpenHands reports,
+which used `claude-haiku-5.5`.
 
 | File | What it is |
 |---|---|
@@ -48,21 +51,37 @@ questions, so these are **not** results for the models foreman uses in productio
 | `qa/foreman-fresh-baseline/report.regraded.json` | The same answers re-graded with the corrected grader (spelled-out numbers, stated absences). Score 91.33%. This is the baseline figure used. |
 | `qa/foreman-fresh-v6`, `v7`, `v8` | Earlier arms of the branch, three attempts (v8: one attempt). v7 and v8 score 100% on `sympy2-dev`. |
 | `qa/GUARD-V7-VS-V6.md` | Comparison of the Cypher guard arm against the arm before it, with its statistical caveats. |
-| `qa/rerun/baseline-<set>.json`, `qa/rerun/branch-<set>.json` | **Fresh re-run** of baseline and branch on three sets, same harness, same grader, same cost meter. Source of the tables in OPTIMISATION.md section 5.5. |
+
+`v6`, `v7`, `v8` and `GUARD-V7-VS-V6.md` come from the working history before it was tidied into
+this branch's commits, so the commits they name (`14166da`, `29f7c1b`) are not in this branch.
+`v8` has the same code fingerprint as `258000c`. OPTIMISATION.md cites these only as earlier
+results that agree; its numbers come from `qa/rerun/`.
+| `qa/rerun/baseline-<set>.json`, `qa/rerun/branch-<set>.json` | **Fresh re-run** of baseline and branch, same harness, same grader, same cost meter. The three sets below are the source of OPTIMISATION.md section 5.5; `oh-dev` and `oh-600` are the source of section 7. |
 | `qa/rerun/branch-neutral-example-sympy2-dev.json` | The final branch code (after the prompt's borrowed label example was replaced by a neutral one), SymPy Core 50: 149 of 150 attempts right. |
 
 Sets (plain names used in OPTIMISATION.md, with the file names used here): **SymPy Core 50**
 (`sympy2-dev`, 50 questions, the set the fixes were developed against), **Hugging Face 50**
 (`lewtun-holdout`, 50 questions about a different project, not tuned against) and
 **SymPy Extended 81** (`sympy2-dev-81`, 81 questions about the same SymPy issues, 23 of which
-repeat SymPy Core 50 questions).
+repeat SymPy Core 50 questions). Section 7 adds **OpenHands Dev 50** (`oh-dev`) and
+**OpenHands 600** (`oh-600`, 150 questions about 600 issues, one attempt each); see
+`OPENHANDS.md`.
+
+The OpenHands reports record the original's failed reaction check only as "content differs". The
+"35 of 56" in OPTIMISATION.md section 7 comes from replaying the original's rule over the 60 Dev 50
+issues: a reaction is merged into an earlier one by the same person with the same emoji on the same
+issue, so 21 of the 56 comment reactions end up on the wrong comment or are lost. The test in
+`test/integration/cypher.test.ts` shows the same merge on a real database.
 
 Each question set has one-answer questions (checked by a program) and summaries (marked by an
-AI judge): SymPy Core 50 has 44 and 6, Hugging Face 50 has 44 and 6, SymPy Extended 81 has 73 and 8.
+AI judge): SymPy Core 50 has 44 and 6, Hugging Face 50 has 44 and 6, SymPy Extended 81 has 73 and 8,
+OpenHands Dev 50 has 44 and 6, OpenHands 600 has 140 and 10.
 
 Useful fields in each report: `score.overall`, `score.solvedAllAttempts`, `qa.tasks[].attempts[]`
 (`pass`, `answer`, `reason`, `ms`, `toolCalls`), `cost.qaUsd`, `qa.openai.cacheHitRate`, and
-`sut.head` (the exact commit that was tested).
+`sut`: `hash` is a fingerprint of the code that was tested, `head` the commit checked out, and
+`dirty` whether there were uncommitted edits. When `dirty` is true, the fingerprint is what ties
+the report to a commit (see `verification.json`).
 
 ### `verification.json`: the independent check
 
@@ -84,6 +103,10 @@ the result and what was checked.
   pool works, not what real GitHub will do.
 
 ## Checking a figure yourself
+
+`bun docs/optimisation/benchmark/check-numbers.ts` (from the repository root) re-checks every
+headline number in OPTIMISATION.md against these files and exits 1 if one differs. To check one
+figure by hand, from this folder:
 
 ```
 # exact and repeatable

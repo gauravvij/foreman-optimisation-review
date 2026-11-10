@@ -13,7 +13,7 @@
       "**/.astro",
       "**/coverage",
       "**/*.min.js",
-      "benchmark/**",
+      "docs/optimisation/benchmark/**",
       "**/*.postman_collection.json",
       "**/*.postman_environment.json"
     ]
