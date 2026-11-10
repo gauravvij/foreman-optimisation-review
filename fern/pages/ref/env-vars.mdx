@@ -53,6 +53,17 @@ with a message naming the missing scope.
 | `NEO4J_URI` | `bolt://{NEO4J_HOST}:7687` | Full Bolt URI. |
 | `NEO4J_AUTH` | — | Enable auth; left unset by default. |
 
+## Tuning
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `MODEL_TIMEOUT_MS` | `60000` | How long one model call may take before it fails. |
+| `MODEL_MAX_TOKENS` | `1024` | Cap on free-text model output, such as comment summaries. |
+| `GITHUB_FETCH_CONCURRENCY` | `1` | Issues fetched from GitHub at once. Higher is faster but uses the GitHub rate limit faster. |
+| `NEO4J_INGEST_BATCH_SIZE` | `250` | Issues written to the database in one transaction. |
+| `SUMMARIZE_COMMENT_LIMIT` | `200` | Most comments the summariser reads per issue, newest first. |
+| `SUMMARIZE_PROMPT_CHAR_CAP` | `40000` | Most characters of comments the summariser sends to the model. |
+
 ## Runtime storage
 
 | Variable | Default | Purpose |

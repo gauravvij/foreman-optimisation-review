@@ -352,6 +352,12 @@ is re-fetched and marked `CLOSED` in the graph.
 | `MODEL_FAST` | No | Overrides the cheap tier (default `claude-haiku-4-5`) |
 | `MODEL_JUDGE` | No | Eval suite only. The model that scores answers. Unset, it is the cheap tier, the same model that writes foreman's summaries |
 | `JUDGE_GATEWAY_URL`, `JUDGE_GATEWAY_API_KEY` | No | Eval suite only. Send the judge to another OpenAI-compatible endpoint, such as `https://openrouter.ai/api`. The key is required, so the gateway key is never sent elsewhere |
+| `MODEL_TIMEOUT_MS` | No | How long one model call may take before it fails (default `60000`) |
+| `MODEL_MAX_TOKENS` | No | Cap on free-text model output, such as comment summaries (default `1024`) |
+| `GITHUB_FETCH_CONCURRENCY` | No | Issues fetched from GitHub at once (default `1`). Higher is faster but uses the GitHub rate limit faster |
+| `NEO4J_INGEST_BATCH_SIZE` | No | Issues written to the database in one transaction (default `250`) |
+| `SUMMARIZE_COMMENT_LIMIT` | No | Most comments the summariser reads per issue, newest first (default `200`) |
+| `SUMMARIZE_PROMPT_CHAR_CAP` | No | Most characters of comments the summariser sends to the model (default `40000`) |
 
 ### Models
 
