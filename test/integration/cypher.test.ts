@@ -318,3 +318,179 @@ describe('analysis ingestion when the model omits a comment source', () => {
     }
   });
 });
+
+describe('reaction ingestion keeps one node per reaction', () => {
+  // The same user gives the same reaction to the issue and to two of its
+  // comments. Those are three reactions. The original merge key
+  // (content, issueId, userLogin) collapsed them into one node, so two were lost.
+  const issueData = (n: number) => {
+    const alice = { login: 'alice-reacts' };
+    const thumbs = { content: 'THUMBS_UP', user: alice };
+    return {
+      issue: {
+        id: `I_R${n}`,
+        number: n,
+        title: 'reaction probe',
+        bodyText: 'body',
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+        closedAt: null,
+        state: 'OPEN',
+        author: alice,
+        reactions: { nodes: [thumbs], totalCount: 1 },
+        totalComments: 2,
+      },
+      comments: [1, 2].map((k) => ({
+        id: `IC_R${n}_${k}`,
+        bodyText: `comment ${k}`,
+        createdAt: `2026-01-0${k}T00:00:00Z`,
+        author: alice,
+        reactions: { nodes: [thumbs], totalCount: 1 },
+      })),
+    };
+  };
+
+  async function reactionShape(n: number) {
+    const session = driver.session();
+    try {
+      const r = await session.run(
+        `MATCH (i:Issue {number: $n})
+         CALL { WITH i MATCH (r:Reaction {issueId: i.issueId}) RETURN count(r) AS nodes }
+         CALL { WITH i MATCH (i)-[:HAS_REACTION]->(r:Reaction) RETURN count(r) AS onIssue }
+         CALL { WITH i MATCH (i)-[:HAS_COMMENT]->(:Comment)-[:HAS_REACTION]->(r:Reaction)
+                RETURN count(r) AS onComments, count(DISTINCT r) AS distinctOnComments }
+         RETURN nodes, onIssue, onComments, distinctOnComments`,
+        { n: neo4j.int(n) },
+      );
+      const rec = r.records[0];
+      return {
+        nodes: rec.get('nodes').toNumber(),
+        onIssue: rec.get('onIssue').toNumber(),
+        onComments: rec.get('onComments').toNumber(),
+        distinctOnComments: rec.get('distinctOnComments').toNumber(),
+      };
+    } finally {
+      await session.close();
+    }
+  }
+
+  const expected = { nodes: 3, onIssue: 1, onComments: 2, distinctOnComments: 2 };
+
+  afterAll(async () => {
+    const session = driver.session();
+    try {
+      await session.run(
+        `MATCH (r:Reaction) WHERE r.issueId IN ['I_R9001', 'I_R9002'] DETACH DELETE r
+         WITH count(*) AS _
+         MATCH (i:Issue) WHERE i.number IN [9001, 9002]
+         OPTIONAL MATCH (i)-[:HAS_COMMENT]->(c:Comment)
+         DETACH DELETE i, c`,
+      );
+    } finally {
+      await session.close();
+    }
+  });
+
+  it('batched ingest stores all three, and re-ingesting adds none', async () => {
+    const { ingestMultipleIssues } = await import('../../src/services/neo4j');
+    const first = await ingestMultipleIssues([issueData(9001)]);
+    expect(first.errors).toEqual([]);
+    expect(await reactionShape(9001)).toEqual(expected);
+
+    await ingestMultipleIssues([issueData(9001)]);
+    expect(await reactionShape(9001), 're-ingesting must be idempotent').toEqual(expected);
+  });
+
+  it('per-issue ingest, the batch fallback, stores the same graph', async () => {
+    const { ingestIssueData } = await import('../../src/services/neo4j');
+    const { issue, comments } = issueData(9002);
+    await ingestIssueData(issue, comments);
+    await ingestIssueData(issue, comments);
+    expect(await reactionShape(9002)).toEqual(expected);
+  });
+});
+
+describe('re-analysis tidies up only what the issue left behind', () => {
+  // Re-analysing an issue detaches its old competitors and categories. The
+  // original then swept the whole database for unattached ones after every
+  // issue; the branch deletes only the ones this issue just detached.
+  const analysis = (competitors: string[], categories: string[]) =>
+    ({
+      summary: 'probe',
+      categories,
+      category: 'backend',
+      subcategory: null,
+      severity: 'low',
+      impact: 'narrow',
+      effort: 'small',
+      issueType: 'task',
+      needsClarification: false,
+      clarificationReason: '',
+      priorityRationale: 'probe',
+      competitors: competitors.map((name) => ({ name, source: '' })),
+      solutions: [],
+      workarounds: [],
+    }) as never;
+
+  async function names(label: 'Competitor' | 'Category'): Promise<string[]> {
+    const session = driver.session();
+    try {
+      const r = await session.run(
+        `MATCH (n:${label}) WHERE n.name STARTS WITH 'tidy-' RETURN n.name AS name ORDER BY name`,
+      );
+      return r.records.map((x) => x.get('name') as string);
+    } finally {
+      await session.close();
+    }
+  }
+
+  beforeAll(async () => {
+    const session = driver.session();
+    try {
+      await session.run(
+        `CREATE (:Issue {number: 9101, issueId: 'I_T1', title: 'tidy a', state: 'OPEN'}),
+                (:Issue {number: 9102, issueId: 'I_T2', title: 'tidy b', state: 'OPEN'}),
+                (:Competitor {name: 'tidy-stray'}), (:Category {name: 'tidy-stray'})`,
+      );
+    } finally {
+      await session.close();
+    }
+  });
+
+  afterAll(async () => {
+    const session = driver.session();
+    try {
+      await session.run(
+        `MATCH (n) WHERE (n:Issue AND n.number IN [9101, 9102])
+            OR ((n:Competitor OR n:Category) AND n.name STARTS WITH 'tidy-')
+         DETACH DELETE n`,
+      );
+    } finally {
+      await session.close();
+    }
+  });
+
+  it("deletes the issue's own leftovers and keeps shared and unrelated ones", async () => {
+    const { ingestAnalysisResults } = await import('../../src/services/analysis');
+    await ingestAnalysisResults([
+      {
+        issueNumber: 9101,
+        analysis: analysis(['tidy-shared', 'tidy-only-a'], ['tidy-shared', 'tidy-only-a']),
+      },
+      { issueNumber: 9102, analysis: analysis(['tidy-shared'], ['tidy-shared']) },
+    ]);
+
+    // Issue 9101 is analysed again and now mentions nothing.
+    const { errors } = await ingestAnalysisResults([
+      { issueNumber: 9101, analysis: analysis([], []) },
+    ]);
+
+    expect(errors).toEqual([]);
+    const kept = ['tidy-shared', 'tidy-stray'];
+    expect(
+      await names('Competitor'),
+      'only-a removed; shared and the unrelated stray kept',
+    ).toEqual(kept);
+    expect(await names('Category'), 'the same rule for categories').toEqual(kept);
+  });
+});

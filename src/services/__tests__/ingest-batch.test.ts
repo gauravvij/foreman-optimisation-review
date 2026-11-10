@@ -154,7 +154,9 @@ describe('planIssueBatch', () => {
       ['HEART', null],
       ['EYES', 'C1'],
     ]);
-    expect(stmts[find(stmts, 'MERGE (:Reaction')]?.query).toContain('commentId: reaction.commentId');
+    expect(stmts[find(stmts, 'MERGE (:Reaction')]?.query).toContain(
+      'commentId: reaction.commentId',
+    );
   });
 
   it('skips reactions that have no user, but still links by the raw node count', () => {

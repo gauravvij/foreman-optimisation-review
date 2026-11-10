@@ -255,12 +255,14 @@ async function insertReactions(
   const valid = reactions.filter((r) => r.user?.login);
   if (valid.length === 0) return 0;
 
-  const result = await session.run(
-    REACTION_MERGE,
-    {
-      reactions: valid.map((r) => ({ content: r.content, issueId, userLogin: r.user!.login, commentId })),
-    },
-  );
+  const result = await session.run(REACTION_MERGE, {
+    reactions: valid.map((r) => ({
+      content: r.content,
+      issueId,
+      userLogin: r.user!.login,
+      commentId,
+    })),
+  });
   return (result.records[0].get('reactionCount') as Integer).toNumber();
 }
 

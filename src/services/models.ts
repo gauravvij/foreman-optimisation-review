@@ -103,7 +103,7 @@ function timeoutMs(): number {
 /**
  * Retries the SDK performs itself, on top of the one this module does for a
  * missing tool call. Two covers a dropped connection or a 5xx without turning
- * one slow call into a eight-minute wait.
+ * one slow call into an eight-minute wait.
  */
 const MAX_RETRIES = 2;
 
@@ -199,11 +199,12 @@ export async function textCompletion(call: ModelCall): Promise<string | null> {
  * response_format: json_schema, so the schema travels as a single tool the
  * model is required to call, which enforces the enums the same way.
  *
- * A tool-forced call still comes back empty now and then: the gateway answers
- * with prose, or with a tool call whose arguments are not valid JSON. One
- * retry covers that. It is deliberately bounded to one, because a model that
- * will not call the tool on the second ask will not call it on the fourth, and
- * every retry is a paid call on a path that ingests a whole corpus.
+ * A tool-forced call still comes back without a tool call now and then: the
+ * gateway answers with prose instead. One retry covers that. A tool call whose
+ * arguments are not valid JSON is not retried; it fails in JSON.parse below.
+ * The retry is deliberately bounded to one, because a model that will not call
+ * the tool on the second ask will not call it on the fourth, and every retry is
+ * a paid call on a path that ingests a whole corpus.
  */
 export async function structuredCompletion<T>(
   call: StructuredCall,
