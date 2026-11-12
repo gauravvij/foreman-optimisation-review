@@ -13,7 +13,7 @@ review the branch without reverse-engineering it from the diff. For the one-page
 |---|---|
 | **PR base** | `origin/main` = `306d0ce` (the diff and the PR are against this) |
 | **Original code** | `3cd3dde`, the parent of `306d0ce`. `306d0ce` adds only the `fern/` docs site, so the two are the *same code*. `OPTIMISATION.md` calls `3cd3dde` "the original". |
-| **Branch** | `pr/foreman-optimisation`, 18 commits ahead of `origin/main`: 12 code commits (groups A–D), 1 evidence commit (`258000c`), and 5 commits made during the independent check (group E) |
+| **Branch** | `pr/foreman-optimisation`, 12 code commits (groups A–D), 1 evidence commit (`258000c`), and the commits made during the independent check (group E), all on top of `origin/main` |
 | **What it does** | Makes reading GitHub issues into the Neo4j graph cheaper (fewer database requests), and makes the assistant answer questions more reliably (fewer confidently wrong answers) |
 | **What it does *not* do** | It does not change *what* ends up in the graph: on the test data the stored content is identical to the original's (verified at 5, 20 and 60 issues). The one deliberate exception is a data-loss fix for repeated reactions (section 5, item 7). |
 
@@ -88,7 +88,7 @@ instructions within their size budget). No runtime dependencies were added.
 
 ### Group E: Changes made during the independent check
 
-Five commits:
+The group E commits, oldest first:
 
 | Id | Commit | Contents |
 |---|---|---|
@@ -96,7 +96,9 @@ Five commits:
 | E2 | test: cover re-analysis, the narrower tidy-up and repeated reactions; format batch ingest | Tests for three changes that had none, formatting, one corrected comment |
 | E3 | docs: document the tuning environment variables | Six settings added by groups A, B and D, now in the README and the docs site |
 | E4 | docs: move the optimisation report and evidence into docs/optimisation | This folder, the first OpenHands 600 run and the numbers check |
-| E5 | docs: report OpenHands 600 over three runs | Two more OpenHands 600 runs, reported with the first as three runs; the earlier 60-issue OpenHands results removed |
+| E5 | added openhands 600 issues * 3 runs | Two more OpenHands 600 runs, reported with the first as three runs; the earlier 60-issue OpenHands results removed |
+| E6 | docs: report OpenHands 600 as 450 attempts over three runs | The OpenHands 600 table counts all three runs together (450 attempts per version) |
+| E7 | docs: describe the branch without commit counts | This wording, so it stays right as commits are added |
 
 | Problem it fixes | Change | Commit | Files |
 |---|---|---|---|
