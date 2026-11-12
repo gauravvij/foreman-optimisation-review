@@ -126,9 +126,13 @@ runs.forEach(({ o, b }, i) => {
   add('7', `${run}: questions worse on the branch`, expected.betterWorse[i][1], ids.filter((q) => ro.get(q) && !rb.get(q)).length);
 });
 const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
-const rightCount = (r: Report) => r.qa.tasks.filter((t) => t.attempts.every((a) => a.pass)).length;
-add('7', 'OpenHands 600: average questions right, original', '126.7', mean(runs.map((r) => rightCount(r.o))).toFixed(1));
-add('7', 'OpenHands 600: average questions right, branch', '143.3', mean(runs.map((r) => rightCount(r.b))).toFixed(1));
+const pooled = (side: 'o' | 'b', keep?: (t: Task) => boolean) => sum(runs.map((r) => attempts(r[side], keep)));
+add('7', 'OpenHands 600: attempts right over 3 runs, original', '380/450', pooled('o'));
+add('7', 'OpenHands 600: attempts right over 3 runs, branch', '430/450', pooled('b'));
+add('7', 'OpenHands 600: one-answer attempts over 3 runs, original', '354/420', pooled('o', oneAnswer));
+add('7', 'OpenHands 600: one-answer attempts over 3 runs, branch', '401/420', pooled('b', oneAnswer));
+add('7', 'OpenHands 600: summary attempts over 3 runs, original', '26/30', pooled('o', summary));
+add('7', 'OpenHands 600: summary attempts over 3 runs, branch', '29/30', pooled('b', summary));
 add('1', 'OpenHands 600: average database requests, original', 8700, Math.round(mean(runs.map((r) => r.o.ingest.neo4j.queries))));
 add('1', 'OpenHands 600: average database requests, branch', 3028, Math.round(mean(runs.map((r) => r.b.ingest.neo4j.queries))));
 add('7', 'OpenHands 600: average run cost ($), original', '4.18', mean(runs.map((r) => r.o.cost.sutTotalUsd)).toFixed(2));

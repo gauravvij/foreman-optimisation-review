@@ -27,7 +27,7 @@ issues in, and more reliable at answering questions.
 | **SymPy Extended 81**: attempts answered correctly | 239 of 243 (98.4%) | **242 of 243 (99.6%)** |
 | Attempts at questions with one right answer, these three sets | 472 of 483 | **483 of 483** |
 | Questions that did worse on the branch, these three sets | | **none** |
-| **OpenHands 600** (a new project, tested last): questions answered correctly, average of 3 runs | 126.7 of 150 (84.4%) | **143.3 of 150 (95.6%)** |
+| **OpenHands 600** (a new project, tested last; 150 questions × 3 runs): attempts answered correctly | 380 of 450 (84.4%) | **430 of 450 (95.6%)** |
 
 The four names in bold are the four **question sets**, and an **attempt** is one try at
 one question. Both terms are explained in section 4. OpenHands 600 was built after the work,
@@ -414,8 +414,8 @@ section), and verified the following:
 Both versions were also tested on **OpenHands 600**, a question set built after the work from a
 project that was not used to build the fixes: 150 questions about 600 issues of the
 OpenHands/OpenHands project (140 one-answer questions and 10 summaries). Each question is asked
-once per run, and the whole test was run **three times**, so each version had three tries at
-every question, in three separate runs.
+once per run, and the whole test was run **three times**, so each version made 450 attempts
+(150 questions × 3 runs). The results below count all 450.
 
 The assistant used `gpt-4o-2024-08-06` (and `gpt-4o-mini` for its comment-summary helper). A
 different **judge** model, `Claude Haiku 5.5`, marked the summaries, so no model marked its own
@@ -425,25 +425,25 @@ commits between them change only tests, formatting, comments and docs.
 
 **Answering questions**
 
-| What was measured | Original | Branch |
-|---|---:|---:|
-| Questions right, runs 1 / 2 / 3 (of 150) | 126 / 127 / 127 | **144 / 141 / 145** |
-| Average of the three runs | 126.7 of 150 (84.4%) | **143.3 of 150 (95.6%)** |
-| One-answer questions right, runs 1 / 2 / 3 (of 140, marked by a program) | 118 / 118 / 118 | **134 / 132 / 135** |
-| Summaries right, runs 1 / 2 / 3 (of 10, marked by the AI judge) | 8 / 9 / 9 | **10 / 9 / 10** |
-| Questions right in all three runs | 118 | **138** |
-| Questions never right | 15 | **1** |
+| What was measured | What it means | Original | Branch |
+|---|---|---:|---:|
+| Attempts right | 150 questions × 3 runs | 380 of 450 (84.4%) | **430 of 450 (95.6%)** |
+| One-answer questions: attempts right | 140 questions × 3 runs, marked by a program | 354 of 420 (84.3%) | **401 of 420 (95.5%)** |
+| Summaries: attempts right | 10 questions × 3 runs, marked by the AI judge | 26 of 30 (86.7%) | **29 of 30 (96.7%)** |
+| Attempts right in each run | runs 1 / 2 / 3, of 150 each | 126 / 127 / 127 | **144 / 141 / 145** |
+| Questions right in all three runs | of 150 | 118 | **138** |
+| Questions never right | of 150 | 15 | **1** |
 
-In every run the branch got 14 to 18 more questions right. Within each run, 19 to 21 questions
+In every run the branch got 14 to 18 more attempts right. Within each run, 19 to 21 questions
 improved and 2 to 5 got worse. A split that lopsided would happen by luck about 1 time in 3,600,
 1 in 150 and 1 in 8,000 (runs 1, 2 and 3). Over the three runs together, 28 questions were right
 more often on the branch and 7 less often (about 1 time in 2,000 by luck).
 
-The original's 70 wrong answers over the three runs are mostly the kinds section 5.5 fixes:
+The original's 70 wrong attempts out of 450 are mostly the kinds section 5.5 fixes:
 two-step questions (28) and label questions (12). In run 1, 15 of the 21 improved questions were
 ones where the original answered "none" when there was an answer: asked how many issues are tagged
 "ui/ux", it said none, while the branch found the 27 stored as `UI/UX`. The branch's weak spot is
-dates: 15 of its 20 wrong answers over the three runs are date questions, some refused as "in the
+dates: 15 of its 20 wrong attempts out of 450 are date questions, some refused as "in the
 future", and the one question it never got right asks how many issues were created in a given
 month. The original also gets date questions wrong (21 of its 70).
 
@@ -508,8 +508,8 @@ What supports them carrying over:
   every one-answer attempt right (132 of 132). On SymPy Extended 81, which has 58 questions not
   seen before, the one mistake the original made was fixed (218 → 219 of 219).
 - **A clear gain on a new project.** On OpenHands 600, a project not used to build the fixes,
-  the branch got 143.3 of 150 questions right on average over three runs, against 126.7 for the
-  original, and it did better in every run (section 7).
+  the branch got 430 of 450 attempts right over three runs (95.6%), against 380 for the
+  original (84.4%), and it did better in every run (section 7).
 
 What is not yet shown:
 

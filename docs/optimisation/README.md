@@ -77,8 +77,8 @@ run, in three separate runs.
 | Hugging Face 50: attempts right | 148/150 (98.7%) | **150/150 (100%)** |
 | SymPy Extended 81: attempts right | 239/243 (98.4%) | **242/243 (99.6%)** |
 | One-answer attempts right, across those three sets | 472/483 | **483/483** |
-| OpenHands 600 (a project not used to build the fixes): questions right, average of 3 runs | 126.7/150 (84.4%) | **143.3/150 (95.6%)** |
-| OpenHands 600: questions right in each run | 126, 127, 127 | **144, 141, 145** |
+| OpenHands 600 (a project not used to build the fixes): attempts right, 150 questions × 3 runs | 380/450 (84.4%) | **430/450 (95.6%)** |
+| OpenHands 600: attempts right in each run (of 150) | 126, 127, 127 | **144, 141, 145** |
 | Database requests to read in those 600 issues, average of 3 runs | 8,700 | **3,028** |
 
 On the first three sets no question did worse on the branch. On OpenHands 600, in each of the
