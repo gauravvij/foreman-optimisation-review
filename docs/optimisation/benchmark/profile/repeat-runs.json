@@ -1,0 +1,641 @@
+{
+ "about": "Evidence behind OPTIMISATION.md sections 5.1 to 5.4 and 6. Produced with the ingestion profiler and a local Neo4j, with a stand-in GitHub serving 60 real huggingface/datasets issues and a stand-in AI model. The profiler is not part of this pull request. 'original' = foreman at commit 3cd3dde. 'branch' = this pull request. Times are in milliseconds.",
+ "database_work_counts": {
+  "measured_on": "original 3cd3dde and branch commit 258000c; re-checked on the final branch tree (see database_comparison)",
+  "sizes": {
+   "issues_5": {
+    "original_runs": 24,
+    "branch_runs": 12,
+    "identical_in_every_run": true,
+    "original": {
+     "requests": 51,
+     "connections": 17,
+     "transactions": 0,
+     "whole_database_sweeps": 5
+    },
+    "branch": {
+     "requests": 41,
+     "connections": 9,
+     "transactions": 1,
+     "whole_database_sweeps": 0
+    }
+   },
+   "issues_20": {
+    "original_runs": 24,
+    "branch_runs": 12,
+    "identical_in_every_run": true,
+    "original": {
+     "requests": 212,
+     "connections": 47,
+     "transactions": 0,
+     "whole_database_sweeps": 20
+    },
+    "branch": {
+     "requests": 89,
+     "connections": 9,
+     "transactions": 1,
+     "whole_database_sweeps": 0
+    }
+   },
+   "issues_60": {
+    "original_runs": 24,
+    "branch_runs": 12,
+    "identical_in_every_run": true,
+    "original": {
+     "requests": 620,
+     "connections": 127,
+     "transactions": 0,
+     "whole_database_sweeps": 60
+    },
+    "branch": {
+     "requests": 209,
+     "connections": 9,
+     "transactions": 1,
+     "whole_database_sweeps": 0
+    }
+   }
+  }
+ },
+ "timing": {
+  "measured_on": "original 3cd3dde vs branch commit 258000c",
+  "method": "5 runs per setup, alternating between the versions; report uses the median",
+  "sizes": {
+   "issues_5": {
+    "original_no_rules": {
+     "runs": 5,
+     "wallMs": [
+      533,
+      595,
+      542,
+      630,
+      545
+     ],
+     "median_wallMs": 545,
+     "median_stage_ms": {
+      "fetch": 3,
+      "ingest": 260,
+      "analyze": 81,
+      "persistAnalysis": 167
+     }
+    },
+    "original_rules_present": {
+     "runs": 5,
+     "wallMs": [
+      404,
+      410,
+      448,
+      440,
+      478
+     ],
+     "median_wallMs": 440,
+     "median_stage_ms": {
+      "fetch": 3,
+      "ingest": 248,
+      "analyze": 54,
+      "persistAnalysis": 85
+     }
+    },
+    "branch_rules_present": {
+     "runs": 5,
+     "wallMs": [
+      197,
+      195,
+      177,
+      166,
+      159
+     ],
+     "median_wallMs": 177,
+     "median_stage_ms": {
+      "fetch": 4,
+      "ingest": 30,
+      "analyze": 14,
+      "persistAnalysis": 57
+     }
+    },
+    "slowest_branch_run_beats_fastest_original_run": true
+   },
+   "issues_20": {
+    "original_no_rules": {
+     "runs": 5,
+     "wallMs": [
+      1112,
+      1388,
+      1429,
+      1188,
+      1396
+     ],
+     "median_wallMs": 1388,
+     "median_stage_ms": {
+      "fetch": 10,
+      "ingest": 924,
+      "analyze": 121,
+      "persistAnalysis": 289
+     }
+    },
+    "original_rules_present": {
+     "runs": 5,
+     "wallMs": [
+      922,
+      1311,
+      1599,
+      1248,
+      1206
+     ],
+     "median_wallMs": 1248,
+     "median_stage_ms": {
+      "fetch": 11,
+      "ingest": 930,
+      "analyze": 86,
+      "persistAnalysis": 196
+     }
+    },
+    "branch_rules_present": {
+     "runs": 5,
+     "wallMs": [
+      362,
+      452,
+      546,
+      411,
+      505
+     ],
+     "median_wallMs": 452,
+     "median_stage_ms": {
+      "fetch": 11,
+      "ingest": 155,
+      "analyze": 30,
+      "persistAnalysis": 184
+     }
+    },
+    "slowest_branch_run_beats_fastest_original_run": true
+   },
+   "issues_60": {
+    "original_no_rules": {
+     "runs": 5,
+     "wallMs": [
+      2827,
+      2447,
+      2671,
+      3209,
+      3249
+     ],
+     "median_wallMs": 2827,
+     "median_stage_ms": {
+      "fetch": 30,
+      "ingest": 1963,
+      "analyze": 176,
+      "persistAnalysis": 577
+     }
+    },
+    "original_rules_present": {
+     "runs": 5,
+     "wallMs": [
+      3043,
+      2037,
+      2025,
+      3178,
+      3153
+     ],
+     "median_wallMs": 3043,
+     "median_stage_ms": {
+      "fetch": 30,
+      "ingest": 2340,
+      "analyze": 140,
+      "persistAnalysis": 494
+     }
+    },
+    "branch_rules_present": {
+     "runs": 5,
+     "wallMs": [
+      868,
+      684,
+      658,
+      805,
+      820
+     ],
+     "median_wallMs": 805,
+     "median_stage_ms": {
+      "fetch": 31,
+      "ingest": 154,
+      "analyze": 52,
+      "persistAnalysis": 503
+     }
+    },
+    "slowest_branch_run_beats_fastest_original_run": true
+   }
+  }
+ },
+ "branch_first_run_on_new_database": {
+  "note": "includes creating the uniqueness rules and lookup shortcuts, which happens once per database",
+  "sizes": {
+   "issues_5": {
+    "runs": 7,
+    "wallMs": [
+     808,
+     806,
+     795,
+     1060,
+     1051,
+     1061,
+     1028
+    ],
+    "median_wallMs": 1028
+   },
+   "issues_20": {
+    "runs": 7,
+    "wallMs": [
+     993,
+     984,
+     959,
+     1249,
+     1217,
+     1116,
+     979
+    ],
+    "median_wallMs": 993
+   },
+   "issues_60": {
+    "runs": 7,
+    "wallMs": [
+     1366,
+     1327,
+     1301,
+     1593,
+     1211,
+     1408,
+     1629
+    ],
+    "median_wallMs": 1366
+   }
+  }
+ },
+ "fetch_with_120ms_added_per_request_60_issues": {
+  "measured_on": "original 3cd3dde vs branch commit 258000c",
+  "settings": {
+   "original_one_at_a_time": {
+    "runs": [
+     {
+      "wallMs": 18148,
+      "fetchStageMs": 14578,
+      "githubRequests": 122,
+      "maxConcurrent": 1
+     },
+     {
+      "wallMs": 23077,
+      "fetchStageMs": 14574,
+      "githubRequests": 122,
+      "maxConcurrent": 1
+     },
+     {
+      "wallMs": 18024,
+      "fetchStageMs": 14572,
+      "githubRequests": 122,
+      "maxConcurrent": 1
+     }
+    ],
+    "median_wallMs": 18148,
+    "median_fetchStageMs": 14574
+   },
+   "branch_default_one_at_a_time": {
+    "runs": [
+     {
+      "wallMs": 16458,
+      "fetchStageMs": 14575,
+      "githubRequests": 122,
+      "maxConcurrent": 1
+     },
+     {
+      "wallMs": 17175,
+      "fetchStageMs": 14579,
+      "githubRequests": 122,
+      "maxConcurrent": 1
+     },
+     {
+      "wallMs": 16196,
+      "fetchStageMs": 14579,
+      "githubRequests": 122,
+      "maxConcurrent": 1
+     }
+    ],
+    "median_wallMs": 16458,
+    "median_fetchStageMs": 14579
+   },
+   "branch_four_at_a_time": {
+    "runs": [
+     {
+      "wallMs": 5727,
+      "fetchStageMs": 3654,
+      "githubRequests": 122,
+      "maxConcurrent": 4
+     },
+     {
+      "wallMs": 5675,
+      "fetchStageMs": 3661,
+      "githubRequests": 122,
+      "maxConcurrent": 4
+     },
+     {
+      "wallMs": 5520,
+      "fetchStageMs": 3657,
+      "githubRequests": 122,
+      "maxConcurrent": 4
+     }
+    ],
+    "median_wallMs": 5675,
+    "median_fetchStageMs": 3657
+   }
+  }
+ },
+ "database_comparison": {
+  "measured_on": "original 3cd3dde vs the final branch tree (all changes in this pull request)",
+  "method": "After each run every item (labels and stored details) and every link (type, both ends, stored details) is exported, sorted, and fingerprinted with SHA-256. Only the two run-time timestamps (last sync times) are masked. Equal fingerprints mean identical database contents.",
+  "standard_corpus": {
+   "issues_5": {
+    "nodes": 22,
+    "relationships": 16,
+    "digest_original": "d1d07d1ea6b5112e",
+    "digest_branch": "d1d07d1ea6b5112e",
+    "identical": true,
+    "requests": [
+     51,
+     41
+    ],
+    "connections": [
+     17,
+     9
+    ],
+    "transactions": [
+     0,
+     1
+    ],
+    "whole_db_sweeps": [
+     5,
+     0
+    ]
+   },
+   "issues_20": {
+    "nodes": 109,
+    "relationships": 95,
+    "digest_original": "27974ed0ed8b9dc0",
+    "digest_branch": "27974ed0ed8b9dc0",
+    "identical": true,
+    "requests": [
+     212,
+     89
+    ],
+    "connections": [
+     47,
+     9
+    ],
+    "transactions": [
+     0,
+     1
+    ],
+    "whole_db_sweeps": [
+     20,
+     0
+    ]
+   },
+   "issues_60": {
+    "nodes": 388,
+    "relationships": 357,
+    "digest_original": "a075ccdc851355de",
+    "digest_branch": "a075ccdc851355de",
+    "identical": true,
+    "requests": [
+     620,
+     209
+    ],
+    "connections": [
+     127,
+     9
+    ],
+    "transactions": [
+     0,
+     1
+    ],
+    "whole_db_sweeps": [
+     60,
+     0
+    ]
+   }
+  },
+  "richer_model_output_20_issues": {
+   "wellformed": {
+    "digest_original": "c5f4a183961d5277",
+    "digest_branch": "c5f4a183961d5277",
+    "identical": true,
+    "items_links_original": [
+     132,
+     202
+    ],
+    "items_links_branch": [
+     132,
+     202
+    ],
+    "original": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     },
+     "pass2": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     }
+    },
+    "branch": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     },
+     "pass2": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     }
+    },
+    "pre_existing_stray_entries_left": [
+     0,
+     0
+    ]
+   },
+   "orphans": {
+    "digest_original": "c5f4a183961d5277",
+    "digest_branch": "dcd63cd66dd27187",
+    "identical": false,
+    "items_links_original": [
+     132,
+     202
+    ],
+    "items_links_branch": [
+     134,
+     202
+    ],
+    "original": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     },
+     "pass2": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     }
+    },
+    "branch": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     },
+     "pass2": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     }
+    },
+    "pre_existing_stray_entries_left": [
+     0,
+     2
+    ]
+   },
+   "malformed": {
+    "digest_original": "4a66049a876102ea",
+    "digest_branch": "eb61aedda68280d2",
+    "identical": false,
+    "items_links_original": [
+     117,
+     125
+    ],
+    "items_links_branch": [
+     140,
+     265
+    ],
+    "original": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 20
+     },
+     "pass2": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 20
+     }
+    },
+    "branch": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     },
+     "pass2": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     }
+    },
+    "pre_existing_stray_entries_left": [
+     0,
+     0
+    ]
+   },
+   "incremental": {
+    "digest_original": "83809a5f3b16ef69",
+    "digest_branch": "ec2ca5f79ad55f71",
+    "identical": false,
+    "items_links_original": [
+     131,
+     199
+    ],
+    "items_links_branch": [
+     130,
+     183
+    ],
+    "original": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     },
+     "pass2": {
+      "fetched": 5,
+      "analyzed": 0,
+      "skipped": 5,
+      "errors": 0
+     }
+    },
+    "branch": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     },
+     "pass2": {
+      "fetched": 5,
+      "analyzed": 5,
+      "skipped": 0,
+      "errors": 0
+     }
+    },
+    "pre_existing_stray_entries_left": [
+     0,
+     0
+    ]
+   },
+   "dupconstraint": {
+    "digest_original": "c810056bd8336e29",
+    "digest_branch": "c810056bd8336e29",
+    "identical": true,
+    "items_links_original": [
+     133,
+     199
+    ],
+    "items_links_branch": [
+     133,
+     199
+    ],
+    "original": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 0
+     }
+    },
+    "branch": {
+     "pass1": {
+      "fetched": 20,
+      "analyzed": 20,
+      "skipped": 0,
+      "errors": 1
+     }
+    },
+    "pre_existing_stray_entries_left": [
+     0,
+     0
+    ],
+    "branch_error": [
+     "schema: CREATE CONSTRAINT label_name_unique IF NOT EXISTS FOR (n:Label) REQUIRE n.name IS UNIQUE"
+    ]
+   }
+  }
+ }
+}

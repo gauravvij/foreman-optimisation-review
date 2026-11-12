@@ -15,7 +15,20 @@ export const recordCategoryRuleTool = createTool({
     'a given category, and apply it immediately. Use this when the user corrects ' +
     'a whole class of issues rather than one, for example "anything labelled X ' +
     'should be Y". The rule keeps applying to issues ingested later, and always ' +
-    "wins over the model's own classification.",
+    "wins over the model's own classification.\n\n" +
+    'Rules:\n' +
+    '- A judgment of the form "anything with this label belongs in that category" ' +
+    'is a Rule, not an Assessment: it must keep applying to issues that do not ' +
+    'exist yet, so record it here rather than editing only the issues you can ' +
+    'currently see.\n' +
+    '- Prefer a Rule over Guidance when the condition is a GitHub label, because ' +
+    'a Rule is enforced after classification while advisory guidance can be ' +
+    'ignored by the model.\n' +
+    '- Rules take effect on the next analysis, not retroactively. Say so, rather ' +
+    'than implying existing issues have already changed.\n' +
+    '- Issue.categorySource names the rule that set the category, when one did. ' +
+    'If asked why an issue has its category, check that before explaining the ' +
+    "model's reasoning.",
   inputSchema: z.object({
     label: z.string().describe('The GitHub label to match, exactly as it appears on issues'),
     category: z.enum(TAXONOMY),

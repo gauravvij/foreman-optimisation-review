@@ -21,7 +21,14 @@ export const prioritizeIssuesTool = createTool({
     'List issues ranked by priority score (highest first), optionally filtered ' +
     'to one category or grouped by category. Use this instead of hand-written ' +
     'Cypher whenever the question is about what to work on next, or how issues ' +
-    'break down by area.',
+    'break down by area.\n\n' +
+    'Rules:\n' +
+    "- This ranks by priorityScore, the model's score. An Assessment is a " +
+    "person's decision and outranks it: when both exist on an issue and they " +
+    'disagree, lead with the Assessment and say the score differs.\n' +
+    '- Mention issues flagged needsClarification when ranking work someone is ' +
+    "about to pick up, because those are held out of the board's Ready column " +
+    'however urgent they look.',
   inputSchema: z.object({
     category: z
       .enum(TAXONOMY)

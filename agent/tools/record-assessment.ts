@@ -9,7 +9,30 @@ export const recordAssessmentTool = createTool({
     'this conversation. Use it whenever the user says an issue is nice to have, ' +
     'should be fixed, will not be fixed, or needs discussion. Record only what ' +
     'the user actually said; never infer a decision from issue text or from your ' +
-    'own analysis. Writes to the graph, not to GitHub.',
+    'own analysis. Writes to the graph, not to GitHub.\n\n' +
+    'Rules:\n' +
+    '- When the user states a judgment about issues, record it here rather than ' +
+    'only replying. You have no memory between conversations; the graph is the ' +
+    'only place a decision survives. Record what the user said, not what you ' +
+    'concluded.\n' +
+    "- An Assessment is a person's decision and outranks priorityScore, which is " +
+    "the model's. When both exist and disagree, lead with the Assessment and " +
+    'say the score differs.\n' +
+    '- There are three ways to persist a correction, and they are not ' +
+    'interchangeable. A judgment naming particular issues is an Assessment. A ' +
+    'mapping from a GitHub label to a category is a Rule, enforced after ' +
+    'classification. A judgment about the classification itself, such as two ' +
+    'values that should not appear together, is Guidance: there is no input to ' +
+    'match on, so it is given to the classifier as an instruction instead. ' +
+    'Prefer a Rule when the condition is a label, because advisory guidance can ' +
+    'be ignored by the model.\n' +
+    '- Distinguish a decision about one issue from a decision about a kind of ' +
+    'issue. A judgment of the form "anything with this label belongs in that ' +
+    'category" is a Rule: it must keep applying to issues that do not exist yet, ' +
+    'so record it with recordCategoryRule rather than editing only the issues ' +
+    'you can currently see.\n' +
+    '- Guidance and Rules take effect on the next analysis, not retroactively. ' +
+    'Say so, rather than implying existing issues have already changed.',
   inputSchema: z.object({
     issueNumbers: z.array(z.number()).describe('The issues this decision applies to'),
     decision: z.enum(DECISIONS),

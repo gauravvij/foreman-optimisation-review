@@ -8,19 +8,20 @@
  */
 
 import { type AnalysisData, ingestAnalysisResults } from './analysis';
-import { fetchMultipleIssueDetails } from './database';
 import { type IssueState, getAllIssueNumbers, getIssuesData, getPullRequests } from './github';
 import { listGuidance, renderGuidance } from './guidance';
 import { analyzeIssue, transformIssueDataForAnalysis } from './issue-analysis';
 import { modelFor } from './models';
 import {
-  getIssueUpdatedAt,
+  type IssueData,
+  getIssueUpdatedAtBatch,
   getLastPullRequestSyncTimestamp,
   getLastSyncTimestamp,
   ingestMultipleIssues,
   ingestPullRequests,
   setLastPullRequestSyncTimestamp,
   setLastSyncTimestamp,
+  setupDatabaseSchema,
 } from './neo4j';
 import { applyCategoryRules } from './rules';
 import { ensureVocabulary } from './subcategory';
@@ -58,6 +59,48 @@ export interface PipelineResult {
   incremental: boolean;
 }
 
+/**
+ * The slice of issue data the analysis stage consumes.
+ *
+ * Structurally the same shape `transformIssueDataForAnalysis` accepts, so the
+ * fetched data can be handed over directly. It mirrors DbIssueDetails, which is
+ * what the removed read-back used to produce: the graph read returned exactly
+ * these fields because they are exactly what the previous write had put there.
+ */
+interface AnalysisDetail {
+  issue: { issueId: string; number: number; title: string; bodyText: string | null };
+  labels: string[];
+  comments: { commentId: string; authorLogin: string | null; bodyText: string | null }[];
+}
+
+/**
+ * Maps freshly fetched GitHub data onto the analysis stage's input.
+ *
+ * Comments are ordered oldest-first, matching what the read-back did: it sorted
+ * by createdAt before handing comments on, and comment order is visible to the
+ * model, so an unsorted handoff would change the prompt.
+ */
+function toAnalysisDetail({ issue, comments }: IssueData): AnalysisDetail {
+  return {
+    issue: {
+      issueId: issue.id,
+      number: issue.number,
+      title: issue.title,
+      bodyText: issue.bodyText ?? null,
+    },
+    labels: (issue.labels?.nodes ?? []).map((l) => l.name),
+    // Sort before mapping, on the same key the read-back sorted on, so the
+    // model sees comments in the order it used to.
+    comments: [...comments]
+      .sort((a, b) => new Date(a.createdAt ?? '').getTime() - new Date(b.createdAt ?? '').getTime())
+      .map((c) => ({
+        commentId: c.id,
+        authorLogin: c.author?.login ?? null,
+        bodyText: c.bodyText ?? null,
+      })),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Full pipeline
 // ---------------------------------------------------------------------------
@@ -87,6 +130,23 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   console.log(`  Analyze: ${config.analyze}`);
   console.log(`  Mode:    ${incremental ? `incremental (since ${since})` : 'full sync'}`);
   console.log('========================================\n');
+
+  // Schema bootstrap. Runs once per process, before the first write, and costs
+  // twelve `IF NOT EXISTS` statements. Applying it here rather than inside the
+  // ingest loop keeps it off the per-issue path: a graph that is already
+  // constrained pays one failed-create check each, not one per issue.
+  console.log('Applying graph schema (constraints + indexes)...');
+  const schema = await setupDatabaseSchema();
+  if (schema.ran) {
+    if (schema.failures.length > 0) {
+      console.warn(
+        `  Schema bootstrap: ${schema.failures.length} statement(s) failed — graph is usable but not fully constrained`,
+      );
+      for (const f of schema.failures) errors.push(`schema: ${f.statement}`);
+    } else {
+      console.log('  Schema in place');
+    }
+  }
 
   // 1. Discover issue numbers
   console.log('Step 1/5: Discovering issues...');
@@ -126,6 +186,17 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
   console.log(`  Fetched ${fetched.results.length} issues\n`);
 
   // 3. Ingest into Neo4j
+  //
+  // Before writing, snapshot the updatedAt values already in the graph. The
+  // incremental-skip decision in step 4 compares "what GitHub says now" against
+  // "what we last stored", and ingestion overwrites the stored value. Reading
+  // after ingestion would compare the new value against itself, so every issue
+  // would look unchanged and nothing would ever be re-analysed. One batched
+  // statement replaces the previous per-issue read.
+  const previousUpdatedAt = incremental
+    ? await getIssueUpdatedAtBatch(fetched.results.map((f) => f.issue.number))
+    : new Map<number, string>();
+
   console.log('Step 3/5: Ingesting into Neo4j...');
   const ingested = await ingestMultipleIssues(fetched.results);
   for (const e of ingested.errors) errors.push(`ingest #${e.issueNumber}: ${e.error}`);
@@ -140,12 +211,19 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
     const vocabulary = await ensureVocabulary(config.refreshVocabulary ?? false, runTimestamp);
     const guidance = renderGuidance(await listGuidance());
     if (guidance) console.log('  Applying standing classification guidance');
-    const ingestedNumbers = ingested.results
-      .map((r) => {
-        const match = fetched.results.find((f) => f.issue.id === r.issueId);
-        return match?.issue.number;
-      })
-      .filter((n): n is number => n !== undefined);
+    // Hand the analysis stage the data we already fetched and just wrote,
+    // instead of reading every issue back out of the graph. The read-back was
+    // one session and one statement per issue to fetch values this process was
+    // still holding in memory, and it could only ever return what this run had
+    // just written.
+    //
+    // Order is preserved: ingested.results is in listing order, and each entry
+    // is resolved back to its fetched issue by id.
+    const analysisDetails: AnalysisDetail[] = [];
+    for (const r of ingested.results) {
+      const match = fetched.results.find((f) => f.issue.id === r.issueId);
+      if (match) analysisDetails.push(toAnalysisDetail(match));
+    }
 
     // Build a map of issue number -> new updatedAt from the fetched data
     const updatedAtMap = new Map<number, string>();
@@ -153,16 +231,18 @@ export async function runPipeline(config: PipelineConfig): Promise<PipelineResul
       updatedAtMap.set(issue.number, issue.updatedAt);
     }
 
-    const dbData = await fetchMultipleIssueDetails(ingestedNumbers);
     const analysisResults: AnalysisData[] = [];
 
-    for (const detail of dbData.results) {
+    for (const detail of analysisDetails) {
       try {
-        // In incremental mode, skip analysis if the issue's updatedAt hasn't changed
+        // In incremental mode, skip analysis if the issue's updatedAt hasn't
+        // changed since the previous run. The comparison uses the snapshot
+        // taken before ingestion — reading the graph here would return the
+        // value step 3 just wrote and every issue would look unchanged.
         if (incremental) {
-          const previousUpdatedAt = await getIssueUpdatedAt(detail.issue.number);
+          const stored = previousUpdatedAt.get(detail.issue.number);
           const currentUpdatedAt = updatedAtMap.get(detail.issue.number);
-          if (previousUpdatedAt && currentUpdatedAt && previousUpdatedAt === currentUpdatedAt) {
+          if (stored && currentUpdatedAt && stored === currentUpdatedAt) {
             console.log(`  Skipping issue #${detail.issue.number} (unchanged)`);
             skippedCount++;
             continue;

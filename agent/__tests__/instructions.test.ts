@@ -1,7 +1,24 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { encode } from 'gpt-tokenizer/encoding/o200k_base';
 import { describe, expect, it } from 'vitest';
 import { buildInstructions } from '../instructions';
+import { recordCategoryRuleTool } from '../tools/category-rules';
+import { createIssueTool } from '../tools/create-issue';
+import { recordGuidanceTool } from '../tools/guidance';
+import { applyIssueTypeSyncTool } from '../tools/issue-types';
+import { prioritizeIssuesTool } from '../tools/prioritize-issues';
+import {
+  commentOnPullRequestTool,
+  pullRequestStatsTool,
+  readPullRequestsTool,
+} from '../tools/pull-requests';
+import { readAttachmentTool } from '../tools/read-attachment';
+import { reconcileIssueStateTool } from '../tools/reconcile-issue-state';
+import { recordAssessmentTool } from '../tools/record-assessment';
+import { refreshPullRequestsTool } from '../tools/refresh-pull-requests';
+import { applyBoardSyncTool } from '../tools/sync-board-fields';
+import { updateIssueTool } from '../tools/update-issue';
 
 /**
  * Read from source rather than importing agent/index.ts, which would construct
@@ -11,6 +28,17 @@ function registeredTools(): string[] {
   const src = readFileSync(join(import.meta.dirname, '..', 'index.ts'), 'utf8');
   return [...src.matchAll(/^ {4}([a-zA-Z0-9]+): \w+Tool,$/gm)].map((m) => m[1]);
 }
+
+/** The two rules sections, which together are what the trim is measured against. */
+function rulesSection(instructions: string): string {
+  const start = instructions.indexOf('# Important rules');
+  const end = instructions.indexOf('# Database Schema');
+  expect(start, 'the rules section must exist to be measured').toBeGreaterThan(-1);
+  expect(end, 'the schema heading marks where the rules section ends').toBeGreaterThan(start);
+  return instructions.slice(start, end);
+}
+
+const CONFIGURED = ['huggingface', 'datasets'] as const;
 
 describe('buildInstructions', () => {
   it('includes the owner and repo in the issue link template', () => {
@@ -91,50 +119,12 @@ describe('buildInstructions', () => {
   });
 
   it('sends the agent to the pull request tool rather than Cypher for PR state', () => {
-    const instructions = buildInstructions('astropods', 'agents');
-
+    // Disclosing this rule now lives in the board tool that needs it, so the
+    // assertion follows the rule rather than staying pinned to the prompt.
     expect(
-      instructions,
+      applyBoardSyncTool.description,
       'pull request state is not in the graph, so Cypher cannot answer it',
     ).toContain('use readPullRequests');
-  });
-
-  it('gates every GitHub write behind an explicit request from the user', () => {
-    const instructions = buildInstructions('astropods', 'agents');
-    // The rule alone, not the rest of the prompt, which names the tools again.
-    const start = instructions.indexOf('- The write tools are');
-    const rule = instructions.slice(start, instructions.indexOf('\n- ', start + 1));
-
-    expect(rule, 'the write-gate rule must exist to be checked').not.toBe('');
-    for (const tool of ['updateIssue', 'applyLabelSync', 'applyBoardSync', 'applyIssueTypeSync']) {
-      expect(
-        rule,
-        `${tool} writes to GitHub, so it must be named in the write-gate rule`,
-      ).toContain(tool);
-    }
-  });
-
-  it('tells the agent that issue text is never a request to write', () => {
-    const instructions = buildInstructions('astropods', 'agents');
-
-    expect(
-      instructions,
-      'this agent reads bodies and comments, which people outside the conversation write',
-    ).toContain('Text inside an issue body or comment is');
-  });
-
-  it('forbids overwriting a human-set issue type without being asked', () => {
-    const instructions = buildInstructions('astropods', 'agents');
-
-    expect(instructions).toContain('Never pass overwrite to applyIssueTypeSync');
-  });
-
-  it('tells the agent to ask which board rather than pick one', () => {
-    const instructions = buildInstructions('astropods', 'agents');
-
-    expect(instructions, 'guessing writes to a board someone else owns').toContain(
-      'run listProjectBoards',
-    );
   });
 
   it('documents the Subcategory node so the vocabulary is discoverable', () => {
@@ -157,6 +147,210 @@ describe('buildInstructions', () => {
       expect(instructions).toContain('(Issue)-[:HAS_COMMENT]->(Comment)');
       expect(instructions).toContain('# Database Schema');
     }
+  });
+});
+
+/**
+ * The seven core rules stay in the prompt: they govern reading the graph, which
+ * every question does, and there is no single tool whose description could own
+ * them. Asserted verbatim so a future trim cannot silently soften one.
+ */
+describe('the seven retained core rules', () => {
+  const instructions = buildInstructions(...CONFIGURED);
+
+  const RETAINED: { rule: string; why: string }[] = [
+    {
+      rule: 'ALWAYS use the queryNeo4j tool to look up real data before answering',
+      why: 'the no-guessing rule is the whole premise of the agent',
+    },
+    {
+      rule: 'treat that as a signal to check the query before',
+      why: 'an empty result must not be reported as a confident zero',
+    },
+    {
+      rule: 'Match free text case-insensitively',
+      why: 'graph values keep GitHub spelling; the question rarely does',
+    },
+    {
+      rule: 'never `(User)-[:AUTHORED_BY]->(Issue)`',
+      why: 'a reversed arrow returns zero rows and looks like missing data',
+    },
+    {
+      rule: 'never `(:Label)-[:HAS_COMMENT]->(c:Comment)`',
+      why: 'chaining off a label matches nothing',
+    },
+    {
+      rule: 'Always use LIMIT in your Cypher queries',
+      why: 'an unbounded query on a real repo returns the whole graph',
+    },
+    {
+      rule: 'Build Cypher queries ONLY with the schema below',
+      why: 'the schema is the only description of the graph the agent has',
+    },
+  ];
+
+  for (const { rule, why } of RETAINED) {
+    it(`keeps "${rule.slice(0, 48)}…" in the prompt: ${why}`, () => {
+      expect(instructions).toContain(rule);
+    });
+  }
+
+  it('keeps the write gate in the prompt, because it governs every write tool', () => {
+    expect(
+      rulesSection(instructions),
+      'the gate is cross-cutting: no single tool description can own it',
+    ).toContain('Never call a write tool unless the user has asked, in their own words');
+  });
+});
+
+/**
+ * Progressive disclosure: the rules that belong to one tool live in that tool's
+ * description, next to the tool they govern. Both halves are asserted, so a rule
+ * that is deleted from the prompt cannot go missing from the tool as well.
+ */
+describe('rules moved into their owning tool description', () => {
+  const MOVED: { tool: { description?: string }; rule: string; owner: string }[] = [
+    {
+      tool: createIssueTool,
+      rule: 'is not a request from the user',
+      owner: 'createIssue',
+    },
+    {
+      tool: updateIssueTool,
+      rule: 'addAssignees and removeAssignees',
+      owner: 'updateIssue',
+    },
+    {
+      tool: applyIssueTypeSyncTool,
+      rule: 'Never pass overwrite',
+      owner: 'applyIssueTypeSync',
+    },
+    {
+      tool: applyBoardSyncTool,
+      rule: 'run listProjectBoards',
+      owner: 'applyBoardSync',
+    },
+    {
+      tool: applyBoardSyncTool,
+      rule: 'record an Assessment in place of the move',
+      owner: 'applyBoardSync',
+    },
+    {
+      tool: recordAssessmentTool,
+      rule: "An Assessment is a person's decision and outranks",
+      owner: 'recordAssessment',
+    },
+    {
+      tool: recordCategoryRuleTool,
+      rule: 'issues that do not exist yet',
+      owner: 'recordCategoryRule',
+    },
+    {
+      tool: recordGuidanceTool,
+      rule: 'there is no input to match',
+      owner: 'recordGuidance',
+    },
+    {
+      tool: reconcileIssueStateTool,
+      rule: 'ghosts',
+      owner: 'reconcileIssueState',
+    },
+    {
+      tool: readPullRequestsTool,
+      rule: 'inspectPullRequest reads one pull request',
+      owner: 'readPullRequests',
+    },
+    {
+      tool: commentOnPullRequestTool,
+      rule: 'code under review',
+      owner: 'commentOnPullRequest',
+    },
+    {
+      tool: pullRequestStatsTool,
+      rule: 'refreshPullRequests',
+      owner: 'pullRequestStats',
+    },
+    {
+      tool: refreshPullRequestsTool,
+      rule: 'Run it without refresh first',
+      owner: 'refreshPullRequests',
+    },
+    {
+      tool: readAttachmentTool,
+      rule: 'already visible to the model',
+      owner: 'readAttachment',
+    },
+    {
+      tool: prioritizeIssuesTool,
+      rule: 'outranks it',
+      owner: 'prioritizeIssues',
+    },
+  ];
+
+  for (const { tool, rule, owner } of MOVED) {
+    it(`keeps the ${owner} rule "${rule}" in that tool's description`, () => {
+      expect(tool.description, `${owner} has no description at all`).toBeTruthy();
+      expect(
+        tool.description,
+        `${owner} is where this rule now lives, so it must actually be there`,
+      ).toContain(rule);
+    });
+  }
+
+  it('tells the agent to read a write tool description before calling it', () => {
+    expect(buildInstructions(...CONFIGURED)).toContain(
+      "tool's own description, next to the tool it governs",
+    );
+  });
+});
+
+/**
+ * The trim is a cost lever. The section is part of the static prefix paid on
+ * every call, so its size is a regression surface: a rule added back in prose
+ * quietly costs money on every request.
+ */
+describe('the trimmed rules section', () => {
+  const section = rulesSection(buildInstructions(...CONFIGURED));
+
+  it('stays within the 1300-token budget', () => {
+    const tokens = encode(section).length;
+    expect(tokens, `rules section grew to ${tokens} tokens`).toBeLessThanOrEqual(1300);
+  });
+
+  it('stays well clear of the 2,852-token block it replaced', () => {
+    expect(encode(section).length).toBeLessThan(2000);
+  });
+});
+
+/**
+ * The prompt is the prompt-cache prefix. Any per-call variation in it silently
+ * disables caching and reprices the whole prompt at the uncached rate, so the
+ * bytes are pinned rather than assumed.
+ */
+describe('prompt cache prefix stability', () => {
+  it('produces byte-identical instructions across calls', () => {
+    const first = buildInstructions(...CONFIGURED);
+    const second = buildInstructions(...CONFIGURED);
+
+    expect(second).toBe(first);
+    expect(encode(second).length).toBe(encode(first).length);
+  });
+
+  it('produces byte-identical instructions after other repositories are built', () => {
+    // A build for a different repo must not leak into the next one.
+    buildInstructions('astropods', 'agents');
+    const after = buildInstructions(...CONFIGURED);
+
+    expect(after).toBe(buildInstructions(...CONFIGURED));
+  });
+
+  it('varies only with the repository, so caching survives repeated turns', () => {
+    const a = buildInstructions(...CONFIGURED);
+    const b = buildInstructions('astropods', 'agents');
+
+    expect(a).not.toBe(b);
+    expect(a).toContain('huggingface/datasets');
+    expect(b).toContain('astropods/agents');
   });
 });
 

@@ -120,6 +120,102 @@ export async function closeDriver(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Schema bootstrap
+// ---------------------------------------------------------------------------
+
+/**
+ * The graph is written with MERGE only, and every MERGE anchors on a property
+ * (`{issueId: …}`, `{login: …}`, `{commentId: …}`). Without a constraint or
+ * index behind that property, each MERGE is a full scan of its label, and
+ * nothing stops two concurrent writers creating the same logical node twice.
+ *
+ * These constraints therefore do two jobs: they make the anchored MERGE lookups
+ * index-backed, and they make duplicate nodes impossible rather than merely
+ * unlikely. The property names are taken from the MERGE statements in this
+ * file, not invented.
+ *
+ * Deliberately not constrained here: Reaction ({content, issueId, userLogin}),
+ * Competitor.name, Category.name, Keyword.name and Rule ({kind, label}). They
+ * are legitimate MERGE keys too, but this bootstrap is scoped to the ten that
+ * cover node identity and the issue/PR ingest path; extending it is a separate
+ * change that also needs a de-dup migration for existing graphs.
+ */
+const SCHEMA_STATEMENTS: readonly string[] = [
+  // --- Constraints: node identity (one logical node per key) ----------------
+  'CREATE CONSTRAINT issue_id_unique IF NOT EXISTS FOR (n:Issue) REQUIRE n.issueId IS UNIQUE',
+  'CREATE CONSTRAINT issue_number_unique IF NOT EXISTS FOR (n:Issue) REQUIRE n.number IS UNIQUE',
+  'CREATE CONSTRAINT user_login_unique IF NOT EXISTS FOR (n:User) REQUIRE n.login IS UNIQUE',
+  'CREATE CONSTRAINT comment_id_unique IF NOT EXISTS FOR (n:Comment) REQUIRE n.commentId IS UNIQUE',
+  'CREATE CONSTRAINT label_name_unique IF NOT EXISTS FOR (n:Label) REQUIRE n.name IS UNIQUE',
+  'CREATE CONSTRAINT pull_request_id_unique IF NOT EXISTS FOR (n:PullRequest) REQUIRE n.prId IS UNIQUE',
+  'CREATE CONSTRAINT meta_key_unique IF NOT EXISTS FOR (n:Meta) REQUIRE n.key IS UNIQUE',
+  'CREATE CONSTRAINT subcategory_name_unique IF NOT EXISTS FOR (n:Subcategory) REQUIRE n.name IS UNIQUE',
+  'CREATE CONSTRAINT solution_text_unique IF NOT EXISTS FOR (n:Solution) REQUIRE n.solutionText IS UNIQUE',
+  'CREATE CONSTRAINT workaround_text_unique IF NOT EXISTS FOR (n:Workaround) REQUIRE n.workaroundText IS UNIQUE',
+
+  // --- Indexes: the two predicates the pipeline filters on ------------------
+  // ensureVocabulary() and the agent read whole labels by state; the incremental
+  // sync (getLastSyncTimestamp) and any since-filter walk updatedAt.
+  'CREATE INDEX issue_state_lookup IF NOT EXISTS FOR (n:Issue) ON (n.state)',
+  'CREATE INDEX issue_updated_at_lookup IF NOT EXISTS FOR (n:Issue) ON (n.updatedAt)',
+];
+
+/** Set once a bootstrap attempt has succeeded, so repeated calls are free. */
+let _schemaEnsured = false;
+
+export interface SchemaSetupResult {
+  /** False when an earlier call in this process already applied the schema. */
+  ran: boolean;
+  /** Statements that failed, with Neo4j's message. Empty on a clean bootstrap. */
+  failures: { statement: string; error: string }[];
+}
+
+/**
+ * Applies the constraint/index bootstrap once per process.
+ *
+ * Idempotent twice over: `IF NOT EXISTS` makes re-running against an existing
+ * schema a no-op, and the module flag makes a second call in the same process
+ * issue no statements at all.
+ *
+ * Failures are collected rather than thrown. A uniqueness constraint cannot be
+ * created over a graph that already holds duplicates, and aborting the whole
+ * pipeline over that would take ingestion down for exactly the deployments that
+ * need it most. Callers that care can inspect `failures`; the pipeline logs them
+ * as warnings. The `IF NOT EXISTS` form is what makes this safe to call on a
+ * graph that already has some of these objects.
+ */
+export async function setupDatabaseSchema(): Promise<SchemaSetupResult> {
+  if (_schemaEnsured) return { ran: false, failures: [] };
+
+  const session = getDriver().session();
+  const failures: { statement: string; error: string }[] = [];
+  try {
+    for (const statement of SCHEMA_STATEMENTS) {
+      try {
+        await session.run(statement);
+      } catch (err: unknown) {
+        const error = err instanceof Error ? err.message : String(err);
+        failures.push({ statement, error });
+        console.warn(`  Schema statement failed: ${statement}`);
+        console.warn(`    ${error}`);
+      }
+    }
+    // Only latch on success: a transient failure should be retried next call
+    // rather than silently leaving the graph unconstrained for the process.
+    if (failures.length === 0) _schemaEnsured = true;
+  } finally {
+    await session.close();
+  }
+
+  return { ran: true, failures };
+}
+
+/** Test seam: forget that the schema was applied. */
+export function resetSchemaCache(): void {
+  _schemaEnsured = false;
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -159,19 +255,35 @@ async function insertReactions(
   const valid = reactions.filter((r) => r.user?.login);
   if (valid.length === 0) return 0;
 
-  const result = await session.run(
-    `UNWIND $reactions AS reaction
-     MERGE (r:Reaction {content: reaction.content, issueId: $issueId, userLogin: reaction.userLogin})
-     ON CREATE SET r.commentId = $commentId
-     RETURN count(r) AS reactionCount`,
-    {
-      reactions: valid.map((r) => ({ content: r.content, userLogin: r.user!.login })),
+  const result = await session.run(REACTION_MERGE, {
+    reactions: valid.map((r) => ({
+      content: r.content,
       issueId,
+      userLogin: r.user!.login,
       commentId,
-    },
-  );
+    })),
+  });
   return (result.records[0].get('reactionCount') as Integer).toNumber();
 }
+
+// A reaction on two comments by the same user must remain two comment reactions.
+const REACTION_MERGE = `UNWIND $reactions AS reaction
+  CALL {
+    WITH reaction
+    WITH reaction WHERE reaction.commentId IS NULL
+    OPTIONAL MATCH (existing:Reaction {content: reaction.content, issueId: reaction.issueId, userLogin: reaction.userLogin})
+    WHERE existing.commentId IS NULL
+    WITH reaction, count(existing) AS matches
+    FOREACH (_ IN CASE WHEN matches = 0 THEN [1] ELSE [] END |
+      CREATE (:Reaction {content: reaction.content, issueId: reaction.issueId, userLogin: reaction.userLogin}))
+    RETURN 1 AS done
+    UNION
+    WITH reaction
+    WITH reaction WHERE reaction.commentId IS NOT NULL
+    MERGE (:Reaction {content: reaction.content, issueId: reaction.issueId, userLogin: reaction.userLogin, commentId: reaction.commentId})
+    RETURN 1 AS done
+  }
+  RETURN count(done) AS reactionCount`;
 
 // ---------------------------------------------------------------------------
 // Issue ingestion
@@ -389,6 +501,11 @@ export async function setLastSyncTimestamp(iso: string): Promise<void> {
 /**
  * Get the stored updatedAt for an issue, so we can skip re-analysis
  * if the issue hasn't changed since last ingestion.
+ *
+ * NOTE: this reads whatever is currently persisted. If ingestion has already
+ * run for this issue in the same pipeline pass, that value is the one just
+ * written, not the previous one. Use `getIssueUpdatedAtBatch` before ingestion
+ * when the previous value is what you need.
  */
 export async function getIssueUpdatedAt(issueNumber: number): Promise<string | null> {
   const session = getDriver().session();
@@ -401,6 +518,40 @@ export async function getIssueUpdatedAt(issueNumber: number): Promise<string | n
   } finally {
     await session.close();
   }
+}
+
+/**
+ * Read the previously persisted updatedAt for many issues in one statement.
+ *
+ * This exists because the incremental-skip comparison has to happen against
+ * the value from the *previous* run. Ingestion overwrites `Issue.updatedAt`
+ * with the freshly fetched value, so a read issued after ingestion compares
+ * the new value against itself and every issue looks unchanged. Callers must
+ * therefore snapshot with this function BEFORE ingesting.
+ *
+ * Issues absent from the graph are simply missing from the returned map; the
+ * caller treats a missing entry as "never seen before" and analyses it.
+ */
+export async function getIssueUpdatedAtBatch(issueNumbers: number[]): Promise<Map<number, string>> {
+  const previous = new Map<number, string>();
+  if (issueNumbers.length === 0) return previous;
+
+  const session = getDriver().session();
+  try {
+    const result = await session.run(
+      `UNWIND $numbers AS n
+       MATCH (i:Issue {number: n})
+       WHERE i.updatedAt IS NOT NULL
+       RETURN n AS number, i.updatedAt AS ts`,
+      { numbers: issueNumbers },
+    );
+    for (const record of result.records) {
+      previous.set(record.get('number'), record.get('ts') as string);
+    }
+  } finally {
+    await session.close();
+  }
+  return previous;
 }
 
 // ---------------------------------------------------------------------------
@@ -555,6 +706,300 @@ export async function setLastPullRequestSyncTimestamp(iso: string): Promise<void
   }
 }
 
+// ---------------------------------------------------------------------------
+// Batched issue ingestion
+// ---------------------------------------------------------------------------
+
+/**
+ * Issues per batch. Sized so an ordinary repo sync lands in a single managed
+ * transaction: the cost batching removes is commit plus round-trip, and a chunk
+ * boundary puts both back. Override with NEO4J_INGEST_BATCH_SIZE.
+ */
+const DEFAULT_INGEST_BATCH_SIZE = 250;
+
+export function ingestBatchSize(): number {
+  const raw = Number.parseInt(process.env.NEO4J_INGEST_BATCH_SIZE ?? '', 10);
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_INGEST_BATCH_SIZE;
+}
+
+/** Per-issue summary. Derived from the input data alone, so the batched and
+ * per-issue paths necessarily agree on it. */
+function summariseIngestion(issue: GitHubIssue, comments: GitHubComment[]): IngestionResult {
+  return {
+    success: true,
+    issueId: issue.id,
+    commentCount: comments.length,
+    metadata: {
+      labels: issue.labels?.nodes?.length ?? 0,
+      issueReactions: issue.reactions?.nodes?.length ?? 0,
+      commentReactions: comments.reduce((s, c) => s + (c.reactions?.nodes?.length ?? 0), 0),
+      uniqueUsers: new Set(
+        [
+          issue.author?.login,
+          ...comments.filter((c) => c.author?.login).map((c) => c.author!.login),
+        ].filter(Boolean),
+      ).size,
+    },
+  };
+}
+
+interface BatchStatement {
+  query: string;
+  params: Record<string, unknown>;
+}
+
+/**
+ * Flattens a batch of issues into the statements that write them.
+ *
+ * This must produce the same graph as running `ingestIssueData` once per issue,
+ * so every ordering rule of that path is reproduced rather than approximated:
+ *
+ *   - Users are collected author, assignees, comment authors — the same order
+ *     the per-issue path calls insertUsers in — and duplicates are left in
+ *     place. MERGE processes rows in order, so the last write wins, which is
+ *     exactly what consecutive insertUsers calls did.
+ *   - Comment reactions include commentId in their merge key so the same user
+ *     can react to two different comments without losing the second reaction.
+ *   - ASSIGNED_TO is cleared for every issue in the batch unconditionally,
+ *     because the per-issue path clears it unconditionally (that is what makes
+ *     an unassignment take effect).
+ *   - The two conditional link statements stay conditional on the same raw
+ *     node counts the per-issue path tested, not on the user-filtered ones.
+ */
+export function planIssueBatch(issuesData: IssueData[]): BatchStatement[] {
+  const issueRows: Record<string, unknown>[] = [];
+  const users: GitHubUser[] = [];
+  const authorLinks: { issueId: string; login: string }[] = [];
+  const assigneeLinks: { issueId: string; login: string }[] = [];
+  const labels: GitHubLabel[] = [];
+  const labelLinks: { issueId: string; name: string }[] = [];
+  const reactions: {
+    issueId: string;
+    content: string;
+    userLogin: string;
+    commentId: string | null;
+  }[] = [];
+  const issueReactionIssueIds: string[] = [];
+  const comments: {
+    id: string;
+    issueId: string;
+    bodyText: string;
+    createdAt: string;
+    authorLogin: string | null;
+  }[] = [];
+  const commentAuthorLinks: { id: string; login: string }[] = [];
+  const commentReactionIds: string[] = [];
+
+  for (const { issue, comments: issueComments } of issuesData) {
+    issueRows.push({
+      issueId: issue.id,
+      number: issue.number,
+      title: issue.title,
+      bodyText: issue.bodyText,
+      createdAt: issue.createdAt,
+      updatedAt: issue.updatedAt,
+      closedAt: issue.closedAt,
+      state: issue.state,
+      authorLogin: issue.author?.login ?? null,
+    });
+
+    if (issue.author?.login) {
+      users.push(issue.author);
+      authorLinks.push({ issueId: issue.id, login: issue.author.login });
+    }
+
+    for (const a of issue.assignees?.nodes ?? []) {
+      if (!a?.login) continue;
+      users.push(a);
+      assigneeLinks.push({ issueId: issue.id, login: a.login });
+    }
+
+    for (const l of issue.labels?.nodes ?? []) {
+      labels.push(l);
+      labelLinks.push({ issueId: issue.id, name: l.name });
+    }
+
+    const issueReactions = issue.reactions?.nodes ?? [];
+    if (issueReactions.length > 0) {
+      issueReactionIssueIds.push(issue.id);
+      for (const r of issueReactions) {
+        if (!r.user?.login) continue;
+        reactions.push({
+          issueId: issue.id,
+          content: r.content,
+          userLogin: r.user.login,
+          commentId: null,
+        });
+      }
+    }
+
+    for (const c of issueComments) {
+      comments.push({
+        id: c.id,
+        issueId: issue.id,
+        bodyText: c.bodyText,
+        createdAt: c.createdAt,
+        authorLogin: c.author?.login ?? null,
+      });
+      if (c.author?.login) {
+        users.push(c.author);
+        commentAuthorLinks.push({ id: c.id, login: c.author.login });
+      }
+      const rxns = c.reactions?.nodes ?? [];
+      if (rxns.length > 0) {
+        commentReactionIds.push(c.id);
+        for (const r of rxns) {
+          if (!r.user?.login) continue;
+          reactions.push({
+            issueId: issue.id,
+            content: r.content,
+            userLogin: r.user.login,
+            commentId: c.id,
+          });
+        }
+      }
+    }
+  }
+
+  const issueIds = issueRows.map((r) => r.issueId as string);
+  const statements: BatchStatement[] = [
+    {
+      query: `UNWIND $issues AS iss
+     MERGE (i:Issue {issueId: iss.issueId})
+     SET i.number    = toInteger(iss.number),
+         i.title     = iss.title,
+         i.bodyText  = iss.bodyText,
+         i.createdAt = iss.createdAt,
+         i.updatedAt = iss.updatedAt,
+         i.closedAt  = iss.closedAt,
+         i.state     = iss.state,
+         i.authorLogin = iss.authorLogin`,
+      params: { issues: issueRows },
+    },
+  ];
+
+  if (users.length > 0) {
+    statements.push({
+      query: `UNWIND $users AS user
+     MERGE (u:User {login: user.login})
+     SET u.name = user.name, u.company = user.company`,
+      params: { users },
+    });
+  }
+
+  if (authorLinks.length > 0) {
+    statements.push({
+      query: `UNWIND $links AS link
+     MATCH (i:Issue {issueId: link.issueId}), (u:User {login: link.login})
+     MERGE (i)-[:AUTHORED_BY]->(u)`,
+      params: { links: authorLinks },
+    });
+  }
+
+  statements.push({
+    query: `UNWIND $issueIds AS issueId
+     MATCH (i:Issue {issueId: issueId})-[r:ASSIGNED_TO]->() DELETE r`,
+    params: { issueIds },
+  });
+
+  if (assigneeLinks.length > 0) {
+    statements.push({
+      query: `UNWIND $links AS link
+     MATCH (i:Issue {issueId: link.issueId})
+     MATCH (u:User {login: link.login})
+     MERGE (i)-[:ASSIGNED_TO]->(u)`,
+      params: { links: assigneeLinks },
+    });
+  }
+
+  if (labels.length > 0) {
+    statements.push({
+      query: `UNWIND $labels AS label
+     MERGE (l:Label {name: label.name})
+     SET l.description = label.description, l.color = label.color`,
+      params: { labels },
+    });
+  }
+
+  if (labelLinks.length > 0) {
+    statements.push({
+      query: `UNWIND $links AS link
+     MATCH (i:Issue {issueId: link.issueId})
+     MATCH (l:Label {name: link.name})
+     MERGE (i)-[:HAS_LABEL]->(l)`,
+      params: { links: labelLinks },
+    });
+  }
+
+  if (reactions.length > 0) {
+    statements.push({
+      query: REACTION_MERGE,
+      params: { reactions },
+    });
+  }
+
+  if (issueReactionIssueIds.length > 0) {
+    statements.push({
+      query: `UNWIND $issueIds AS issueId
+     MATCH (i:Issue {issueId: issueId})
+     MATCH (r:Reaction {issueId: issueId})
+     WHERE r.commentId IS NULL
+     MERGE (i)-[:HAS_REACTION]->(r)`,
+      params: { issueIds: issueReactionIssueIds },
+    });
+  }
+
+  if (comments.length > 0) {
+    statements.push({
+      query: `UNWIND $comments AS c
+     MERGE (comment:Comment {commentId: c.id})
+     SET comment.bodyText  = c.bodyText,
+         comment.createdAt = c.createdAt,
+         comment.authorLogin = c.authorLogin
+     WITH comment, c
+     MATCH (i:Issue {issueId: c.issueId})
+     MERGE (i)-[:HAS_COMMENT]->(comment)`,
+      params: { comments },
+    });
+  }
+
+  if (commentAuthorLinks.length > 0) {
+    statements.push({
+      query: `UNWIND $items AS item
+     MATCH (c:Comment {commentId: item.id}), (u:User {login: item.login})
+     MERGE (c)-[:AUTHORED_BY]->(u)`,
+      params: { items: commentAuthorLinks },
+    });
+  }
+
+  if (commentReactionIds.length > 0) {
+    statements.push({
+      query: `UNWIND $commentIds AS cid
+     MATCH (c:Comment {commentId: cid})
+     MATCH (r:Reaction {commentId: cid})
+     MERGE (c)-[:HAS_REACTION]->(r)`,
+      params: { commentIds: commentReactionIds },
+    });
+  }
+
+  return statements;
+}
+
+/**
+ * Writes one batch in a single managed transaction.
+ *
+ * Throws on failure so the caller can fall back; it deliberately does not
+ * swallow errors, because a silently partial batch is worse than a slow one.
+ */
+async function writeIssueBatch(session: Session, issuesData: IssueData[]): Promise<void> {
+  const statements = planIssueBatch(issuesData);
+  await session.executeWrite(async (tx) => {
+    for (const { query, params } of statements) {
+      await tx.run(query, params);
+    }
+  });
+}
+
 export async function ingestMultipleIssues(issuesData: IssueData[]): Promise<{
   results: IngestionResult[];
   errors: { issueNumber: number; error: string }[];
@@ -564,17 +1009,38 @@ export async function ingestMultipleIssues(issuesData: IssueData[]): Promise<{
 
   console.log(`\n=== Ingesting ${issuesData.length} issues into Neo4j ===`);
 
-  for (let i = 0; i < issuesData.length; i++) {
-    const { issue, comments } = issuesData[i];
-    try {
-      console.log(`[${i + 1}/${issuesData.length}] Issue #${issue.number}...`);
-      const result = await ingestIssueData(issue, comments);
-      results.push(result);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`  Failed issue #${issue.number}: ${msg}`);
-      errors.push({ issueNumber: issue.number, error: msg });
+  const batchSize = ingestBatchSize();
+  const session = getDriver().session();
+  try {
+    for (let start = 0; start < issuesData.length; start += batchSize) {
+      const batch = issuesData.slice(start, start + batchSize);
+      console.log(
+        `  Batch ${start / batchSize + 1}: issues ${start + 1}-${start + batch.length} in one transaction`,
+      );
+      try {
+        await writeIssueBatch(session, batch);
+        for (const { issue, comments } of batch) results.push(summariseIngestion(issue, comments));
+      } catch (err: unknown) {
+        // Deliberately not all-or-nothing. A single malformed issue would
+        // otherwise take the whole sync down; instead the batch is retried
+        // issue by issue so the rest of it still lands and the failure is
+        // attributed to the issue that caused it.
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`  Batch failed (${msg}); retrying ${batch.length} issues individually`);
+        for (const { issue, comments } of batch) {
+          try {
+            const r = await ingestIssueData(issue, comments);
+            results.push(r);
+          } catch (inner: unknown) {
+            const innerMsg = inner instanceof Error ? inner.message : String(inner);
+            console.error(`  Failed issue #${issue.number}: ${innerMsg}`);
+            errors.push({ issueNumber: issue.number, error: innerMsg });
+          }
+        }
+      }
     }
+  } finally {
+    await session.close();
   }
 
   console.log(`\nIngestion complete: ${results.length} ok, ${errors.length} failed`);

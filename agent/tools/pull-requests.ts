@@ -29,7 +29,16 @@ export const readPullRequestsTool = createTool({
     'still a draft, and whether the pull request declares it closes the issue ' +
     'rather than only mentioning it. Read-only. Use it to answer whether work ' +
     'has started on an issue, what is awaiting review, or which issues have ' +
-    'shipped but are still open.',
+    'shipped but are still open.\n\n' +
+    'Rules:\n' +
+    '- Two tools read pull requests and they start from different things. This ' +
+    'one answers "what is linked to these issues" from issue numbers. ' +
+    'inspectPullRequest reads one pull request by its own number, in full, and ' +
+    'is also how to refetch one whose state has moved on. Neither reads the ' +
+    'graph, which holds issues only.\n' +
+    '- Individual pull request details (reviewDecision, checksState, draft flag) ' +
+    'are not in the graph, so use this tool or inspectPullRequest to answer why ' +
+    'a board card sits where it does.',
   inputSchema: z.object({
     issueNumbers: z
       .array(z.number())
@@ -160,11 +169,14 @@ export const inspectPullRequestTool = createTool({
   description:
     'Read one pull request as it stands right now: state, draft flag, review ' +
     'decision, check status, branches, diff size, labels, the issues it closes, ' +
-    'and its body. Always goes to GitHub rather than the graph, which holds ' +
-    'issues only, so this is also how to refetch a PR whose state has moved on ' +
-    'since it was last looked at. Takes a pull request number: use ' +
-    'readPullRequests instead when starting from issue numbers and asking what ' +
-    'is linked to them.',
+    'and its body. Goes to GitHub rather than the graph, so this is also how to ' +
+    'refetch a PR whose state has moved on. Takes a pull request number; use ' +
+    'readPullRequests when starting from issue numbers.\n\n' +
+    'Rules:\n' +
+    '- Two tools read pull requests and they start from different things. ' +
+    'readPullRequests answers "what is linked to these issues" from issue ' +
+    'numbers. This one reads a single pull request by its own number, in full. ' +
+    'Neither reads the graph, which holds issues only.',
   inputSchema: z.object({
     number: z.number().describe('The pull request number'),
     includeBody: z
@@ -242,7 +254,13 @@ export const commentOnPullRequestTool = createTool({
     'note that belongs on the PR rather than on the issue it closes. The comment ' +
     'is signed as agent-written, like every comment this agent posts. Shows the ' +
     'comment and waits for confirmation before posting. Use updateIssue to ' +
-    'comment on an issue instead.',
+    'comment on an issue instead.\n\n' +
+    'Rules:\n' +
+    '- A comment about the code under review belongs here. A comment about ' +
+    'whether the work is worth doing belongs on the issue, through updateIssue. ' +
+    'Do not post the same note to both.\n' +
+    '- This number is a pull request number, not an issue number. A comment ' +
+    'posted on the wrong one cannot be withdrawn.',
   inputSchema: z.object({
     number: z.number().describe('The pull request number'),
     comment: z.string().min(1).describe('The comment body, in GitHub markdown'),
@@ -333,17 +351,19 @@ const STATS_SAMPLE = z.object({
 export const pullRequestStatsTool = createTool({
   id: 'pullRequestStats',
   description:
-    'Count pull requests opened, merged, or closed on this repository during ' +
-    'a time window, optionally filtered to a GitHub login. Answers "how many ' +
-    'did @X open this week" and the same for merged or closed. The three ' +
-    'counts are independent: a PR merged this week may have been opened ' +
-    'earlier, and a PR closed this week without being merged is counted under ' +
-    'closed, not merged. This tool is windowed, so it does NOT answer "how ' +
-    'many PRs are open right now" or "how many are drafts"; use queryNeo4j ' +
-    'with a MATCH on PullRequest nodes for those point-in-time totals. ' +
-    'Read-only, backed by the graph; `inspectPullRequest` is the tool for a ' +
-    'fresh single-PR fetch. Returns a short sample of recent pull requests ' +
-    'from the window alongside the counts.',
+    'Count pull requests opened, merged, or closed during a time window, ' +
+    'optionally filtered to a GitHub login. The three counts are independent: ' +
+    'a PR merged this week may have been opened earlier, and one closed ' +
+    'without being merged counts under closed, not merged. Windowed, so it ' +
+    'does NOT answer point-in-time totals such as "how many are open right ' +
+    'now" — use queryNeo4j on PullRequest nodes for those. Read-only, backed ' +
+    'by the graph. Returns a short sample of recent PRs alongside the counts.\n\n' +
+    'Rules:\n' +
+    '- The graph is fed by a sync that only picks up pull requests updated since ' +
+    'the last run, so a dormant open PR untouched since the first startup may ' +
+    'never land in it. If a count comes back lower than the user expects, run ' +
+    'refreshPullRequests (dry run first, then with refresh: true) before ' +
+    'reporting the number.',
   inputSchema: z.object({
     author: z
       .string()

@@ -195,7 +195,23 @@ export const applyBoardSyncTool = createTool({
     'Adds an issue to the board when it is not already on it, and clears a ' +
     'field whose derived value the board has no option for. Always shows the ' +
     'full diff and waits for explicit user confirmation before writing ' +
-    'anything. Only open issues are touched.',
+    'anything. Only open issues are touched.\n\n' +
+    'Rules:\n' +
+    '- This tool and previewBoardSync refuse to guess which board to write to ' +
+    'when the repository has more than one. Do not pick one: run ' +
+    'listProjectBoards and ask the user which board they mean.\n' +
+    '- The status column is derived from issue facts, so this tool cannot reach ' +
+    'a column that stands for a decision rather than a fact. Putting work on ' +
+    'hold is the example: when the user asks for a specific column, use ' +
+    'setBoardColumn rather than offering to sync and let them drag the card ' +
+    'afterwards. Do not record an Assessment in place of the move, because ' +
+    'nothing reads a decision or a note when deriving the column.\n' +
+    '- The derived status column comes from facts, not from judgment: closed is ' +
+    'Done, a pull request that is ready or already merged is In review, a draft ' +
+    'pull request or an assignee is In progress, and a P0 or P1 that is ' +
+    'actionable is Ready. Individual pull request details (reviewDecision, ' +
+    'checksState, draft flag) are not in the graph, so use readPullRequests or ' +
+    'inspectPullRequest to answer why a card sits where it does.',
   inputSchema: z.object({
     limit: z
       .number()

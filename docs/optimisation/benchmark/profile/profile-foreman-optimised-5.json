@@ -1,0 +1,355 @@
+{
+  "target": "foreman",
+  "foremanHead": "758a06d7ab80e470293458c324d7f3020292bf28",
+  "foremanHeadDirty": false,
+  "corpus": {
+    "path": "../../bench/corpus/dev.json",
+    "owner": "huggingface",
+    "repo": "datasets",
+    "issues": 60
+  },
+  "issueLimit": 5,
+  "concurrency": "1",
+  "simulatedLatencyMs": 0,
+  "wallMs": 587,
+  "neo4j": {
+    "totalStatements": 41,
+    "statementsInTransaction": 7,
+    "managedTransactions": 1,
+    "sessionsOpened": 9,
+    "orphanSweeps": 0,
+    "unboundedReads": 3,
+    "orphanSweepStatements": [],
+    "unboundedReadStatements": [
+      "MATCH (s:Subcategory) RETURN s.name AS name, s.definition AS definition ORDER BY s.name",
+      "MATCH (i:Issue) OPTIONAL MATCH (i)-[:HAS_LABEL]->(l:Label) RETURN i.number AS number, i.title AS title, collect(l.name) AS labels ORDER BY number",
+      "MATCH (g:Guidance) RETURN g.id AS id, g.text AS text, g.recordedAt AS recordedAt, g.recordedBy AS recordedBy ORDER BY g.recordedAt"
+    ],
+    "totalStatementMs": 523,
+    "byOperation": {
+      "CREATE": 12,
+      "UNWIND": 7,
+      "MATCH": 20,
+      "MERGE": 2
+    }
+  },
+  "graphAfterRun": {
+    "Comment": 10,
+    "Issue": 5,
+    "User": 4,
+    "Meta": 2,
+    "Label": 1
+  },
+  "github": {
+    "requests": 12,
+    "serverRequests": 12,
+    "listingRequests": 1,
+    "issueRequests": 10,
+    "pullRequestRequests": 1,
+    "maxConcurrent": 1
+  },
+  "gateway": {
+    "chatCompletions": 5,
+    "toolCallsIssued": 5,
+    "byModel": {
+      "claude-haiku-4-5": 5
+    }
+  },
+  "stages": [
+    {
+      "stage": "discover",
+      "startMs": 303,
+      "endMs": 315,
+      "durationMs": 12
+    },
+    {
+      "stage": "fetch",
+      "startMs": 315,
+      "endMs": 321,
+      "durationMs": 6
+    },
+    {
+      "stage": "ingest",
+      "startMs": 321,
+      "endMs": 502,
+      "durationMs": 180
+    },
+    {
+      "stage": "analyze",
+      "startMs": 502,
+      "endMs": 569,
+      "durationMs": 67
+    },
+    {
+      "stage": "persistAnalysis",
+      "startMs": 569,
+      "endMs": 822,
+      "durationMs": 253
+    },
+    {
+      "stage": "pullRequests",
+      "startMs": 822,
+      "endMs": 836,
+      "durationMs": 14
+    }
+  ],
+  "pipelineResult": {
+    "issuesFetched": 5,
+    "issuesIngested": 5,
+    "issuesAnalyzed": 5,
+    "issuesSkipped": 0,
+    "pullRequestsFetched": 0,
+    "pullRequestsIngested": 0,
+    "errors": [],
+    "durationMs": 564
+  },
+  "fatal": null,
+  "statements": [
+    {
+      "text": "CREATE CONSTRAINT issue_id_unique IF NOT EXISTS FOR (n:Issue) REQUIRE n.issueId IS UNIQUE",
+      "ms": 8.55,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT issue_number_unique IF NOT EXISTS FOR (n:Issue) REQUIRE n.number IS UNIQUE",
+      "ms": 2.77,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT user_login_unique IF NOT EXISTS FOR (n:User) REQUIRE n.login IS UNIQUE",
+      "ms": 2.07,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT comment_id_unique IF NOT EXISTS FOR (n:Comment) REQUIRE n.commentId IS UNIQUE",
+      "ms": 1.77,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT label_name_unique IF NOT EXISTS FOR (n:Label) REQUIRE n.name IS UNIQUE",
+      "ms": 1.8,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT pull_request_id_unique IF NOT EXISTS FOR (n:PullRequest) REQUIRE n.prId IS UNIQUE",
+      "ms": 3.12,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT meta_key_unique IF NOT EXISTS FOR (n:Meta) REQUIRE n.key IS UNIQUE",
+      "ms": 1.6,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT subcategory_name_unique IF NOT EXISTS FOR (n:Subcategory) REQUIRE n.name IS UNIQUE",
+      "ms": 1.88,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT solution_text_unique IF NOT EXISTS FOR (n:Solution) REQUIRE n.solutionText IS UNIQUE",
+      "ms": 1.77,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE CONSTRAINT workaround_text_unique IF NOT EXISTS FOR (n:Workaround) REQUIRE n.workaroundText IS UNIQUE",
+      "ms": 1.62,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE INDEX issue_state_lookup IF NOT EXISTS FOR (n:Issue) ON (n.state)",
+      "ms": 1.52,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "CREATE INDEX issue_updated_at_lookup IF NOT EXISTS FOR (n:Issue) ON (n.updatedAt)",
+      "ms": 1.48,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "UNWIND $issues AS iss MERGE (i:Issue {issueId: iss.issueId}) SET i.number = toInteger(iss.number), i.title = iss.title, i.bodyText = iss.bodyText, i.createdAt = iss.createdAt, i.updatedAt = iss.updatedAt, i.closedAt = iss.closedAt, i.state = iss.state, i.authorLogin = iss.authorLogin",
+      "ms": 26.77,
+      "inTransaction": true,
+      "scan": null
+    },
+    {
+      "text": "UNWIND $users AS user MERGE (u:User {login: user.login}) SET u.name = user.name, u.company = user.company",
+      "ms": 14.26,
+      "inTransaction": true,
+      "scan": null
+    },
+    {
+      "text": "UNWIND $links AS link MATCH (i:Issue {issueId: link.issueId}), (u:User {login: link.login}) MERGE (i)-[:AUTHORED_BY]->(u)",
+      "ms": 20.74,
+      "inTransaction": true,
+      "scan": null
+    },
+    {
+      "text": "UNWIND $issueIds AS issueId MATCH (i:Issue {issueId: issueId})-[r:ASSIGNED_TO]->() DELETE r",
+      "ms": 19.31,
+      "inTransaction": true,
+      "scan": null
+    },
+    {
+      "text": "UNWIND $labels AS label MERGE (l:Label {name: label.name}) SET l.description = label.description, l.color = label.color",
+      "ms": 22.23,
+      "inTransaction": true,
+      "scan": null
+    },
+    {
+      "text": "UNWIND $links AS link MATCH (i:Issue {issueId: link.issueId}) MATCH (l:Label {name: link.name}) MERGE (i)-[:HAS_LABEL]->(l)",
+      "ms": 23.35,
+      "inTransaction": true,
+      "scan": null
+    },
+    {
+      "text": "UNWIND $comments AS c MERGE (comment:Comment {commentId: c.id}) SET comment.bodyText = c.bodyText, comment.createdAt = c.createdAt, comment.authorLogin = c.authorLogin WITH comment, c MATCH (i:Issue {issueId: c.issueId}) MERGE (i)-[:HAS_COMMENT]->(comment)",
+      "ms": 35.84,
+      "inTransaction": true,
+      "scan": null
+    },
+    {
+      "text": "MATCH (s:Subcategory) RETURN s.name AS name, s.definition AS definition ORDER BY s.name",
+      "ms": 12.46,
+      "inTransaction": false,
+      "scan": "unboundedRead"
+    },
+    {
+      "text": "MATCH (i:Issue) OPTIONAL MATCH (i)-[:HAS_LABEL]->(l:Label) RETURN i.number AS number, i.title AS title, collect(l.name) AS labels ORDER BY number",
+      "ms": 24.16,
+      "inTransaction": false,
+      "scan": "unboundedRead"
+    },
+    {
+      "text": "MATCH (g:Guidance) RETURN g.id AS id, g.text AS text, g.recordedAt AS recordedAt, g.recordedBy AS recordedBy ORDER BY g.recordedAt",
+      "ms": 14.91,
+      "inTransaction": false,
+      "scan": "unboundedRead"
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTION]->(s:Solution) OPTIONAL MATCH (s)-[:HAS_KEYWORD]->(sk:Keyword) DETACH DELETE s, sk WITH i OPTIONAL MATCH (i)-[:HAS_WORKAROUND]->(w:Workaround) OPTIONAL MATCH (w)-[:HAS_KEYWORD]->(wk:Keyword) DETACH DELETE w, wk WITH i OPTIONAL MATCH (i)-[:HAS_COMMENT]->(c:Comment) OPTIONAL MATCH (c)-[:HAS_SOLUTION]->(cs:Solution) OPTIONAL MATCH (cs)-[:",
+      "ms": 65.96,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i)-[r:MENTIONS_COMPETITOR]->(comp:Competitor) DELETE r WITH collect(comp) AS detached UNWIND detached AS candidate WITH candidate WHERE candidate IS NOT NULL AND NOT (candidate)<-[:MENTIONS_COMPETITOR]-() DELETE candidate RETURN count(*) AS competitors_deleted } CALL { WITH i OPTIONAL MATCH (i)-[r:BELONGS_TO_CATEGORY]->(cat:Category) DELET",
+      "ms": 58.38,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) SET i.category = $category, i.subcategory = $subcategory, i.severity = $severity, i.impact = $impact, i.effort = $effort, i.priorityScore = toInteger($priorityScore), i.priorityRationale = $priorityRationale, i.issueType = $issueType, i.needsClarification = $needsClarification, i.clarificationReason = $clarificationReason",
+      "ms": 24.91,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTION]->(s:Solution) OPTIONAL MATCH (s)-[:HAS_KEYWORD]->(sk:Keyword) DETACH DELETE s, sk WITH i OPTIONAL MATCH (i)-[:HAS_WORKAROUND]->(w:Workaround) OPTIONAL MATCH (w)-[:HAS_KEYWORD]->(wk:Keyword) DETACH DELETE w, wk WITH i OPTIONAL MATCH (i)-[:HAS_COMMENT]->(c:Comment) OPTIONAL MATCH (c)-[:HAS_SOLUTION]->(cs:Solution) OPTIONAL MATCH (cs)-[:",
+      "ms": 1.73,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i)-[r:MENTIONS_COMPETITOR]->(comp:Competitor) DELETE r WITH collect(comp) AS detached UNWIND detached AS candidate WITH candidate WHERE candidate IS NOT NULL AND NOT (candidate)<-[:MENTIONS_COMPETITOR]-() DELETE candidate RETURN count(*) AS competitors_deleted } CALL { WITH i OPTIONAL MATCH (i)-[r:BELONGS_TO_CATEGORY]->(cat:Category) DELET",
+      "ms": 1.84,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) SET i.category = $category, i.subcategory = $subcategory, i.severity = $severity, i.impact = $impact, i.effort = $effort, i.priorityScore = toInteger($priorityScore), i.priorityRationale = $priorityRationale, i.issueType = $issueType, i.needsClarification = $needsClarification, i.clarificationReason = $clarificationReason",
+      "ms": 3.84,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTION]->(s:Solution) OPTIONAL MATCH (s)-[:HAS_KEYWORD]->(sk:Keyword) DETACH DELETE s, sk WITH i OPTIONAL MATCH (i)-[:HAS_WORKAROUND]->(w:Workaround) OPTIONAL MATCH (w)-[:HAS_KEYWORD]->(wk:Keyword) DETACH DELETE w, wk WITH i OPTIONAL MATCH (i)-[:HAS_COMMENT]->(c:Comment) OPTIONAL MATCH (c)-[:HAS_SOLUTION]->(cs:Solution) OPTIONAL MATCH (cs)-[:",
+      "ms": 1.21,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i)-[r:MENTIONS_COMPETITOR]->(comp:Competitor) DELETE r WITH collect(comp) AS detached UNWIND detached AS candidate WITH candidate WHERE candidate IS NOT NULL AND NOT (candidate)<-[:MENTIONS_COMPETITOR]-() DELETE candidate RETURN count(*) AS competitors_deleted } CALL { WITH i OPTIONAL MATCH (i)-[r:BELONGS_TO_CATEGORY]->(cat:Category) DELET",
+      "ms": 1.42,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) SET i.category = $category, i.subcategory = $subcategory, i.severity = $severity, i.impact = $impact, i.effort = $effort, i.priorityScore = toInteger($priorityScore), i.priorityRationale = $priorityRationale, i.issueType = $issueType, i.needsClarification = $needsClarification, i.clarificationReason = $clarificationReason",
+      "ms": 9.72,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTION]->(s:Solution) OPTIONAL MATCH (s)-[:HAS_KEYWORD]->(sk:Keyword) DETACH DELETE s, sk WITH i OPTIONAL MATCH (i)-[:HAS_WORKAROUND]->(w:Workaround) OPTIONAL MATCH (w)-[:HAS_KEYWORD]->(wk:Keyword) DETACH DELETE w, wk WITH i OPTIONAL MATCH (i)-[:HAS_COMMENT]->(c:Comment) OPTIONAL MATCH (c)-[:HAS_SOLUTION]->(cs:Solution) OPTIONAL MATCH (cs)-[:",
+      "ms": 4.12,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i)-[r:MENTIONS_COMPETITOR]->(comp:Competitor) DELETE r WITH collect(comp) AS detached UNWIND detached AS candidate WITH candidate WHERE candidate IS NOT NULL AND NOT (candidate)<-[:MENTIONS_COMPETITOR]-() DELETE candidate RETURN count(*) AS competitors_deleted } CALL { WITH i OPTIONAL MATCH (i)-[r:BELONGS_TO_CATEGORY]->(cat:Category) DELET",
+      "ms": 2.27,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) SET i.category = $category, i.subcategory = $subcategory, i.severity = $severity, i.impact = $impact, i.effort = $effort, i.priorityScore = toInteger($priorityScore), i.priorityRationale = $priorityRationale, i.issueType = $issueType, i.needsClarification = $needsClarification, i.clarificationReason = $clarificationReason",
+      "ms": 3.52,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) OPTIONAL MATCH (i)-[:HAS_SOLUTION]->(s:Solution) OPTIONAL MATCH (s)-[:HAS_KEYWORD]->(sk:Keyword) DETACH DELETE s, sk WITH i OPTIONAL MATCH (i)-[:HAS_WORKAROUND]->(w:Workaround) OPTIONAL MATCH (w)-[:HAS_KEYWORD]->(wk:Keyword) DETACH DELETE w, wk WITH i OPTIONAL MATCH (i)-[:HAS_COMMENT]->(c:Comment) OPTIONAL MATCH (c)-[:HAS_SOLUTION]->(cs:Solution) OPTIONAL MATCH (cs)-[:",
+      "ms": 1.45,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) CALL { WITH i OPTIONAL MATCH (i)-[r:MENTIONS_COMPETITOR]->(comp:Competitor) DELETE r WITH collect(comp) AS detached UNWIND detached AS candidate WITH candidate WHERE candidate IS NOT NULL AND NOT (candidate)<-[:MENTIONS_COMPETITOR]-() DELETE candidate RETURN count(*) AS competitors_deleted } CALL { WITH i OPTIONAL MATCH (i)-[r:BELONGS_TO_CATEGORY]->(cat:Category) DELET",
+      "ms": 1.31,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (i:Issue {number: $n}) SET i.category = $category, i.subcategory = $subcategory, i.severity = $severity, i.impact = $impact, i.effort = $effort, i.priorityScore = toInteger($priorityScore), i.priorityRationale = $priorityRationale, i.issueType = $issueType, i.needsClarification = $needsClarification, i.clarificationReason = $clarificationReason",
+      "ms": 7.85,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (r:Rule {kind: 'category'}) MATCH (i:Issue)-[:HAS_LABEL]->(l:Label {name: r.label}) WHERE ($numbers IS NULL OR i.number IN $numbers) AND (i.category IS NULL OR i.category <> r.category) WITH i, r, i.category AS previous SET i.category = r.category, i.categorySource = 'rule:' + r.label RETURN i.number AS number, previous AS previous, r.category AS category, r.label AS label ORDER BY i.number",
+      "ms": 46.74,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MERGE (m:Meta {key: 'lastSync'}) SET m.value = $ts",
+      "ms": 13.08,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MERGE (m:Meta {key: 'lastPullRequestSync'}) SET m.value = $ts",
+      "ms": 12.74,
+      "inTransaction": false,
+      "scan": null
+    },
+    {
+      "text": "MATCH (n) UNWIND labels(n) AS l RETURN l AS label, count(*) AS c ORDER BY c DESC",
+      "ms": 16.68,
+      "inTransaction": false,
+      "scan": null
+    }
+  ]
+}

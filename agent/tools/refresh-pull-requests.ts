@@ -10,7 +10,13 @@ export const refreshPullRequestsTool = createTool({
     'a point-in-time pull request total (open, closed, by author) disagrees ' +
     'with what the user sees on GitHub, which happens for pull requests ' +
     'opened long ago and not touched since the last incremental sync fetched ' +
-    'them. One-shot reconciliation, not a routine refresh.',
+    'them. One-shot reconciliation, not a routine refresh.\n\n' +
+    'Rules:\n' +
+    '- Run it without refresh first. The dry run reports the gap and writes ' +
+    'nothing, which is usually the answer the user wanted.\n' +
+    '- It re-fetches every pull request on GitHub, so leave it for the case where ' +
+    'a count is visibly wrong. It is not the way to get one PR up to date; ' +
+    'inspectPullRequest already reads live.',
   inputSchema: z.object({
     refresh: z
       .boolean()

@@ -8,7 +8,12 @@ export const ingestMissingIssuesTool = createTool({
     'Find issues that are open on GitHub but absent from the graph, and ' +
     'optionally fetch and classify them. Use this when a count looks short, or ' +
     'when the user asks whether the graph is complete. reconcileIssueState ' +
-    'cannot answer this: it only checks issues the graph already holds.',
+    'cannot answer this: it only checks issues the graph already holds.\n\n' +
+    'Rules:\n' +
+    '- Each fetched issue costs a model call when analyze is left on, so pass a ' +
+    'limit the user would accept and report how many were skipped.\n' +
+    '- Run it without ingest first when the user only asks whether the graph is ' +
+    'complete. The report is the answer and it writes nothing.',
   inputSchema: z.object({
     ingest: z
       .boolean()

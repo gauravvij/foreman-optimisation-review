@@ -8,7 +8,27 @@ export const reconcileIssueStateTool = createTool({
     'Check every issue in the graph against GitHub and report which ones have a ' +
     'stale open/closed state, optionally correcting them. Writes only to the ' +
     'graph, never to GitHub. Use this when counts look wrong, when an issue the ' +
-    'graph calls open turns out to be closed, or before trusting a state filter.',
+    'graph calls open turns out to be closed, or before trusting a state filter.\n\n' +
+    'Rules:\n' +
+    '- Three different things can be wrong with the graph, and each needs its own ' +
+    'tool. A stale open/closed state is this tool. An issue the graph never held ' +
+    'is ingestMissingIssues, which this tool cannot see, so it reports no drift ' +
+    'while a count stays short. Stale content on an issue the graph does hold, ' +
+    'after an edit or a new comment, is refreshIssues; neither of the others ' +
+    're-reads the title, body, labels, or comments. When a total looks wrong, ' +
+    'check for missing issues; when the text looks wrong, refresh it.\n' +
+    '- Issue.state can lag GitHub: the sync fetches open issues, so an issue ' +
+    'closed after ingestion keeps a stale OPEN state. This tool is idempotent and ' +
+    'only ever makes the graph agree with GitHub.\n' +
+    '- This tool also finds issues GitHub no longer has, deleted or never ' +
+    'created, and reports them as ghosts. A ghost is why a count can be short ' +
+    'while drift reads zero, since a deleted issue has no state to disagree ' +
+    'about. With apply it removes them, except one carrying a recorded ' +
+    'Assessment, which it keeps and names so a human decision is not lost with ' +
+    'the node. Report a kept ghost to the user rather than deleting the ' +
+    'Assessment yourself.\n' +
+    '- A number in the unresolved list was not checked; it is not evidence the ' +
+    'issue was deleted. Say so rather than treating it as a ghost.',
   inputSchema: z.object({
     apply: z
       .boolean()
@@ -66,10 +86,11 @@ export const reconcileIssueStateTool = createTool({
         r.ghosts.length === 0
           ? ''
           : input.apply
-            ? ` Removed ${r.deleted} issue(s) GitHub no longer has: ${r.ghosts.join(', ')}.` +
-              (r.ghostsKept.length > 0
-                ? ` Kept ${r.ghostsKept.join(', ')} because a recorded assessment would be lost with them.`
-                : '')
+            ? ` Removed ${r.deleted} issue(s) GitHub no longer has: ${r.ghosts.join(', ')}.${
+                r.ghostsKept.length > 0
+                  ? ` Kept ${r.ghostsKept.join(', ')} because a recorded assessment would be lost with them.`
+                  : ''
+              }`
             : ` ${r.ghosts.length} issue(s) do not exist on GitHub: ${r.ghosts.join(', ')}. Re-run with apply to remove them.`;
 
       const unresolvedNote =
