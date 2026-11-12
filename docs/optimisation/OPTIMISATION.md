@@ -431,8 +431,8 @@ commits between them change only tests, formatting, comments and docs.
 | One-answer questions: attempts right | 140 questions × 3 runs, marked by a program | 354 of 420 (84.3%) | **401 of 420 (95.5%)** |
 | Summaries: attempts right | 10 questions × 3 runs, marked by the AI judge | 26 of 30 (86.7%) | **29 of 30 (96.7%)** |
 | Attempts right in each run | runs 1 / 2 / 3, of 150 each | 126 / 127 / 127 | **144 / 141 / 145** |
-| Questions right in all three runs | of 150 | 118 | **138** |
-| Questions never right | of 150 | 15 | **1** |
+| Questions answered correctly in every run | questions right in all 3 runs: the answer was reliable | 118 of 150 | **138 of 150** |
+| Questions never answered correctly | questions wrong in all 3 runs: the version could not answer them | 15 of 150 | **1 of 150** |
 
 In every run the branch got 14 to 18 more attempts right. Within each run, 19 to 21 questions
 improved and 2 to 5 got worse. A split that lopsided would happen by luck about 1 time in 3,600,
