@@ -13,7 +13,7 @@ review the branch without reverse-engineering it from the diff. For the one-page
 |---|---|
 | **PR base** | `origin/main` = `306d0ce` (the diff and the PR are against this) |
 | **Original code** | `3cd3dde`, the parent of `306d0ce`. `306d0ce` adds only the `fern/` docs site, so the two are the *same code*. `OPTIMISATION.md` calls `3cd3dde` "the original". |
-| **Branch** | `pr/foreman-optimisation`, 17 commits ahead of `origin/main`: 12 code commits (groups A–D), 1 evidence commit (`258000c`), and 4 commits made during the independent check (group E) |
+| **Branch** | `pr/foreman-optimisation`, 18 commits ahead of `origin/main`: 12 code commits (groups A–D), 1 evidence commit (`258000c`), and 5 commits made during the independent check (group E) |
 | **What it does** | Makes reading GitHub issues into the Neo4j graph cheaper (fewer database requests), and makes the assistant answer questions more reliably (fewer confidently wrong answers) |
 | **What it does *not* do** | It does not change *what* ends up in the graph: on the test data the stored content is identical to the original's (verified at 5, 20 and 60 issues). The one deliberate exception is a data-loss fix for repeated reactions (section 5, item 7). |
 
@@ -39,7 +39,7 @@ so the two documents line up. Commit ids are in backticks so you can `git show` 
 - **Group E: changes made during the independent check.** Tests for the reading-in code and for
   each change that had none, the repeated-reaction fix, a neutral example in the instructions, a
   separate judge for the eval suite, formatting, docs for the new settings, the OpenHands 600
-  results, and a script that re-checks every reported number.
+  results over three runs, and a script that re-checks every reported number.
 
 No change is a rewrite. Every change is either (a) a database *how*, not *what*, or (b) an
 addition to the assistant's instructions or tools that is easy to read on its own.
@@ -88,20 +88,21 @@ instructions within their size budget). No runtime dependencies were added.
 
 ### Group E: Changes made during the independent check
 
-Four commits:
+Five commits:
 
 | Id | Commit | Contents |
 |---|---|---|
 | E1 | `10d6ea3` docs: add WORKDONE.md and SUMMARY.md, tidy-ups and final test evidence | The tidy-ups, the reaction fix, the judge option, new tests and evidence |
 | E2 | test: cover re-analysis, the narrower tidy-up and repeated reactions; format batch ingest | Tests for three changes that had none, formatting, one corrected comment |
 | E3 | docs: document the tuning environment variables | Six settings added by groups A, B and D, now in the README and the docs site |
-| E4 | docs: move the optimisation report and evidence into docs/optimisation | This folder, the OpenHands 600 results and the numbers check |
+| E4 | docs: move the optimisation report and evidence into docs/optimisation | This folder, the first OpenHands 600 run and the numbers check |
+| E5 | docs: report OpenHands 600 over three runs | Two more OpenHands 600 runs, reported with the first as three runs; the earlier 60-issue OpenHands results removed |
 
 | Problem it fixes | Change | Commit | Files |
 |---|---|---|---|
 | The reading-in code had **no tests**. | 26 new tests (17 + 9). They were also checked by breaking the code on purpose in 4 places; they caught all 4. | E1 | `src/services/__tests__/ingest-batch.test.ts` *(new)*, `src/services/__tests__/github-concurrency.test.ts` *(new)* |
 | An instruction example was **taken from one of the question sets** (leakage). | A neutral example (`"Good First Issue"`). | E1 | `agent/instructions.ts` |
-| Repeated reactions were **lost**: one person's same reaction on two comments of an issue was merged into one. Found by the OpenHands Dev 50 database check. | Comment reactions include the comment id in their merge key; issue-level reactions match only other issue-level reactions. | E1 | `src/services/neo4j.ts` |
+| Repeated reactions were **lost**: one person's same reaction on two comments of an issue was merged into one. Found by the database check of the OpenHands test. | Comment reactions include the comment id in their merge key; issue-level reactions match only other issue-level reactions. | E1 | `src/services/neo4j.ts` |
 | The AI judge used the same model it was scoring, so it **marked its own work**. | `MODEL_JUDGE` moves only the judge; `JUDGE_GATEWAY_URL` + `JUDGE_GATEWAY_API_KEY` can send it to another provider. With neither set, nothing changes. | E1 | `src/services/models.ts`, `README.md`, `fern/pages/ref/env-vars.mdx` |
 | The eval suite **silently drifted** to a one-line stand-in prompt (it regex-extracted the prompt from `agent/index.ts`, which stopped matching). | Builds the prompt the same way production does (`buildInstructions`); uses only the read-only tools. | E1 | `test/evals/agent.eval.ts` |
 | Style drift. | Formatting and style fixes. **Behaviour unchanged.** | E1, E2 | the changed `agent/` and `src/` files |
@@ -110,7 +111,7 @@ Four commits:
 | Three changes had **no test in the repository**: re-analysing edited issues, the narrower tidy-up, and the reaction fix on a real database. | A test for each; each fails on the original code. | E2 | `src/services/__tests__/pipeline-incremental.test.ts` *(new)*, `test/integration/cypher.test.ts` |
 | One comment overstated a retry. | Corrected. **Behaviour unchanged.** | E2 | `src/services/models.ts` |
 | Six new settings were **not documented**. | Each documented with its default. | E3 | `README.md`, `fern/pages/ref/env-vars.mdx` |
-| The OpenHands test covered only 60 issues. | Original vs branch on **OpenHands 600** (600 issues, 150 questions, 1 attempt each). | E4 | `docs/optimisation/benchmark/qa/rerun/*-oh-600.json` *(new)* |
+| The OpenHands test covered only 60 issues, in one run. | Original vs branch on **OpenHands 600** (600 issues, 150 questions, 1 attempt per question), run three times. | E4, E5 | `docs/optimisation/benchmark/qa/rerun/*-oh-600-run{1,2,3}.json` *(new)* |
 | Readers had no quick way to see each change work, or to check the report's numbers. | A "See each change working" table, and one command that re-checks every number. | E4 | `docs/optimisation/README.md`, `docs/optimisation/benchmark/check-numbers.ts` *(new)* |
 | The report and its evidence sat at the repository root. | Moved into one folder, `docs/optimisation/`. | E4 | `docs/optimisation/**` |
 

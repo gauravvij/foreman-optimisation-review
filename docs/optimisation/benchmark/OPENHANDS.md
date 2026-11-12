@@ -1,10 +1,11 @@
 # OpenHands question sets: a fresh, independent benchmark for foreman
 
-**Status (2026-11-07):** the three question sets are built, frozen, audited and pinned, and
-foreman ingests them correctly. Foreman has been scored on **OpenHands Dev 50** and
-**OpenHands 600**; the results are in [`OPTIMISATION.md`](../OPTIMISATION.md) section 7 and the
-reports in `qa/rerun/*-oh-dev.json` and `qa/rerun/*-oh-600.json`. **OpenHands Holdout 50 is
-sealed and has not been scored.** No number in this file is a score.
+**Status (2026-11-12):** the three question sets are built, frozen, audited and pinned, and
+foreman ingests them correctly. The original and the branch have been scored on **OpenHands 600**
+three times; the results are in [`OPTIMISATION.md`](../OPTIMISATION.md) section 7 and the reports
+in `qa/rerun/*-oh-600-run{1,2,3}.json`. **OpenHands Dev 50** was used to check the sets and the
+runner before that. **OpenHands Holdout 50 is sealed and has not been scored.** No number in this
+file is a score.
 
 Before scoring, the Dev 50 issues were also read into a disposable Neo4j by the branch's
 pipeline with a mock model. The graph matched the issue data on issues (60), comments (237),
@@ -37,8 +38,8 @@ No two sets share an issue.
 
 Terms used here:
 - **Question set:** a fixed list of questions about one set of issues. Each question comes with an expected answer worked out from the issue data, not written by a model.
-- **Attempt:** one try at one question. Dev 50 was scored with 3 attempts per question,
-  OpenHands 600 with 1.
+- **Attempt:** one try at one question. OpenHands 600 asks each question once per run, and it
+  was run three times.
 - **One-answer question:** marked by a program. It compares a number, a set of issue numbers,
   or required words in the answer against the expected answer. Dev and Holdout have 44 each,
   OpenHands 600 has 140.
@@ -163,7 +164,7 @@ These are not defects. They do change what a score means.
    and deterministic figures for these sets; `score.byKind.retrieval` has no tasks.
 7. **The judge.** The runner's default judge is the agent's own model, `gpt-4o`
    (`--reasoning-model` and `--judge-model` in `bench/foreman-qa/run.ts`). The scored runs on
-   Dev 50 and OpenHands 600 instead used a separate judge, `anthropic/claude-haiku-5.5`, so no
+   OpenHands 600 instead used a separate judge, `anthropic/claude-haiku-5.5`, so no
    model marked its own summaries. Whichever judge is used, three things limit its influence,
    and one does not:
    - **What the judge sees.** It is given the question, a reference built from the raw issue (title, state, author, comment
@@ -183,34 +184,34 @@ These are not defects. They do change what a score means.
    `qa/` resolved it to `gpt-4o-2024-08-06`, and the cost meter prices that snapshot the same as the
    alias. The commands below therefore pin it for both the agent and the judge. This keeps the baseline and the branch on the same models even if the alias moves between the two runs.
 
-8. **OpenHands 600 asks each question once.** One attempt can go either way by luck, so judge
-   it by how many questions got better and how many got worse, not by any single question.
+8. **OpenHands 600 asks each question once per run.** One attempt can go either way by luck, so
+   it was run three times. Judge it by the spread across runs and by how many questions got
+   better and how many got worse, not by any single question.
 
 ## How to re-run a scored test
 
 Run these from the workspace root. Docker is required (the runner starts Neo4j), and model keys
 are required. The settings below are the ones the scored runs used; each report records them
-under `config`. The exact script behind the OpenHands 600 run is kept in the workspace:
-`docs/oh600-run/run.sh`.
+under `config`. The exact scripts are kept in the workspace: `docs/oh600-run/run.sh` (run 1) and
+`docs/oh600-run/run-repeats.sh` (runs 2 and 3).
 
 ```bash
 # 0. Confirm the files are the pinned ones, and re-run the audit (free)
 (cd bench && sha256sum -c foreman-qa/OPENHANDS.sha256)
 python3 -I bench/foreman-qa/audit-openhands.py .
 
-# 1. The judge: a different model from the agent, reached through OpenRouter
-export MODEL_JUDGE=anthropic/claude-haiku-5.5 JUDGE_GATEWAY_URL=https://openrouter.ai/api JUDGE_GATEWAY_API_KEY=<openrouter key>
+# 1. Every model through OpenRouter; the judge is a different model from the agent
+OR=https://openrouter.ai/api KEY=<openrouter key>
+export BENCH_GATEWAY_URL=$OR BENCH_GATEWAY_API_KEY=$KEY
+export MODEL_JUDGE=anthropic/claude-haiku-5.5 JUDGE_GATEWAY_URL=$OR JUDGE_GATEWAY_API_KEY=$KEY
+PIN="--attempts 1 --score-despite-integrity --reasoning-model openai/gpt-4o-2024-08-06 --fast-model openai/gpt-4o-mini --judge-model anthropic/claude-haiku-5.5"
 
-# 2. OpenHands Dev 50, 3 attempts per question: the agent through OpenAI (about $3.50 per version)
-PIN="--reasoning-model gpt-4o-2024-08-06 --fast-model gpt-4o-mini --judge-model anthropic/claude-haiku-5.5"
-bun bench/foreman-qa/run.ts --target "$PWD/foreman" --split oh-dev --job foreman-oh-dev --attempts 3 --score-despite-integrity $PIN
-
-# 3. The original code, for a paired comparison
+# 2. One run of the branch and one of the original (about $4.50 and $4.20, 30-45 minutes each)
 git -C foreman worktree add /tmp/foreman-baseline 3cd3dde
-bun bench/foreman-qa/run.ts --target /tmp/foreman-baseline --split oh-dev --job foreman-baseline-oh-dev --attempts 3 --score-despite-integrity $PIN
+bun bench/foreman-qa/run.ts --target "$PWD/foreman" --split oh-600 --job foreman-oh600-branch $PIN
+bun bench/foreman-qa/run.ts --target /tmp/foreman-baseline --split oh-600 --job foreman-oh600-baseline $PIN
 
-# OpenHands 600 is the same with --split oh-600 --attempts 1, every model through OpenRouter
-# (BENCH_GATEWAY_URL / BENCH_GATEWAY_API_KEY, model names prefixed openai/); about $4.50 per version.
+# Repeat step 2 with new job names for each further run.
 ```
 
 `--score-despite-integrity` is needed because the original code fails one required graph check
@@ -223,7 +224,7 @@ true-zero issue-set question. `verification_bench/grade-v2.ts` rejects that non-
 both reports against the same frozen split and quote the corrected figures:
 
 ```bash
-bun bench/foreman-qa/regrade-fresh.ts --split oh-dev --job foreman-oh-dev --job foreman-baseline-oh-dev
+bun bench/foreman-qa/regrade-fresh.ts --split oh-600 --job foreman-oh600-branch --job foreman-oh600-baseline
 ```
 
 The regrader rejects incomplete reports or the wrong split, preserves each raw `report.json`,
@@ -239,8 +240,8 @@ and comment fields and authors, as well as counts.
 
 **Open next steps**
 - [x] Add `--split` to `regrade-fresh.ts` and check report completeness before re-grading.
-- [x] Score the baseline and the branch on OpenHands Dev 50, then re-grade both.
-- [x] Build OpenHands 600 and score the baseline and the branch on it once, then re-grade both.
+- [x] Build OpenHands 600 and score the baseline and the branch on it, then re-grade both.
+- [x] Run OpenHands 600 twice more, so it is reported over three runs.
 - [ ] Only once a final candidate is chosen: score OpenHands Holdout 50 once, and report it on all 50 and on the 40 independent questions.
 
 ## Can this benchmark live inside foreman?

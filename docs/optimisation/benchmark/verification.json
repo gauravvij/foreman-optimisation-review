@@ -1,8 +1,8 @@
 {
- "about": "Record of the independent check of the benchmark and of every proof file in this folder. The benchmark (question sets, scoring program, ingestion profiler) was built by NEO. These checks were performed with Claude Code, Anthropic's AI coding agent, using Claude Opus 5.5, on 2026-11-04. The OpenHands checks (openhands_reports), the refreshed code_checks and the database re-run on the final code (database_contents) were added on 2026-11-10.",
+ "about": "Record of the independent check of the benchmark and of every proof file in this folder. The benchmark (question sets, scoring program, ingestion profiler) was built by NEO. These checks were performed with Claude Code, Anthropic's AI coding agent, using Claude Opus 5.5, on 2026-11-04. The OpenHands checks (openhands_reports), the refreshed code_checks and the database re-run on the final code (database_contents) were added on 2026-11-10; OpenHands 600 runs 2 and 3 were added, and the OpenHands Dev 50 reports removed, on 2026-11-12.",
  "terms": {
-  "question_set": "A fixed list of questions about a fixed collection of GitHub issues: 60 for the three sets below and OpenHands Dev 50, 600 for OpenHands 600.",
-  "attempt": "One try at answering one question. In the three sets below every question was asked 3 times, so each question has 3 attempts, each marked right or wrong on its own. OpenHands 600 asks each question once."
+  "question_set": "A fixed list of questions about a fixed collection of GitHub issues: 60 for the three sets below, 600 for OpenHands 600.",
+  "attempt": "One try at answering one question. In the three sets below every question was asked 3 times, so each question has 3 attempts, each marked right or wrong on its own. OpenHands 600 asks each question once per run, and it was run three times."
  },
  "question_sets": {
   "SymPy Core 50": {
@@ -186,26 +186,40 @@
   },
   "openhands_reports": {
    "result": "pass",
-   "detail": "The four OpenHands reports (qa/rerun/*-oh-dev.json and *-oh-600.json) contain exactly the questions and expected answers of the pinned question files (50 of 50 and 150 of 150), are marked valid, and pass their sanity questions. Every one-answer attempt was marked again with the scoring program and got the same verdict (132 of 132 per Dev 50 report, 140 of 140 per OpenHands 600 report). Every stored score equals the score recomputed from its attempts. Code fingerprints: original 98bff512a1c301a8 = commit 3cd3dde; branch 6883fbc3d64d73bb = commit 10d6ea3.",
+   "detail": "The six OpenHands 600 reports (qa/rerun/baseline-oh-600-run{1,2,3}.json and branch-oh-600-run{1,2,3}.json) each contain exactly the 150 questions and expected answers of the pinned question file, are marked valid, and pass their sanity questions. Each was re-graded with the corrected grader and every verdict stayed the same. Every stored score equals the score recomputed from its attempts. Code fingerprints: original 98bff512a1c301a8 = commit 3cd3dde in all three runs; branch 6883fbc3d64d73bb = commit 10d6ea3 in run 1, and 97ffa01b9e7fc8a9 = commit 5ad56c6 in runs 2 and 3.",
    "per_report": {
-    "baseline-oh-dev": {
-     "attempts_right": "124/150",
-     "one_answer": "115/132"
-    },
-    "branch-oh-dev": {
-     "attempts_right": "144/150",
-     "one_answer": "127/132"
-    },
-    "baseline-oh-600": {
+    "baseline-oh-600-run1": {
      "attempts_right": "126/150",
-     "one_answer": "118/140"
+     "one_answer": "118/140",
+     "code": "98bff512a1c301a8"
     },
-    "branch-oh-600": {
+    "baseline-oh-600-run2": {
+     "attempts_right": "127/150",
+     "one_answer": "118/140",
+     "code": "98bff512a1c301a8"
+    },
+    "baseline-oh-600-run3": {
+     "attempts_right": "127/150",
+     "one_answer": "118/140",
+     "code": "98bff512a1c301a8"
+    },
+    "branch-oh-600-run1": {
      "attempts_right": "144/150",
-     "one_answer": "134/140"
+     "one_answer": "134/140",
+     "code": "6883fbc3d64d73bb"
+    },
+    "branch-oh-600-run2": {
+     "attempts_right": "141/150",
+     "one_answer": "132/140",
+     "code": "97ffa01b9e7fc8a9"
+    },
+    "branch-oh-600-run3": {
+     "attempts_right": "145/150",
+     "one_answer": "135/140",
+     "code": "97ffa01b9e7fc8a9"
     }
    },
-   "note": "These runs used gpt-4o-2024-08-06 to answer and claude-haiku-5.5 to judge the summaries, unlike the 12 reports above, which used gpt-4o for both. The original's 'comment_reactions_match' check fails in both baseline reports (section 6, item 7 of OPTIMISATION.md)."
+   "note": "These runs used gpt-4o-2024-08-06 to answer and claude-haiku-5.5 to judge the summaries, all through OpenRouter, unlike the 12 reports above, which used gpt-4o for both. The original's 'comment_reactions_match' check fails in all three baseline reports (section 6, item 7 of OPTIMISATION.md)."
   }
  }
 }

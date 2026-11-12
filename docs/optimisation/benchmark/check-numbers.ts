@@ -94,53 +94,62 @@ for (const [label, file, usd, secs] of [
     (median(allAttempts(r).map((a) => a.ms)) / 1000).toFixed(2));
 }
 
-// Section 7: OpenHands Dev 50 (3 attempts) and OpenHands 600 (1 attempt).
-const ohDev = { o: report('baseline-oh-dev'), b: report('branch-oh-dev') };
-add('7', 'Dev 50: attempts right, original', '124/150', attempts(ohDev.o));
-add('7', 'Dev 50: attempts right, branch', '144/150', attempts(ohDev.b));
-add('7', 'Dev 50: one-answer attempts, original', '115/132', attempts(ohDev.o, oneAnswer));
-add('7', 'Dev 50: one-answer attempts, branch', '127/132', attempts(ohDev.b, oneAnswer));
-add('7', 'Dev 50: summary attempts, original', '9/18', attempts(ohDev.o, summary));
-add('7', 'Dev 50: summary attempts, branch', '17/18', attempts(ohDev.b, summary));
-add('7', 'Dev 50: solved on every attempt, original', '36/50', solved(ohDev.o));
-add('7', 'Dev 50: solved on every attempt, branch', '46/50', solved(ohDev.b));
-add('7', 'Dev 50: database requests, original', 958, ohDev.o.ingest.neo4j.queries);
-add('7', 'Dev 50: database requests, branch', 345, ohDev.b.ingest.neo4j.queries);
-add('7', 'Dev 50: database connections, original', 126, ohDev.o.ingest.neo4j.sessions);
-add('7', 'Dev 50: database connections, branch', 8, ohDev.b.ingest.neo4j.sessions);
-add('7', 'Dev 50: database checks passed, original', '17/18', checks(ohDev.o));
-add('7', 'Dev 50: database checks passed, branch', '18/18', checks(ohDev.b));
-
-const oh600 = { o: report('baseline-oh-600'), b: report('branch-oh-600') };
-add('7', 'OpenHands 600: attempts right, original', '126/150', attempts(oh600.o));
-add('7', 'OpenHands 600: attempts right, branch', '144/150', attempts(oh600.b));
-add('7', 'OpenHands 600: one-answer attempts, original', '118/140', attempts(oh600.o, oneAnswer));
-add('7', 'OpenHands 600: one-answer attempts, branch', '134/140', attempts(oh600.b, oneAnswer));
-add('7', 'OpenHands 600: summary attempts, original', '8/10', attempts(oh600.o, summary));
-add('7', 'OpenHands 600: summary attempts, branch', '10/10', attempts(oh600.b, summary));
-add('7', 'OpenHands 600: database requests, original', 8703, oh600.o.ingest.neo4j.queries);
-add('7', 'OpenHands 600: database requests, branch', 3061, oh600.b.ingest.neo4j.queries);
-add('7', 'OpenHands 600: database connections, original', 1206, oh600.o.ingest.neo4j.sessions);
-add('7', 'OpenHands 600: database connections, branch', 8, oh600.b.ingest.neo4j.sessions);
-add('7', 'OpenHands 600: database checks passed, original', '17/18', checks(oh600.o));
-add('7', 'OpenHands 600: database checks passed, branch', '18/18', checks(oh600.b));
-add('7', 'OpenHands 600: run cost ($), original', '4.24', oh600.o.cost.sutTotalUsd.toFixed(2));
-add('7', 'OpenHands 600: run cost ($), branch', '4.52', oh600.b.cost.sutTotalUsd.toFixed(2));
-
-// Questions better and worse, original vs branch (a question counts as right
-// when every attempt at it was right).
-for (const [name, pair, better, worse] of [
-  ['Dev 50', ohDev, 12, 2],
-  ['OpenHands 600', oh600, 21, 3],
-] as const) {
-  const right = (r: Report) =>
-    new Map(r.qa.tasks.map((t) => [t.id, t.attempts.every((a) => a.pass)]));
-  const o = right(pair.o);
-  const b = right(pair.b);
-  const ids = [...o.keys()];
-  add('7', `${name}: questions better on the branch`, better, ids.filter((i) => b.get(i) && !o.get(i)).length);
-  add('7', `${name}: questions worse on the branch`, worse, ids.filter((i) => o.get(i) && !b.get(i)).length);
-}
+// Section 7: OpenHands 600, run three times, 1 attempt per question per run.
+type Template = { id: string; template: string };
+const runs = [1, 2, 3].map((r) => ({ o: report(`baseline-oh-600-run${r}`), b: report(`branch-oh-600-run${r}`) }));
+const expected = {
+  right: [['126/150', '127/150', '127/150'], ['144/150', '141/150', '145/150']],
+  oneAnswer: [['118/140', '118/140', '118/140'], ['134/140', '132/140', '135/140']],
+  summaries: [['8/10', '9/10', '9/10'], ['10/10', '9/10', '10/10']],
+  requests: [[8703, 8684, 8712], [3061, 3017, 3006]],
+  betterWorse: [[21, 3], [19, 5], [20, 2]],
+};
+const rightIn = (r: Report) => new Map(r.qa.tasks.map((t) => [t.id, t.attempts.every((a) => a.pass)]));
+runs.forEach(({ o, b }, i) => {
+  const run = `OpenHands 600 run ${i + 1}`;
+  add('7', `${run}: questions right, original`, expected.right[0][i], attempts(o));
+  add('7', `${run}: questions right, branch`, expected.right[1][i], attempts(b));
+  add('7', `${run}: one-answer right, original`, expected.oneAnswer[0][i], attempts(o, oneAnswer));
+  add('7', `${run}: one-answer right, branch`, expected.oneAnswer[1][i], attempts(b, oneAnswer));
+  add('7', `${run}: summaries right, original`, expected.summaries[0][i], attempts(o, summary));
+  add('7', `${run}: summaries right, branch`, expected.summaries[1][i], attempts(b, summary));
+  add('7', `${run}: database requests, original`, expected.requests[0][i], o.ingest.neo4j.queries);
+  add('7', `${run}: database requests, branch`, expected.requests[1][i], b.ingest.neo4j.queries);
+  add('7', `${run}: database connections, original`, 1206, o.ingest.neo4j.sessions);
+  add('7', `${run}: database connections, branch`, 8, b.ingest.neo4j.sessions);
+  add('7', `${run}: database checks passed, original`, '17/18', checks(o));
+  add('7', `${run}: database checks passed, branch`, '18/18', checks(b));
+  const ro = rightIn(o);
+  const rb = rightIn(b);
+  const ids = [...ro.keys()];
+  add('7', `${run}: questions better on the branch`, expected.betterWorse[i][0], ids.filter((q) => rb.get(q) && !ro.get(q)).length);
+  add('7', `${run}: questions worse on the branch`, expected.betterWorse[i][1], ids.filter((q) => ro.get(q) && !rb.get(q)).length);
+});
+const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+const rightCount = (r: Report) => r.qa.tasks.filter((t) => t.attempts.every((a) => a.pass)).length;
+add('7', 'OpenHands 600: average questions right, original', '126.7', mean(runs.map((r) => rightCount(r.o))).toFixed(1));
+add('7', 'OpenHands 600: average questions right, branch', '143.3', mean(runs.map((r) => rightCount(r.b))).toFixed(1));
+add('1', 'OpenHands 600: average database requests, original', 8700, Math.round(mean(runs.map((r) => r.o.ingest.neo4j.queries))));
+add('1', 'OpenHands 600: average database requests, branch', 3028, Math.round(mean(runs.map((r) => r.b.ingest.neo4j.queries))));
+add('7', 'OpenHands 600: average run cost ($), original', '4.18', mean(runs.map((r) => r.o.cost.sutTotalUsd)).toFixed(2));
+add('7', 'OpenHands 600: average run cost ($), branch', '4.48', mean(runs.map((r) => r.b.cost.sutTotalUsd)).toFixed(2));
+const timesRight = (side: 'o' | 'b', id: string) => runs.filter((r) => rightIn(r[side]).get(id)).length;
+const ids600 = runs[0].o.qa.tasks.map((t) => t.id);
+add('7', 'OpenHands 600: questions right in all three runs, original', 118, ids600.filter((q) => timesRight('o', q) === 3).length);
+add('7', 'OpenHands 600: questions right in all three runs, branch', 138, ids600.filter((q) => timesRight('b', q) === 3).length);
+add('7', 'OpenHands 600: questions never right, original', 15, ids600.filter((q) => timesRight('o', q) === 0).length);
+add('7', 'OpenHands 600: questions never right, branch', 1, ids600.filter((q) => timesRight('b', q) === 0).length);
+add('7', 'OpenHands 600: questions right more often on the branch', 28, ids600.filter((q) => timesRight('b', q) > timesRight('o', q)).length);
+add('7', 'OpenHands 600: questions right less often on the branch', 7, ids600.filter((q) => timesRight('b', q) < timesRight('o', q)).length);
+const misses = (side: 'o' | 'b', template?: string) =>
+  runs.flatMap((r) => (r[side].qa.tasks as unknown as (Task & Template)[]))
+    .filter((t) => !t.attempts.every((a) => a.pass) && (!template || t.template === template)).length;
+add('7', 'OpenHands 600: wrong answers over 3 runs, original', 70, misses('o'));
+add('7', 'OpenHands 600: of which two-step questions', 28, misses('o', 'multi_hop'));
+add('7', 'OpenHands 600: of which label questions', 12, misses('o', 'label'));
+add('7', 'OpenHands 600: of which date questions', 21, misses('o', 'date_range'));
+add('7', 'OpenHands 600: wrong answers over 3 runs, branch', 20, misses('b'));
+add('7', 'OpenHands 600: of which date questions', 15, misses('b', 'date_range'));
 
 // Section 5.2: database work to read in 5, 20 and 60 issues, from the repeated runs.
 const repeat = load('profile/repeat-runs.json');
@@ -172,7 +181,7 @@ for (const [n, original, branch] of [
 }
 
 // Every original-version report was run on the same code.
-const originals = ['sympy2-dev', 'lewtun-holdout', 'sympy2-dev-81', 'oh-dev', 'oh-600'].map(
+const originals = ['sympy2-dev', 'lewtun-holdout', 'sympy2-dev-81', 'oh-600-run1', 'oh-600-run2', 'oh-600-run3'].map(
   (f) => report(`baseline-${f}`).sut.hash,
 );
 add('4', 'Original reports all ran on the original code (98bff512…)', 'yes',

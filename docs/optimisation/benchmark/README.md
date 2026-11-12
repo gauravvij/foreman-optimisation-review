@@ -7,9 +7,9 @@ results are weak. This file only says which report supports which claim and how 
 The benchmark harness is **not** part of this PR. Only its outputs are, so every figure can be
 checked without leaving the branch.
 
-Three newer question sets built from OpenHands/OpenHands issues are described in
-[`OPENHANDS.md`](OPENHANDS.md). Two of them, OpenHands Dev 50 and OpenHands 600, have been
-scored (OPTIMISATION.md section 7). The third, OpenHands Holdout 50, is sealed and has not been run.
+The OpenHands question sets, built from OpenHands/OpenHands issues, are described in
+[`OPENHANDS.md`](OPENHANDS.md). OPTIMISATION.md section 7 reports one of them, OpenHands 600,
+over three runs.
 
 ## What each report shows
 
@@ -40,7 +40,7 @@ comparison (every node, relationship and property, fingerprinted) is under `data
 Produced by a harness that asks the agent questions with known answers and marks each answer.
 Two terms: a **question set** is a fixed list of questions about a fixed set of GitHub issues
 (60, or 600 for OpenHands 600), and an **attempt** is one try at one question. Every question is
-asked 3 times, so each question has 3 attempts; OpenHands 600 and `v8` ask each question once.
+asked 3 times, so each question has 3 attempts; `v8` and each OpenHands 600 run ask each question once.
 The agent model is `gpt-4o`, so these are **not** results for the models foreman uses in
 production. The judge for summary questions is `gpt-4o` too, except in the OpenHands reports,
 which used `claude-haiku-5.5`.
@@ -56,26 +56,25 @@ which used `claude-haiku-5.5`.
 this branch's commits, so the commits they name (`14166da`, `29f7c1b`) are not in this branch.
 `v8` has the same code fingerprint as `258000c`. OPTIMISATION.md cites these only as earlier
 results that agree; its numbers come from `qa/rerun/`.
-| `qa/rerun/baseline-<set>.json`, `qa/rerun/branch-<set>.json` | **Fresh re-run** of baseline and branch, same harness, same grader, same cost meter. The three sets below are the source of OPTIMISATION.md section 5.5; `oh-dev` and `oh-600` are the source of section 7. |
+| `qa/rerun/baseline-<set>.json`, `qa/rerun/branch-<set>.json` | **Fresh re-run** of baseline and branch, same harness, same grader, same cost meter. The three sets below are the source of OPTIMISATION.md section 5.5; `oh-600-run1` to `run3` are the source of section 7. |
 | `qa/rerun/branch-neutral-example-sympy2-dev.json` | The final branch code (after the prompt's borrowed label example was replaced by a neutral one), SymPy Core 50: 149 of 150 attempts right. |
 
 Sets (plain names used in OPTIMISATION.md, with the file names used here): **SymPy Core 50**
 (`sympy2-dev`, 50 questions, the set the fixes were developed against), **Hugging Face 50**
 (`lewtun-holdout`, 50 questions about a different project, not tuned against) and
 **SymPy Extended 81** (`sympy2-dev-81`, 81 questions about the same SymPy issues, 23 of which
-repeat SymPy Core 50 questions). Section 7 adds **OpenHands Dev 50** (`oh-dev`) and
-**OpenHands 600** (`oh-600`, 150 questions about 600 issues, one attempt each); see
-`OPENHANDS.md`.
+repeat SymPy Core 50 questions). Section 7 adds **OpenHands 600** (`oh-600`, 150 questions about
+600 issues, one attempt per question), run three times: `qa/rerun/baseline-oh-600-run{1,2,3}.json`
+and `qa/rerun/branch-oh-600-run{1,2,3}.json`. See `OPENHANDS.md`.
 
-The OpenHands reports record the original's failed reaction check only as "content differs". The
-"35 of 56" in OPTIMISATION.md section 7 comes from replaying the original's rule over the 60 Dev 50
-issues: a reaction is merged into an earlier one by the same person with the same emoji on the same
-issue, so 21 of the 56 comment reactions end up on the wrong comment or are lost. The test in
-`test/integration/cypher.test.ts` shows the same merge on a real database.
+The OpenHands reports record the original's failed reaction check (`comment_reactions_match`)
+only as "content differs": the original merges a reaction into an earlier one by the same person
+with the same emoji on the same issue. The test in `test/integration/cypher.test.ts` shows the
+same merge on a real database.
 
 Each question set has one-answer questions (checked by a program) and summaries (marked by an
 AI judge): SymPy Core 50 has 44 and 6, Hugging Face 50 has 44 and 6, SymPy Extended 81 has 73 and 8,
-OpenHands Dev 50 has 44 and 6, OpenHands 600 has 140 and 10.
+OpenHands 600 has 140 and 10.
 
 Useful fields in each report: `score.overall`, `score.solvedAllAttempts`, `qa.tasks[].attempts[]`
 (`pass`, `answer`, `reason`, `ms`, `toolCalls`), `cost.qaUsd`, `qa.openai.cacheHitRate`, and

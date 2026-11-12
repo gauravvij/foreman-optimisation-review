@@ -27,19 +27,18 @@ issues in, and more reliable at answering questions.
 | **SymPy Extended 81**: attempts answered correctly | 239 of 243 (98.4%) | **242 of 243 (99.6%)** |
 | Attempts at questions with one right answer, these three sets | 472 of 483 | **483 of 483** |
 | Questions that did worse on the branch, these three sets | | **none** |
-| **OpenHands Dev 50** (a new project, tested last): attempts answered correctly | 124 of 150 (82.7%) | **144 of 150 (96.0%)** |
-| **OpenHands 600** (a larger set from the same project, 1 attempt each): attempts answered correctly | 126 of 150 (84.0%) | **144 of 150 (96.0%)** |
+| **OpenHands 600** (a new project, tested last): questions answered correctly, average of 3 runs | 126.7 of 150 (84.4%) | **143.3 of 150 (95.6%)** |
 
-The five names in bold are the five **question sets**, and an **attempt** is one try at
-one question. Both terms are explained in section 4. The two OpenHands sets were built after the
-work, from a project that was not used to build it, and are described in section 7.
+The four names in bold are the four **question sets**, and an **attempt** is one try at
+one question. Both terms are explained in section 4. OpenHands 600 was built after the work,
+from a project that was not used to build it, and is described in section 7.
 
 In short: the earlier fixture ends up in the database with about a third of the database
 work, and the assistant gives the right answer more often. On the first three question sets,
 every question with a single right answer was answered correctly on every attempt by the
-branch. On both OpenHands sets the branch also did clearly better, although it still misses some
-questions about dates (section 7). OpenHands Dev 50 also exposed repeated comment reactions that
-were previously lost; the branch now preserves them (section 6).
+branch. On OpenHands 600 the branch also did clearly better, in each of three runs, although it
+still misses some questions about dates (section 7). The OpenHands test also exposed repeated
+comment reactions that were previously lost; the branch now preserves them (section 6).
 
 "Original version" means foreman as it was before these changes (commit `3cd3dde`). "This
 branch" means the code in this pull request. This report calls them the *original* and the
@@ -77,7 +76,7 @@ each change can be found in the history.
 | **B. A leaner hand-off from fetching to analysis** | Add an optional bounded-concurrency GitHub fetch (**off by default**); hand freshly fetched data straight to analysis instead of writing it and reading it back; fixes a bug where an issue edited on GitHub was never re-analysed. | `8977994`, `4dfa100` |
 | **C. Fewer confidently wrong answers** | Tell the assistant an issue's state is stored `OPEN`/`CLOSED`; treat an empty result as a possible query mistake rather than an absent fact; add a **query checker** that warns on reversed or impossible links (it never changes a query or its results). | `89d5a98`, `1bedad9`, `c93ef61`, `07a126d` |
 | **D. Sturdier analysis and summaries** | Keep a solution even when the model omits its comment source; anchor the comment summariser on the issue's title and body; bound how much of a long thread is summarised; tighten the model client (60s timeout, two retries, a 1,024-token cap, one shared connection). | `a6c1ae1`, `19061b9`, `4762100` |
-| **E. Changes made during the independent check** | 26 new tests for the reading-in code; tests for the re-analysis fix, the narrower tidy-up and repeated reactions; the repeated-reaction fix (section 6, item 7); a neutral example in the instructions; a separate judge for the eval suite; formatting and style fixes; docs for the new settings; more test evidence; and a script that re-checks this report's numbers. | `10d6ea3` and the three commits after it |
+| **E. Changes made during the independent check** | 26 new tests for the reading-in code; tests for the re-analysis fix, the narrower tidy-up and repeated reactions; the repeated-reaction fix (section 6, item 7); a neutral example in the instructions; a separate judge for the eval suite; formatting and style fixes; docs for the new settings; more test evidence; and a script that re-checks this report's numbers. | `10d6ea3` and the four commits after it |
 
 The only new dependency is a development-only helper, `gpt-tokenizer`, used by a test that
 keeps the instructions within their size budget.
@@ -148,7 +147,7 @@ consistent as possible, but its marks are still less certain than the program's.
 
 **Which AI models were used.** The assistant answered with `gpt-4o` (it uses the smaller
 `gpt-4o-mini` for its comment-summary helper). The judge was also `gpt-4o`, so the same model
-answered and judged the summaries. (The OpenHands tests in section 7 used a different judge.)
+answered and judged the summaries. (The OpenHands test in section 7 used a different judge.)
 Both versions were marked by the same judge with the same rules, so the comparison between them
 is fair, but a judge marking answers from its own model may be generous. Both versions used the
 same test program, scoring rules and cost meter.
@@ -161,7 +160,7 @@ same test program, scoring rules and cost meter.
 | Timing and the fetch option (5.3, 5.4) | commit `258000c`. Later changes to this code are formatting and the reaction fix (section 6, item 7). That fix adds no database requests (the final code still makes 209 at 60 issues), but the timings were not measured again. |
 | Question sets, both versions (5.5, 5.6) | commit `258000c`, the 12 code changes |
 | SymPy Core 50 re-test after the tidy-ups (5.5) | the branch with every change except two made later: the reaction fix, and the judge option that only the eval suite uses |
-| OpenHands Dev 50 and OpenHands 600 (7) | commit `10d6ea3`; the commits after it change only tests, formatting, comments and docs |
+| OpenHands 600, three runs (7) | run 1: commit `10d6ea3`; runs 2 and 3: `5ad56c6`, the head of this pull request. The commits between them change only tests, formatting, comments and docs. |
 
 ---
 
@@ -372,14 +371,14 @@ These change on purpose. The database a normal, correct run produces is not affe
    words) can cut off a very slow or very long answer. Both can be changed with environment variables.
 6. **Fetching several issues at once is off by default** and should be turned on with care
    (section 5.4).
-7. **Repeated reactions on separate comments are preserved.** The OpenHands Dev 50 database
-   check found that a reaction from the same user with the same content on two comments of one
+7. **Repeated reactions on separate comments are preserved.** The OpenHands database check
+   (section 7) found that a reaction from the same user with the same content on two comments of one
    issue was merged into one graph node. Comment reactions now include the comment ID in their
    merge key. Issue-level reactions are matched only against other issue-level reactions, so
    adding one later cannot be swallowed by an existing comment reaction. A test on a real
    database (`test/integration/cypher.test.ts`) covers both cases, whether issues are written
-   together or one at a time, and it fails on the original. A mock ingest of the 60 OpenHands
-   Dev 50 issues passes all 18 exact graph checks, including reaction links. The Hugging Face
+   together or one at a time, and it fails on the original. On OpenHands 600 the branch passes
+   all 18 exact graph checks in every run, including reaction links. The Hugging Face
    test data has no such repeated reactions, so it comes out identical on both versions
    (section 5.1).
 
@@ -400,7 +399,7 @@ section), and verified the following:
 |---|---|
 | The question sets have not been altered | The SymPy issue data and the SymPy Core 50 questions match the fingerprints recorded when they were frozen. The other two sets had no earlier fingerprint; theirs are now recorded in `verification.json`, and their expected answers were re-derived (next row). |
 | The expected answers are right | Every expected answer to a one-answer question (161 across the three sets) was worked out again from the raw issue data by a separate program. All 161 match. Three wrong answers planted on purpose were all caught. |
-| Each test used these questions | All 12 stored test reports contain exactly these questions and expected answers, and each asks every question 3 times (except one single-attempt confirmation run). The 4 OpenHands reports (section 7) were checked the same way, and their verdicts and scores reproduce too. |
+| Each test used these questions | All 12 stored test reports contain exactly these questions and expected answers, and each asks every question 3 times (except one single-attempt confirmation run). The 6 OpenHands 600 reports (section 7) were checked the same way: each contains exactly the 150 pinned questions and expected answers, and their verdicts and scores reproduce too. |
 | Each test ran the code it claims | Each report records a fingerprint of the code it tested; recomputing them ties every report to its version. |
 | Answers were marked correctly | Every one-answer attempt in every stored report was marked again with the scoring program and got the same verdict. The only exception is 7 correct answers in the oldest stored report that earlier scoring rules wrongly rejected; its corrected copy, which is the one used, matches. Every headline score was recomputed from its attempts and matches. |
 | Wrong answers are really wrong | Every failed attempt was read. All 11 failed one-answer attempts of the original are genuinely wrong. Summaries are marked by an AI judge and are less certain (see 5.5). |
@@ -410,63 +409,63 @@ section), and verified the following:
 
 *Proof:* `benchmark/verification.json` records every check and its result.
 
-### A fresh test on a new project: OpenHands Dev 50
+### A test on a new project: OpenHands 600
 
-Both versions were also tested on **OpenHands Dev 50**, a new question set from a project not
-used to build the fixes: 50 questions about 60 OpenHands issues, 3 attempts each. The assistant
-used `gpt-4o-2024-08-06`, and a different **judge** model, `Claude Haiku 5.5`, judged the summaries. The
-branch here is `10d6ea3`, the code in this pull request apart from later edits that only add tests
-and change formatting and a comment. A sealed second set, OpenHands Holdout 50, is kept for one final run.
+Both versions were also tested on **OpenHands 600**, a question set built after the work from a
+project that was not used to build the fixes: 150 questions about 600 issues of the
+OpenHands/OpenHands project (140 one-answer questions and 10 summaries). Each question is asked
+once per run, and the whole test was run **three times**, so each version had three tries at
+every question, in three separate runs.
+
+The assistant used `gpt-4o-2024-08-06` (and `gpt-4o-mini` for its comment-summary helper). A
+different **judge** model, `Claude Haiku 5.5`, marked the summaries, so no model marked its own
+answers. Every model was reached through OpenRouter. The original was `3cd3dde` in every run. The
+branch was `10d6ea3` in run 1 and `5ad56c6`, the head of this pull request, in runs 2 and 3; the
+commits between them change only tests, formatting, comments and docs.
 
 **Answering questions**
 
-| What was measured | What it means | Original | Branch |
-|---|---|---:|---:|
-| One-answer questions: attempts right | 44 questions × 3 attempts, marked by a program | 115 of 132 (87.1%) | **127 of 132 (96.2%)** |
-| Summaries: attempts right | 6 questions × 3 attempts, marked by the AI judge | 9 of 18 (50.0%) | **17 of 18 (94.4%)** |
-| Questions solved on every attempt | right on all 3 attempts | 36 of 50 | **46 of 50** |
+| What was measured | Original | Branch |
+|---|---:|---:|
+| Questions right, runs 1 / 2 / 3 (of 150) | 126 / 127 / 127 | **144 / 141 / 145** |
+| Average of the three runs | 126.7 of 150 (84.4%) | **143.3 of 150 (95.6%)** |
+| One-answer questions right, runs 1 / 2 / 3 (of 140, marked by a program) | 118 / 118 / 118 | **134 / 132 / 135** |
+| Summaries right, runs 1 / 2 / 3 (of 10, marked by the AI judge) | 8 / 9 / 9 | **10 / 9 / 10** |
+| Questions right in all three runs | 118 | **138** |
+| Questions never right | 15 | **1** |
 
-12 questions improved and 2 got one attempt worse, a split that would happen by luck only about
-1 time in 77. The original's mistakes were the kinds section 5.5 fixes. Both versions still
-sometimes refuse date questions as "in the future", which is 4 of the branch's 6 wrong attempts.
+In every run the branch got 14 to 18 more questions right. Within each run, 19 to 21 questions
+improved and 2 to 5 got worse. A split that lopsided would happen by luck about 1 time in 3,600,
+1 in 150 and 1 in 8,000 (runs 1, 2 and 3). Over the three runs together, 28 questions were right
+more often on the branch and 7 less often (about 1 time in 2,000 by luck).
 
-**Reading the 60 issues into the database**
+The original's 70 wrong answers over the three runs are mostly the kinds section 5.5 fixes:
+two-step questions (28) and label questions (12). In run 1, 15 of the 21 improved questions were
+ones where the original answered "none" when there was an answer: asked how many issues are tagged
+"ui/ux", it said none, while the branch found the 27 stored as `UI/UX`. The branch's weak spot is
+dates: 15 of its 20 wrong answers over the three runs are date questions, some refused as "in the
+future", and the one question it never got right asks how many issues were created in a given
+month. The original also gets date questions wrong (21 of its 70).
 
-| What was measured | What it means | Original | Branch |
-|---|---|---:|---:|
-| Database requests | commands sent to the database to read in the 60 issues | 958 | **345** |
-| Database connections | connections opened to the database | 126 | **8** |
-| Database checks passed | stored data compared with the issue data | 17 of 18 | **18 of 18** |
-| Comment reactions stored correctly | stored with the right person, emoji and comment | 35 of 56 | **56 of 56** |
+**Reading the 600 issues into the database**
 
-The original's failed check is the lost reactions (section 6, item 7). Compare the versions with
-each other, not with section 5.2, which used different issues.
+| What was measured | Original | Branch |
+|---|---:|---:|
+| Database requests, runs 1 / 2 / 3 | 8,703 / 8,684 / 8,712 | **3,061 / 3,017 / 3,006** |
+| Database connections, every run | 1,206 | **8** |
+| Database checks passed (stored data compared with the issue data), every run | 17 of 18 | **18 of 18** |
 
-*Proof:* `benchmark/qa/rerun/baseline-oh-dev.json` and `branch-oh-dev.json`. How the set was
-built: `benchmark/OPENHANDS.md`.
+The request counts vary a little between runs because the analysis step uses a real AI model,
+whose answers differ from run to run. The original's failed check is the lost reactions
+(section 6, item 7). Compare the versions with each other, not with section 5.2, which used
+different issues.
 
-### A larger test on the same project: OpenHands 600
+Each run cost about $4.18 for the original and $4.48 for the branch (averages of the three
+runs), which is less per right answer.
 
-Both versions were then tested on **OpenHands 600**: 150 questions about 600 other OpenHands
-issues, none of them in Dev 50 or Holdout 50, each asked once, with the same models (this time
-all reached through OpenRouter).
-
-| What was measured | What it means | Original | Branch |
-|---|---|---:|---:|
-| One-answer questions: attempts right | 140 questions × 1 attempt, marked by a program | 118 of 140 | **134 of 140** |
-| Summaries: attempts right | 10 questions × 1 attempt, marked by the AI judge | 8 of 10 | **10 of 10** |
-| Database requests | commands sent to the database to read in the 600 issues | 8,703 | **3,061** |
-| Database connections | connections opened to the database | 1,206 | **8** |
-| Database checks passed | stored data compared with the issue data | 17 of 18 | **18 of 18** |
-
-21 questions improved and 3 got worse, a split that would happen by luck less than 1 time in
-3,000. In 15 of the 21 the original answered "none" when there was an answer: asked how many
-issues are tagged "ui/ux", it said none, while the branch found the 27 stored as `UI/UX`. The
-branch's 6 misses are 4 date questions refused as "in the future" and 2 label names it rewrote.
-The run cost $4.24 for the original and $4.52 for the branch, which is less per right answer.
-
-*Proof:* `benchmark/qa/rerun/baseline-oh-600.json` and `branch-oh-600.json`. How the set was
-built and checked: `benchmark/OPENHANDS.md`.
+*Proof:* `benchmark/qa/rerun/baseline-oh-600-run1.json` to `-run3.json` and
+`branch-oh-600-run1.json` to `-run3.json`. How the set was built and checked:
+`benchmark/OPENHANDS.md`.
 
 ---
 
@@ -508,15 +507,14 @@ What supports them carrying over:
 - **Nothing got worse on new data.** On Hugging Face 50, a different project, the branch kept
   every one-answer attempt right (132 of 132). On SymPy Extended 81, which has 58 questions not
   seen before, the one mistake the original made was fixed (218 → 219 of 219).
-- **A clear gain on a new project.** On OpenHands Dev 50, not used to build the fixes, one-answer
-  attempts right went from 115 to 127 of 132. On OpenHands 600, ten times larger, attempts right
-  went from 126 to 144 of 150 (section 7).
+- **A clear gain on a new project.** On OpenHands 600, a project not used to build the fixes,
+  the branch got 143.3 of 150 questions right on average over three runs, against 126.7 for the
+  original, and it did better in every run (section 7).
 
 What is not yet shown:
 
 - **One model.** All answers came from `gpt-4o`. Foreman's production models may make these
-  mistakes less often, so the gain there could be smaller. The sealed OpenHands Holdout 50 has
-  not been run yet.
+  mistakes less often, so the gain there could be smaller.
 
 ---
 
@@ -544,7 +542,7 @@ What is not yet shown:
 | Database counts, repeat timings, fetch option, database comparison | `benchmark/profile/repeat-runs.json` |
 | Single-run reading-in results for each size | `benchmark/profile/profile-foreman-*.json` |
 | The fresh question tests, original vs branch, for each question set | `benchmark/qa/rerun/` |
-| The OpenHands tests (section 7) and how their questions were built | `benchmark/qa/rerun/*-oh-dev.json`, `benchmark/qa/rerun/*-oh-600.json`, `benchmark/OPENHANDS.md` |
+| The OpenHands 600 test (section 7) and how its questions were built | `benchmark/qa/rerun/*-oh-600-run{1,2,3}.json`, `benchmark/OPENHANDS.md` |
 | The earlier stored question results | `benchmark/qa/` |
 | How to read each file and check a number yourself | `benchmark/README.md` |
 | Every number in this report re-checked against those files, in one command | `bun docs/optimisation/benchmark/check-numbers.ts` (from the repository root) |
@@ -569,15 +567,16 @@ output. Three notes on the stored files:
   request.
 - **Question set:** a fixed list of questions about a fixed collection of GitHub issues (60, or
   600 for OpenHands 600). There are three in section 5: SymPy Core 50, Hugging Face 50 and SymPy
-  Extended 81. Section 7 adds OpenHands Dev 50 and OpenHands 600.
+  Extended 81. Section 7 adds OpenHands 600.
 - **Attempt:** one try at answering one question. Every question is asked 3 times, except in
-  OpenHands 600, where each is asked once.
+  OpenHands 600, where each is asked once per run, in three separate runs.
 - **Solved on every attempt:** all 3 attempts at a question were right.
 - **One-answer question:** a question with a single correct answer (a count, a name, a list of
   issue numbers), checked by a program.
 - **Summary:** a question asking for a summary of a discussion, marked by an AI judge.
 - **Two-step question:** a question needing two links to be followed, such as "which users
   commented on issues labelled X".
+- **Run (question test):** one complete test of one version on one question set.
 - **Run (reading-in test):** one complete read-in of the issues into an empty database.
 - **Median:** the middle value when runs are sorted; it ignores one-off slow or fast runs.
 - **Request (statement):** one command sent to the database.
