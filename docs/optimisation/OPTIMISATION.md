@@ -561,6 +561,43 @@ output. Three notes on the stored files:
 
 ---
 
+## 11. How NEO got here: the experiments behind the results
+
+The sections above are the results. This section is the short story of how NEO reached
+them — the order of the experiments and the turns that mattered — so the numbers have a
+history, not just a value.
+
+| Step | What NEO did | What it found |
+|---|---|---|
+| 1 | Measured foreman on 60 fixed issues and a set of questions with known answers | Reading issues in made far more database work than it needed (620 requests, 127 connections), and the assistant sometimes answered with confidence but wrongly |
+| 2 | Cut the database work: set the rules up once per run, write all issues in one all-or-nothing batch, tidy up only what changed | The database ended up with exactly the same contents, for far less work — checked item by item, not assumed |
+| 3 | Stopped writing each issue and reading it straight back before the analysis step | A real bug: an issue edited on GitHub was compared against itself and never re-analysed |
+| 4 | Traced every wrong answer back to the query behind it | The assistant was turning a wrong query into a confident "no such data" — and foreman's own instructions told it to do exactly that |
+| 5 | Told the assistant how the data is really stored, changed the empty-result rule, and added a query checker | On the test sets, every one-answer question was then right on every attempt |
+| 6 | Checked an early claim that the branch was 41% cheaper | The saving was a mistake in the cost meter, not in the code; the claim was withdrawn and both versions were measured again the same way |
+| 7 | Fixed the defects that only showed up once the numbers were examined | A solution record with no comment source was silently losing a whole issue's analysis; a summary drifted onto the wrong part of a discussion; a competitor record could vanish |
+| 8 | Re-checked the program that marks each answer right or wrong | A scoring bug that rejected a count written as a word and a correct "no such data"; corrected, and every earlier run was re-scored so the comparison stayed fair |
+| 9 | Tested both versions on a project not used to build the fixes (OpenHands 600) | A clear gain in each of three runs — the strongest sign the fixes are general, not tuned to the test data |
+| 10 | Had the benchmark and every result checked from scratch by a separate agent (Claude Code) | Every expected answer re-derived and both versions re-run; the numbers held |
+
+**Two turns are worth remembering.**
+
+The first is step 4. The wrong answers were not the assistant being incapable. They were the
+assistant faithfully following an instruction — "if a query returns no results, say so
+honestly" — that cannot tell a genuinely empty answer apart from a query that asked the wrong
+thing. Almost all of the accuracy gain came from closing that gap, not from tuning.
+
+The second is step 6. An early figure showed a large cost saving that did not survive
+checking: it belonged to the model provider's caching, which the cost meter could not yet see.
+Withdrawing it and re-measuring both versions under the same conditions is why this report now
+says cost is a few percent higher, not lower — the number that stayed is the honest one.
+
+**What the journey shows.** The biggest wins were the simplest changes, and they were the ones
+that left the database contents identical. Every figure that looked too good was re-checked,
+and two were corrected. The final, verified results are the ones in section 1.
+
+---
+
 ## Glossary
 
 - **Original / branch:** foreman before these changes (`3cd3dde`) and the code in this pull
